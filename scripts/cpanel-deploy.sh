@@ -44,10 +44,17 @@ if [ "${RUN_MIGRATIONS:-0}" = "1" ]; then
 fi
 
 # 4. Cache clear + warm.
-echo ">> Clearing and warming caches"
+#    IMPORTANT: config/route caching bakes APP_ENV in — never do it in a dev
+#    environment (it poisons `php artisan test` and local .env changes).
+APP_ENV_VALUE=$(grep -E '^APP_ENV=' "$ROOT/backend/.env" 2>/dev/null | cut -d= -f2 | tr -d '\r\n' || true)
+APP_ENV_VALUE=${APP_ENV_VALUE:-production}
+echo ">> Clearing caches (APP_ENV=$APP_ENV_VALUE)"
 php "$ROOT/backend/artisan" optimize:clear
-php "$ROOT/backend/artisan" config:cache
-php "$ROOT/backend/artisan" route:cache
-php "$ROOT/backend/artisan" view:cache
+if [ "$APP_ENV_VALUE" = "production" ]; then
+  echo ">> Warming production caches"
+  php "$ROOT/backend/artisan" config:cache
+  php "$ROOT/backend/artisan" route:cache
+  php "$ROOT/backend/artisan" view:cache
+fi
 
 echo ">> Deploy finished. SPA live at $PUBLIC/index.html"
