@@ -16,7 +16,7 @@ class DisputeResource extends JsonResource
             'explanation' => $this->explanation,
             'helper' => $this->whenLoaded('helper', fn () => [
                 'uuid' => $this->helper->uuid,
-                'name' => $this->helper->name,
+                'name' => $this->helper->full_name,
             ]),
             'status' => $this->status?->value,
             'disputable_type' => class_basename($this->disputable_type),
