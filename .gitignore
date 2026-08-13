@@ -1,0 +1,16 @@
+backend/vendor/
+backend/node_modules/
+frontend/node_modules/
+backend/.env
+backend/storage/*.key
+backend/public/storage
+backend/public/build/
+backend/storage/logs/*.log
+backend/storage/framework/cache/*
+backend/storage/framework/sessions/*
+backend/storage/framework/views/*
+backend/storage/app/private/evidence/*
+backend/storage/app/public/profiles/*
+backend/storage/app/public/avatars/*
+.DS_Store
+Thumbs.db
