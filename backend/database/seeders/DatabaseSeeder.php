@@ -17,6 +17,7 @@ class DatabaseSeeder extends Seeder
             EmploymentAndReviewSeeder::class,
             JobSeeder::class,
             ReportAndDisputeSeeder::class,
+            LowScoreHelperSeeder::class,
         ]);
     }
 }

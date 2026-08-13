@@ -70,7 +70,14 @@ export function SearchPage() {
     const next = new URLSearchParams(params)
     if (value) next.set(key, value)
     else next.delete(key)
-    next.delete('page')
+    next.delete('page') // filter changes reset to page 1
+    setParams(next)
+  }
+
+  const setPage = (p: number) => {
+    const next = new URLSearchParams(params)
+    if (p <= 1) next.delete('page')
+    else next.set('page', String(p))
     setParams(next)
   }
 
@@ -290,7 +297,7 @@ export function SearchPage() {
             />
           ))}
           {data && data.meta.last_page > 1 && (
-            <Pagination meta={data.meta} onChange={(p) => setParam('page', p === 1 ? null : String(p))} />
+            <Pagination meta={data.meta} onChange={setPage} />
           )}
         </div>
       </div>
