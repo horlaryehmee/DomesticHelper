@@ -37,12 +37,19 @@ export interface AuthUser {
 interface AuthContextValue {
   user: AuthUser | null
   loading: boolean
-  login: (credentials: { login: string; password: string }) => Promise<void>
+  login: (credentials: { login: string; password: string }) => Promise<AuthUser>
   logout: () => Promise<void>
   setUser: (user: AuthUser) => void
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null)
+
+/** Role-based dashboard route. */
+export function dashboardPath(userType: AuthUser['user_type']): string {
+  if (userType === 'admin') return '/admin'
+  if (userType === 'employer') return '/employer'
+  return '/helper'
+}
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null)
@@ -65,6 +72,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const res = await api.post<{ token: string; user: AuthUser }>('/auth/login', credentials)
     setToken(res.token)
     setUser(res.user)
+    return res.user
   }, [])
 
   const logout = useCallback(async () => {

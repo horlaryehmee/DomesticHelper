@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link, useNavigate, useLocation } from 'react-router-dom'
+import { Link, useNavigate, useLocation, Navigate } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Spinner } from '@/components/ui/spinner'
-import { useAuth } from '@/lib/auth'
+import { useAuth, dashboardPath } from '@/lib/auth'
 import { ApiError } from '@/lib/api'
 
 const schema = z.object({
@@ -20,7 +20,7 @@ const schema = z.object({
 type FormData = z.infer<typeof schema>
 
 export function LoginPage() {
-  const { login } = useAuth()
+  const { user, login } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
   const [submitting, setSubmitting] = useState(false)
@@ -36,14 +36,21 @@ export function LoginPage() {
     setSubmitting(true)
     setServerError(null)
     try {
-      await login(data)
+      const loggedInUser = await login(data)
       const from = (location.state as { from?: string })?.from
-      navigate(from ?? '/', { replace: true })
+      // Redirect to the page the user came from, otherwise straight to
+      // their role dashboard — never the public homepage.
+      navigate(from ?? dashboardPath(loggedInUser.user_type), { replace: true })
     } catch (e) {
       setServerError(e instanceof ApiError ? e.message : 'Login failed. Please try again.')
     } finally {
       setSubmitting(false)
     }
+  }
+
+  // Already logged in? Skip the form and go to the dashboard.
+  if (user) {
+    return <Navigate to={dashboardPath(user.user_type)} replace />
   }
 
   return (
