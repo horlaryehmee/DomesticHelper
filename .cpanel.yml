@@ -1,0 +1,20 @@
+---
+# cPanel Git Version Control auto-deployment for Domestic Helper.
+#
+# IMPORTANT — adjust DEPLOYPATH to your cPanel account path before first use.
+# The document root of the (sub)domain must point at:
+#   <DEPLOYPATH>/backend/public
+#
+# NOTE: .env is NOT committed (credentials). After the first deploy, create
+# backend/.env on the server manually (see README, "Deployment to cPanel").
+# Subsequent pushes will not touch it.
+#
+deployment:
+  tasks:
+    - export DEPLOYPATH=/home/REPLACE_WITH_CPANEL_ACCOUNT/domestichelper.yourdomain.com
+    - /bin/cp -R backend $DEPLOYPATH
+    - /bin/cp -R frontend/dist/. $DEPLOYPATH/backend/public/
+    - /bin/cp -R scripts $DEPLOYPATH
+    - /bin/bash $DEPLOYPATH/scripts/cpanel-deploy.sh
+    - /usr/bin/php $DEPLOYPATH/backend/artisan migrate --force
+    - /usr/bin/php $DEPLOYPATH/backend/artisan optimize:clear
