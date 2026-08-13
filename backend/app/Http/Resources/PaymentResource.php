@@ -18,6 +18,7 @@ class PaymentResource extends JsonResource
             'channel' => $this->channel,
             'payable_type' => $this->payable_type ? class_basename($this->payable_type) : null,
             'payable' => $this->whenLoaded('payable', fn () => $this->payable ? ['uuid' => $this->payable->uuid] : null),
+            'payer' => $this->whenLoaded('user', fn () => $this->user ? ['uuid' => $this->user->uuid, 'name' => $this->user->full_name] : null),
             'paid_at' => $this->paid_at?->toIso8601String(),
             'created_at' => $this->created_at?->toIso8601String(),
         ];

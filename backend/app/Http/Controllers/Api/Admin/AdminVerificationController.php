@@ -23,12 +23,16 @@ class AdminVerificationController extends Controller
             ->latest()
             ->paginate(20);
 
-        return response()->json([
-            'data' => $verifications->through(fn ($v) => [
+        $items = $verifications->getCollection()
+            ->map(fn ($v) => [
                 ...(new IdentityVerificationResource($v))->resolve(),
                 'user' => ['uuid' => $v->user->uuid, 'name' => $v->user->full_name],
                 'private_notes' => $v->private_notes,
-            ]),
+            ])
+            ->values();
+
+        return response()->json([
+            'data' => $items,
             'meta' => [
                 'current_page' => $verifications->currentPage(),
                 'last_page' => $verifications->lastPage(),

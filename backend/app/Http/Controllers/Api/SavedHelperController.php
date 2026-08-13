@@ -31,14 +31,18 @@ class SavedHelperController extends Controller
 
         $saved = $query->latest()->paginate(12);
 
-        return response()->json([
-            'data' => $saved->through(fn ($item) => [
+        $items = $saved->getCollection()
+            ->map(fn ($item) => [
                 'id' => $item->id,
                 'note' => $item->note,
                 'list_id' => $item->list_id,
-                'helper' => new HelperPublicResource($item->helper),
+                'helper' => (new HelperPublicResource($item->helper))->resolve(),
                 'created_at' => $item->created_at?->toIso8601String(),
-            ]),
+            ])
+            ->values();
+
+        return response()->json([
+            'data' => $items,
             'meta' => [
                 'current_page' => $saved->currentPage(),
                 'last_page' => $saved->lastPage(),

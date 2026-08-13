@@ -109,12 +109,12 @@ class AdminTrustScoreController extends Controller
             ->latest()
             ->paginate(25);
 
+        $items = $events->getCollection()
+            ->map(fn ($e) => (new TrustScoreEventResource($e))->resolve())
+            ->values();
+
         return response()->json([
-            'data' => $events->through(fn ($e) => [
-                ...(new TrustScoreEventResource($e))->resolve(),
-                'helper_name' => $e->helper->full_name,
-                'helper_uuid' => $e->helper->uuid,
-            ]),
+            'data' => $items,
             'meta' => [
                 'current_page' => $events->currentPage(),
                 'last_page' => $events->lastPage(),

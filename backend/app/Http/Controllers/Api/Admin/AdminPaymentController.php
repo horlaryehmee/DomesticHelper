@@ -20,11 +20,12 @@ class AdminPaymentController extends Controller
             ->latest()
             ->paginate(20);
 
+        $items = $payments->getCollection()
+            ->map(fn ($p) => (new PaymentResource($p))->resolve())
+            ->values();
+
         return response()->json([
-            'data' => $payments->through(fn ($p) => [
-                ...(new PaymentResource($p))->resolve(),
-                'payer' => $p->user ? ['uuid' => $p->user->uuid, 'name' => $p->user->full_name] : null,
-            ]),
+            'data' => $items,
             'meta' => [
                 'current_page' => $payments->currentPage(),
                 'last_page' => $payments->lastPage(),
