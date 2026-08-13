@@ -68,7 +68,7 @@ export function PaymentCallbackPage() {
           <p className="text-sm text-muted-foreground">
             {success
               ? 'Your verification report is now available in your dashboard.'
-              : 'If you completed the payment, give it a moment — confirmation comes from the payment provider, never from this page.'}
+              : 'If you completed the payment, give it a moment. Confirmation comes from the payment provider, never from this page.'}
           </p>
           <div className="flex gap-2">
             {success && user?.user_type === 'employer' && (

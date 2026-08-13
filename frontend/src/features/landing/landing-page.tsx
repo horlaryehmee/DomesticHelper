@@ -16,17 +16,17 @@ import type { HelperSummary, PaginationMeta } from '@/lib/types'
 import { useAuth } from '@/lib/auth'
 
 const faqs = [
-  { q: 'How do trust scores work?', a: 'Every helper starts at a neutral score of 50. Points are added only for verified events — confirmed employment, positive moderated reviews, long-term roles — and subtracted only when our admin team verifies a serious complaint. No single employer can change a helper\u2019s score.' },
-  { q: 'How is a helper\u2019s identity verified?', a: 'We verify phone and email with OTPs, and offer NIN and photo verification which our verification officers review. NIN data is encrypted and never displayed publicly — only a verification badge is shown.' },
+  { q: 'How do trust scores work?', a: 'Every helper starts at a neutral score of 50. Points are added only for verified events: confirmed employment, positive moderated reviews and long-term roles. They are subtracted only when our admin team verifies a serious complaint. No single employer can change a helper\u2019s score.' },
+  { q: 'How is a helper\u2019s identity verified?', a: 'We verify phone and email with OTPs, and offer NIN and photo verification which our verification officers review. NIN data is encrypted and never displayed publicly; only a verification badge is shown.' },
   { q: 'Who can leave a review?', a: 'Only employers who have a confirmed employment record with the helper on the platform. Every review is moderated before it appears publicly, and helpers can reply, report, or dispute reviews.' },
   { q: 'What happens when a report is submitted?', a: 'The helper is notified immediately and given the right to respond. Our team reviews the evidence. Until a complaint is verified, it stays private and never affects the helper\u2019s public trust score.' },
-  { q: 'What can helpers dispute?', a: 'Helpers can dispute reviews, reports, trust score events and verification results. If a dispute is upheld, any score impact is reversed — false accusations are corrected.' },
+  { q: 'What can helpers dispute?', a: 'Helpers can dispute reviews, reports, trust score events and verification results. If a dispute is upheld, any score impact is reversed, and false accusations are corrected.' },
   { q: 'Is my personal information safe?', a: 'NIN, exact addresses, private phone numbers, evidence files and internal notes are never shown publicly. Evidence is stored on a private, access-controlled file system.' },
 ]
 
 const verificationSteps = [
   { icon: Phone, title: 'Phone & Email', text: 'OTP-verified contact details confirm the helper is reachable.' },
-  { icon: Fingerprint, title: 'NIN Check', text: 'National ID validated and stored encrypted — never displayed.' },
+  { icon: Fingerprint, title: 'NIN Check', text: 'National ID validated and stored encrypted, never displayed.' },
   { icon: UserCheck, title: 'Photo Verification', text: 'A verification officer confirms the photo matches the identity.' },
   { icon: Briefcase, title: 'Employment Check', text: 'Previous employers confirm roles, dates and performance.' },
 ]
@@ -72,7 +72,7 @@ export function LandingPage() {
               {[
                 ['30+', 'Verified helpers'],
                 ['100%', 'Moderated reviews'],
-                ['0–100', 'Transparent trust score'],
+                ['0 to 100', 'Transparent trust score'],
               ].map(([value, label]) => (
                 <div key={label} className="border-l-2 border-primary/30 pl-3">
                   <div className="text-xl font-bold">{value}</div>
@@ -150,17 +150,17 @@ export function LandingPage() {
         <div className="mx-auto grid max-w-7xl gap-10 px-4 py-20 sm:px-6 lg:grid-cols-2 lg:items-center">
           <div>
             <Badge variant="secondary">Why verification matters</Badge>
-            <h2 className="mt-4 text-3xl font-bold tracking-tight">Trust, verified — not assumed</h2>
+            <h2 className="mt-4 text-3xl font-bold tracking-tight">Trust, verified. Not assumed</h2>
             <p className="mt-3 text-muted-foreground">
               Hiring someone to work in your home is one of the most personal decisions a family makes. We make sure
-              the people you welcome in have a documented, verifiable history — and that good workers can prove it.
+              the people you welcome in have a documented, verifiable history, and that good workers can prove it.
             </p>
             <ul className="mt-6 space-y-4">
               {[
                 'Every public badge reflects a verification that actually happened',
                 'Employment history is confirmed by the previous employer',
                 'Reviews come only from real, recorded employment relationships',
-                'Accusations stay private until verified — protecting helpers from false claims',
+                'Accusations stay private until verified, protecting helpers from false claims',
               ].map((item) => (
                 <li key={item} className="flex items-start gap-3 text-sm">
                   <BadgeCheck className="mt-0.5 size-5 shrink-0 text-primary" />
@@ -212,7 +212,7 @@ export function LandingPage() {
               <TrustScoreRing score={85} category="high" size={200} stroke={14} />
               <div className="mt-4 text-center">
                 <div className="font-semibold text-success">High Trust</div>
-                <div className="text-sm text-muted-foreground">80–100</div>
+                <div className="text-sm text-muted-foreground">80 to 100</div>
               </div>
             </div>
           </div>
@@ -220,7 +220,7 @@ export function LandingPage() {
             <Badge variant="secondary">Trust score explained</Badge>
             <h2 className="mt-4 text-3xl font-bold tracking-tight">One transparent number</h2>
             <p className="mt-3 text-muted-foreground">
-              Every helper starts at 50. The score moves only on verified events — audited, reversible, and never
+              Every helper starts at 50. The score moves only on verified events. Audited, reversible, and never
               driven by a single opinion.
             </p>
             <div className="mt-8 space-y-4">
@@ -240,7 +240,7 @@ export function LandingPage() {
             </div>
             <p className="mt-4 flex items-start gap-2 text-xs text-muted-foreground">
               <AlertTriangle className="mt-0.5 size-4 shrink-0" />
-              We use neutral language — scores below 50 show as &ldquo;Needs Review&rdquo;, never labels like &ldquo;bad&rdquo; or &ldquo;blacklisted&rdquo;.
+              We use neutral language: scores below 50 show as &ldquo;Needs Review&rdquo;, never labels like &ldquo;bad&rdquo; or &ldquo;blacklisted&rdquo;.
             </p>
           </div>
         </div>
@@ -255,7 +255,7 @@ export function LandingPage() {
             </span>
             <h2 className="text-2xl font-bold tracking-tight">For employers</h2>
             <p className="text-muted-foreground">
-              Whether you&apos;re a household or an agency — search verified staff, request verification reports,
+              Whether you&apos;re a household or an agency, search verified staff, request verification reports,
               run interviews, and record every hire so the next family can benefit too.
             </p>
             <ul className="space-y-2 text-sm text-muted-foreground">
@@ -277,12 +277,12 @@ export function LandingPage() {
             <h2 className="text-2xl font-bold tracking-tight">For domestic helpers</h2>
             <p className="text-muted-foreground">
               Build a verified reputation that travels with you. Every good job becomes proof, every review becomes
-              trust — and you can dispute anything unfair.
+              trust, and you can dispute anything unfair.
             </p>
             <ul className="space-y-2 text-sm text-muted-foreground">
               <li>• Your verified employment history, in one place</li>
               <li>• Reviews you can reply to and disputes you can win</li>
-              <li>• Private by design — your NIN is never shown</li>
+              <li>• Private by design: your NIN is never shown</li>
               <li>• Jobs from verified employers</li>
             </ul>
             <Button asChild variant="outline" className="mt-2">
@@ -307,7 +307,7 @@ export function LandingPage() {
             {[
               { icon: FileCheck2, title: 'Submit with evidence', text: 'Employers report issues with employment context and supporting documents.' },
               { icon: Scale, title: 'Right of reply', text: 'The helper is notified and can respond before any decision is made.' },
-              { icon: ShieldCheck, title: 'Admin review', text: 'Only verified outcomes affect trust scores — and every decision is audited.' },
+              { icon: ShieldCheck, title: 'Admin review', text: 'Only verified outcomes affect trust scores, and every decision is audited.' },
             ].map((s) => (
               <Card key={s.title} className="gap-4 py-6">
                 <CardContent className="flex flex-col items-center gap-3 text-center">
@@ -333,7 +333,7 @@ export function LandingPage() {
           {[
             { quote: 'We hired a nanny with a verified 3-year history and real references. The difference in peace of mind is enormous.', name: 'Mrs. Adeyemi', role: 'Employer, Ikeja' },
             { quote: 'My previous employers verified my record and now families contact me directly. My good work finally speaks for itself.', name: 'Esther C.', role: 'Verified Nanny, Lagos' },
-            { quote: 'The report system protected us when an engagement went wrong — and the process was fair to the worker too.', name: 'Mr. Okafor', role: 'Employer, Lekki' },
+            { quote: 'The report system protected us when an engagement went wrong, and the process was fair to the worker too.', name: 'Mr. Okafor', role: 'Employer, Lekki' },
           ].map((t) => (
             <Card key={t.name} className="gap-4 py-6">
               <CardContent className="flex flex-col gap-3">
@@ -370,7 +370,7 @@ export function LandingPage() {
       {/* ============ CTA ============ */}
       <section className="mx-auto max-w-7xl px-4 py-20 sm:px-6">
         <div className="overflow-hidden rounded-2xl bg-primary px-6 py-14 text-center text-primary-foreground sm:px-12">
-          <h2 className="text-3xl font-bold tracking-tight">Ready to hire — or be hired — with confidence?</h2>
+          <h2 className="text-3xl font-bold tracking-tight">Ready to hire or be hired with confidence?</h2>
           <p className="mx-auto mt-3 max-w-xl opacity-90">
             Join the trust network for domestic staff in Nigeria. Verified profiles, fair reviews and real protection for everyone.
           </p>

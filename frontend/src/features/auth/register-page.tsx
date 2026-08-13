@@ -81,7 +81,7 @@ export function RegisterPage() {
         </div>
         <div className="mt-10 grid gap-4 sm:grid-cols-2">
           {[
-            { key: 'employer' as const, icon: Briefcase, title: 'I want to hire', text: 'Find and hire verified domestic staff — housekeepers, nannies, drivers and more.' },
+            { key: 'employer' as const, icon: Briefcase, title: 'I want to hire', text: 'Find and hire verified domestic staff: housekeepers, nannies, drivers and more.' },
             { key: 'helper' as const, icon: UserRound, title: 'I am a domestic helper', text: 'Build your verified reputation and get hired by families who value good work.' },
           ].map((c) => (
             <button
@@ -148,7 +148,7 @@ function EmployerForm({ meta, onDone }: { meta?: Meta; onDone: (u: never) => voi
     <Card className="gap-5">
       <CardHeader>
         <CardTitle className="text-2xl">Employer registration</CardTitle>
-        <CardDescription>Household or agency — verify your phone and start hiring safely.</CardDescription>
+        <CardDescription>Household or agency. Verify your phone and start hiring safely.</CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
@@ -297,7 +297,7 @@ function HelperForm({ meta, onDone }: { meta?: Meta; onDone: (u: never) => void 
             </Field>
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
-            <Field label="NIN (11 digits — private)" error={errors.nin?.message}>
+            <Field label="NIN (11 digits, private)" error={errors.nin?.message}>
               <Input inputMode="numeric" maxLength={11} {...register('nin')} />
             </Field>
             <Field label="Expected salary (₦/month, min)" error={errors.expected_salary_min?.message}>

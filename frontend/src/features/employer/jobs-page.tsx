@@ -190,7 +190,7 @@ function JobFormDialog({ meta }: { meta?: Meta }) {
           </div>
           <div className="space-y-1.5">
             <Label>Working hours</Label>
-            <Input value={form.working_hours} onChange={(e) => set('working_hours', e.target.value)} placeholder="e.g. 8am – 5pm" />
+            <Input value={form.working_hours} onChange={(e) => set('working_hours', e.target.value)} placeholder="e.g. 8am to 5pm" />
           </div>
           <label className="flex cursor-pointer items-center gap-2 text-sm">
             <input type="checkbox" checked={form.accommodation_available} onChange={(e) => set('accommodation_available', e.target.checked)} className="size-4" />

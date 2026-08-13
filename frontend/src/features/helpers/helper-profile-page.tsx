@@ -154,7 +154,7 @@ export function HelperProfilePage() {
                       <div>
                         <div className="font-medium">{e.job_role}</div>
                         <div className="mt-0.5 text-sm text-muted-foreground">
-                          {formatDate(e.start_date)} – {formatDate(e.end_date)}
+                          {formatDate(e.start_date)} to {formatDate(e.end_date)}
                           {e.location && ` · ${e.location}`}
                         </div>
                       </div>
@@ -212,7 +212,7 @@ export function HelperProfilePage() {
             <div>
               <div className="font-semibold">{score.category === 'new' ? 'Building Trust' : trustLabel(category)}</div>
               <div className="mt-1 text-sm text-muted-foreground">
-                {score.category === 'new' ? 'No verified events yet — score builds as verified employment and reviews accumulate.' : `Based on ${helper.verified_jobs_count} verified job${helper.verified_jobs_count === 1 ? '' : 's'} and ${helper.reviews_count} moderated review${helper.reviews_count === 1 ? '' : 's'}.`}
+                {score.category === 'new' ? 'No verified events yet. The score builds as verified employment and reviews accumulate.' : `Based on ${helper.verified_jobs_count} verified job${helper.verified_jobs_count === 1 ? '' : 's'} and ${helper.reviews_count} moderated review${helper.reviews_count === 1 ? '' : 's'}.`}
               </div>
             </div>
             <Dialog>
@@ -229,7 +229,7 @@ export function HelperProfilePage() {
                 <div className="space-y-2 text-sm">
                   {[
                     ['Verified job completion', '+20'],
-                    ['Positive moderated review (4–5 stars)', '+10'],
+                    ['Positive moderated review (4 to 5 stars)', '+10'],
                     ['Long-term employment (12+ months)', '+10'],
                     ['Additional verified employment', '+5'],
                     ['Identity verified (NIN + photo)', '+5'],

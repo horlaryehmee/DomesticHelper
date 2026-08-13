@@ -74,7 +74,7 @@ export function VerifyEmploymentPage() {
           <div className="mb-6 space-y-2 rounded-lg border bg-muted/40 p-4 text-sm">
             <div className="flex justify-between"><span className="text-muted-foreground">Helper</span><span className="font-medium">{info.helper_name}</span></div>
             <div className="flex justify-between"><span className="text-muted-foreground">Role</span><span className="font-medium">{info.job_role}</span></div>
-            <div className="flex justify-between"><span className="text-muted-foreground">Period</span><span className="font-medium">{formatDate(info.start_date)} – {formatDate(info.end_date)}</span></div>
+            <div className="flex justify-between"><span className="text-muted-foreground">Period</span><span className="font-medium">{formatDate(info.start_date)} to {formatDate(info.end_date)}</span></div>
             <div className="flex justify-between items-center"><span className="text-muted-foreground">Status</span><Badge variant={answered ? 'secondary' : 'warning'}>{info.status}</Badge></div>
           </div>
 
@@ -106,7 +106,7 @@ export function VerifyEmploymentPage() {
                     <Input value={jobRole} onChange={(e) => setJobRole(e.target.value)} placeholder={info.job_role} />
                   </div>
                   <div className="space-y-1.5">
-                    <Label>Performance (1–5)</Label>
+                    <Label>Performance (1 to 5)</Label>
                     <Input type="number" min={1} max={5} value={performance} onChange={(e) => setPerformance(e.target.value)} placeholder="e.g. 4" />
                   </div>
                   <div className="space-y-1.5">

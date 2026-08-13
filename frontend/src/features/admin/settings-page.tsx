@@ -50,7 +50,7 @@ export function AdminSettingsPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Settings</h1>
-          <p className="mt-1 text-sm text-muted-foreground">Platform configuration — fees, trust score base, security options.</p>
+          <p className="mt-1 text-sm text-muted-foreground">Platform configuration: fees, trust score base, security options.</p>
         </div>
         <Button onClick={() => save.mutate()} disabled={save.isPending}>
           <SettingsIcon /> Save all settings

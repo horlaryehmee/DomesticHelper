@@ -60,7 +60,7 @@ export function VerificationReportsPage() {
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Verification reports</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Deep-dive reports on shortlisted helpers — {formatNaira(price)} each, generated after verified payment.
+            Deep-dive reports on shortlisted helpers at {formatNaira(price)} each, generated after verified payment.
           </p>
         </div>
         {helperUuid && (

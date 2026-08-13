@@ -113,7 +113,7 @@ export function AdminUsersPage() {
                     {u.employer_profile?.profile_type === 'agency' && <div className="mt-1 text-xs text-muted-foreground">Agency</div>}
                   </TableCell>
                   <TableCell>
-                    <div className="text-sm">{u.email ?? '—'}</div>
+                    <div className="text-sm">{u.email ?? 'N/A'}</div>
                     <div className="text-xs text-muted-foreground">{u.phone ?? ''}</div>
                   </TableCell>
                   <TableCell>

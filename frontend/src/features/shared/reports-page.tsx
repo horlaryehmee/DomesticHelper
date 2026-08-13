@@ -179,7 +179,7 @@ function NewReportDialog({ meta }: { meta?: Meta }) {
         <DialogHeader>
           <DialogTitle>Submit a report</DialogTitle>
           <DialogDescription>
-            Reports document concerns for review. They do not automatically change a helper&apos;s public trust score — our team verifies first, and the helper can respond.
+            Reports document concerns for review. They do not automatically change a helper&apos;s public trust score. Our team verifies first, and the helper can respond.
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-4">

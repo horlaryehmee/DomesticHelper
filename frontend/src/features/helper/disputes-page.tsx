@@ -43,7 +43,7 @@ export function DisputesPage() {
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Disputes &amp; appeals</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Fair process for everyone — dispute anything you believe is incorrect, with evidence.
+            Fair process for everyone. Dispute anything you believe is incorrect, with evidence.
           </p>
         </div>
         <NewDisputeDialog />

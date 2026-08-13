@@ -196,7 +196,7 @@ function ManualAdjustDialog() {
             <Input type="number" value={points} onChange={(e) => setPoints(e.target.value)} />
           </div>
           <div className="space-y-1.5">
-            <Label>Reason (required — recorded in the audit trail)</Label>
+            <Label>Reason (required, recorded in the audit trail)</Label>
             <Input value={note} onChange={(e) => setNote(e.target.value)} />
           </div>
         </div>

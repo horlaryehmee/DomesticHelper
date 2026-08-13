@@ -68,7 +68,7 @@ export function HelperProfileEditPage() {
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Your profile</h1>
-          <p className="mt-1 text-sm text-muted-foreground">Keep it accurate — only verified information appears publicly.</p>
+          <p className="mt-1 text-sm text-muted-foreground">Keep it accurate. Only verified information appears publicly.</p>
         </div>
         <div className="flex items-center gap-2 rounded-lg border bg-card px-4 py-2">
           {isPublic ? <Eye className="size-4 text-success" /> : <EyeOff className="size-4 text-muted-foreground" />}
@@ -82,7 +82,7 @@ export function HelperProfileEditPage() {
       <Card className="gap-5">
         <CardHeader>
           <CardTitle>Basic information</CardTitle>
-          <CardDescription>Your NIN and exact address are private — never shown publicly.</CardDescription>
+          <CardDescription>Your NIN and exact address are private, never shown publicly.</CardDescription>
         </CardHeader>
         <CardContent>
           <form

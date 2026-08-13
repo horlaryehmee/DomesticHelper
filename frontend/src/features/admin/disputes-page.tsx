@@ -40,7 +40,7 @@ export function AdminDisputesPage() {
       <div>
         <h1 className="text-2xl font-bold tracking-tight">Disputes</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Upholding a dispute against a trust score event reverses its impact — helpers are protected from false accusations.
+          Upholding a dispute against a trust score event reverses its impact, so helpers are protected from false accusations.
         </p>
       </div>
 

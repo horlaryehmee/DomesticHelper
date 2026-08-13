@@ -34,7 +34,7 @@ export function AdminAuditLogsPage() {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold tracking-tight">Audit logs</h1>
-        <p className="mt-1 text-sm text-muted-foreground">Every sensitive action — decisions, score changes, payments, suspensions.</p>
+        <p className="mt-1 text-sm text-muted-foreground">Every sensitive action: decisions, score changes, payments, suspensions.</p>
       </div>
 
       <Input placeholder="Filter by action, e.g. report.decided" value={action} onChange={(e) => { setAction(e.target.value); setPage(1) }} className="max-w-sm" />

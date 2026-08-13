@@ -77,7 +77,7 @@ export function HelperVerificationPage() {
                         ) : v?.status === 'pending' ? (
                           <Badge variant="warning">Under review</Badge>
                         ) : v?.status === 'rejected' ? (
-                          <Badge variant="destructive">Rejected — request again</Badge>
+                          <Badge variant="destructive">Rejected. Request again</Badge>
                         ) : (
                           <Badge variant="outline">Not verified</Badge>
                         )}

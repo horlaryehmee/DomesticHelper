@@ -15,7 +15,7 @@ class JobSeeder extends Seeder
     private array $jobs = [
         ['title' => 'Experienced Nanny for Two Children', 'work_type' => 'Nanny', 'city' => 'Lekki', 'state' => 'Lagos', 'min' => 80000, 'max' => 100000, 'live_in' => true],
         ['title' => 'Live-in Housekeeper Needed', 'work_type' => 'Housekeeper', 'city' => 'Victoria Island', 'state' => 'Lagos', 'min' => 70000, 'max' => 90000, 'live_in' => true],
-        ['title' => 'Family Driver (Monday–Saturday)', 'work_type' => 'Driver', 'city' => 'Ikeja', 'state' => 'Lagos', 'min' => 75000, 'max' => 90000, 'live_in' => false],
+        ['title' => 'Family Driver (Monday to Saturday)', 'work_type' => 'Driver', 'city' => 'Ikeja', 'state' => 'Lagos', 'min' => 75000, 'max' => 90000, 'live_in' => false],
         ['title' => 'Professional Cook for Busy Household', 'work_type' => 'Cook', 'city' => 'Ikoyi', 'state' => 'Lagos', 'min' => 100000, 'max' => 130000, 'live_in' => false],
         ['title' => 'Caregiver for Elderly Parent', 'work_type' => 'Caregiver', 'city' => 'Wuse', 'state' => 'FCT Abuja', 'min' => 90000, 'max' => 120000, 'live_in' => true],
         ['title' => 'Trustworthy Cleaner (Weekdays)', 'work_type' => 'Cleaner', 'city' => 'Ajah', 'state' => 'Lagos', 'min' => 50000, 'max' => 65000, 'live_in' => false],
@@ -47,7 +47,7 @@ class JobSeeder extends Seeder
                 'location' => $job['city'],
                 'state' => $job['state'],
                 'city' => $job['city'],
-                'working_hours' => '8am – 5pm, weekdays',
+                'working_hours' => '8am to 5pm, weekdays',
                 'accommodation_available' => $job['live_in'],
                 'employment_type' => $job['live_in'] ? 'live_in' : 'full_time',
                 'start_date' => now()->addDays(random_int(7, 30)),

@@ -3,12 +3,12 @@ export function formatNaira(amount: number): string {
 }
 
 export function formatDate(date: string | null | undefined): string {
-  if (!date) return '—'
+  if (!date) return 'N/A'
   return new Intl.DateTimeFormat('en-NG', { year: 'numeric', month: 'short', day: 'numeric' }).format(new Date(date))
 }
 
 export function formatDateTime(date: string | null | undefined): string {
-  if (!date) return '—'
+  if (!date) return 'N/A'
   return new Intl.DateTimeFormat('en-NG', {
     year: 'numeric',
     month: 'short',
@@ -19,7 +19,7 @@ export function formatDateTime(date: string | null | undefined): string {
 }
 
 export function formatRelative(date: string | null | undefined): string {
-  if (!date) return '—'
+  if (!date) return 'N/A'
   const diff = Date.now() - new Date(date).getTime()
   const mins = Math.floor(diff / 60000)
   if (mins < 1) return 'just now'
@@ -34,7 +34,7 @@ export function formatRelative(date: string | null | undefined): string {
 export function formatSalary(min: number | null, max: number | null): string {
   if (!min && !max) return 'Negotiable'
   if (min && max && min === max) return formatNaira(min)
-  if (min && max) return `${formatNaira(min)} – ${formatNaira(max)}`
+  if (min && max) return `${formatNaira(min)} to ${formatNaira(max)}`
   if (min) return `From ${formatNaira(min)}`
   return `Up to ${formatNaira(max as number)}`
 }

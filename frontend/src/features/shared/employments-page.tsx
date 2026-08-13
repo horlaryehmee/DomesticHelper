@@ -107,7 +107,7 @@ export function EmploymentsPage() {
                       {r.location && ` · ${r.location}`}
                     </div>
                     <div className="mt-1 text-sm text-muted-foreground">
-                      {formatDate(r.start_date)} – {r.end_date ? formatDate(r.end_date) : 'present'}
+                      {formatDate(r.start_date)} to {r.end_date ? formatDate(r.end_date) : 'present'}
                       {r.salary ? ` · ${formatNaira(r.salary)}/mo` : ''}
                     </div>
                     {r.termination_reason && <div className="mt-1 text-xs text-muted-foreground">Reason for leaving: {r.termination_reason}</div>}
@@ -170,7 +170,7 @@ function CompleteDialog({ record, onClose, onSubmit, pending }: {
     <Dialog open onOpenChange={(o) => !o && onClose()}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Complete employment — {record.job_role}</DialogTitle>
+          <DialogTitle>Complete employment: {record.job_role}</DialogTitle>
           <DialogDescription>
             Closing this employment lets it become part of the helper&apos;s verified history once confirmed.
           </DialogDescription>
@@ -185,7 +185,7 @@ function CompleteDialog({ record, onClose, onSubmit, pending }: {
             <Input value={reason} onChange={(e) => setReason(e.target.value)} />
           </div>
           <div className="space-y-1.5">
-            <Label>Performance (1–5)</Label>
+            <Label>Performance (1 to 5)</Label>
             <Input type="number" min={1} max={5} value={rating} onChange={(e) => setRating(e.target.value)} />
           </div>
         </div>
