@@ -12,6 +12,34 @@ import { Spinner } from '@/components/ui/spinner'
 import { useAuth, dashboardPath } from '@/lib/auth'
 import { ApiError } from '@/lib/api'
 
+const staffDemoAccounts = [
+  { email: 'admin@domestichelper.test', label: 'Super admin' },
+  { email: 'verifier@domestichelper.test', label: 'Verification officer' },
+  { email: 'moderator@domestichelper.test', label: 'Moderator' },
+]
+
+const employerDemoAccounts = Array.from({ length: 10 }, (_, index) => ({
+  email: `employer${index + 1}@domestichelper.test`,
+  label: `Employer ${index + 1}`,
+}))
+
+const featuredHelperNames: Record<number, string> = {
+  19: 'Hannah Igwe · trust score 30',
+  31: 'Amina Yusuf · trust score 35',
+  32: 'Daniel Obi · trust score 15',
+  33: 'Blessing Eze · trust score 45',
+  34: 'Musa Abubakar · trust score 40',
+}
+
+const helperDemoAccounts = Array.from({ length: 34 }, (_, index) => {
+  const number = index + 1
+
+  return {
+    email: `helper${number}@domestichelper.test`,
+    label: featuredHelperNames[number] ?? `Helper ${number}`,
+  }
+})
+
 const schema = z.object({
   login: z.string().min(3, 'Enter your email or phone number'),
   password: z.string().min(1, 'Enter your password'),
@@ -29,8 +57,15 @@ export function LoginPage() {
   const {
     register,
     handleSubmit,
+    setValue,
     formState: { errors },
   } = useForm<FormData>({ resolver: zodResolver(schema) })
+
+  const fillDemoCredentials = (email: string) => {
+    setValue('login', email, { shouldDirty: true, shouldValidate: true })
+    setValue('password', 'password', { shouldDirty: true, shouldValidate: true })
+    setServerError(null)
+  }
 
   const onSubmit = async (data: FormData) => {
     setSubmitting(true)
@@ -55,7 +90,7 @@ export function LoginPage() {
 
   return (
     <div className="flex min-h-[80vh] items-center justify-center px-4 py-16">
-      <Card className="w-full max-w-md gap-5">
+      <Card className="w-full max-w-xl gap-5">
         <CardHeader className="items-center text-center">
           <span className="flex size-12 items-center justify-center rounded-xl bg-primary/10">
             <ShieldCheck className="size-6 text-primary" />
@@ -93,6 +128,53 @@ export function LoginPage() {
               Create an account
             </Link>
           </p>
+
+          <div className="mt-6 border-t pt-5">
+            <div className="mb-3 text-center">
+              <p className="text-sm font-semibold">Demo login details</p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Choose any seeded account. The password for every demo account is{' '}
+                <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-foreground">password</code>.
+              </p>
+            </div>
+            <div className="flex flex-col gap-2 sm:flex-row">
+              <select
+                aria-label="Demo account"
+                className="h-10 min-w-0 flex-1 rounded-md border border-input bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                defaultValue="admin@domestichelper.test"
+                id="demo-account"
+              >
+                <optgroup label="Administration">
+                  {staffDemoAccounts.map((account) => (
+                    <option key={account.email} value={account.email}>{account.label} — {account.email}</option>
+                  ))}
+                </optgroup>
+                <optgroup label="Employers">
+                  {employerDemoAccounts.map((account) => (
+                    <option key={account.email} value={account.email}>{account.label} — {account.email}</option>
+                  ))}
+                </optgroup>
+                <optgroup label="Helpers">
+                  {helperDemoAccounts.map((account) => (
+                    <option key={account.email} value={account.email}>{account.label} — {account.email}</option>
+                  ))}
+                </optgroup>
+              </select>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  const select = document.getElementById('demo-account') as HTMLSelectElement | null
+                  if (select) fillDemoCredentials(select.value)
+                }}
+              >
+                Use demo account
+              </Button>
+            </div>
+            <p className="mt-3 text-center text-xs text-muted-foreground">
+              Includes 3 staff accounts, 10 employers, and 34 helpers. Helpers 19 and 31–34 demonstrate low trust scores.
+            </p>
+          </div>
         </CardContent>
       </Card>
     </div>
