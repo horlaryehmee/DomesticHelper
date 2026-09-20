@@ -26,11 +26,6 @@ class CommunityExperienceSeeder extends Seeder
                 'description' => 'An Instagram reel shared as part of the community experience library. Watch the original source for the complete account and context.',
             ],
             [
-                'url' => 'https://www.instagram.com/reel/DaKTeeDsVjY/?igsh=MTk5aHk3eGo3YWt0bA==',
-                'title' => 'Community-sourced experience',
-                'description' => 'An Instagram reel shared as part of the community experience library. Watch the original source for the complete account and context.',
-            ],
-            [
                 'url' => 'https://www.instagram.com/p/DaDI3AgDQXU/?img_index=1&igsh=MTJ0b25rdXdrZHpxZQ==',
                 'title' => 'Community-sourced Instagram post',
                 'description' => 'An Instagram post shared as part of the community experience library. Open the original source to see the complete post and context.',
@@ -54,7 +49,7 @@ class CommunityExperienceSeeder extends Seeder
         }
 
         CommunityExperience::query()
-            ->where('source_url', 'like', '%/reel/DaKTeeDsVjY/%')
-            ->update(['title' => 'Instagram slides – DaKTeeDsVjY']);
+            ->where('source_url', 'like', '%DaKTeeDsVjY%')
+            ->delete();
     }
 }
