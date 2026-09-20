@@ -38,10 +38,10 @@ cp -R "$DIST/." "$PUBLIC/"
 # 2. Storage symlink (idempotent) for public profile images.
 php "$ROOT/backend/artisan" storage:link >/dev/null 2>&1 || true
 
-# 3. Migrations are run by the caller (needs --force) — but guard here:
-if [ "${RUN_MIGRATIONS:-0}" = "1" ]; then
-  php "$ROOT/backend/artisan" migrate --force
-fi
+# 3. Apply database changes before seeders or cache warming. Laravel only
+#    runs migrations that have not already run, so this stays idempotent.
+echo ">> Running database migrations"
+php "$ROOT/backend/artisan" migrate --force
 
 # The platform-owned Community Stories sources are idempotent and must exist
 # even when a production database was created before the feature was added.
