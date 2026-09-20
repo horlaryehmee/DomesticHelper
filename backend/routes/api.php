@@ -10,6 +10,7 @@ use App\Http\Controllers\Api\Admin\AdminSettingController;
 use App\Http\Controllers\Api\Admin\AdminTrustScoreController;
 use App\Http\Controllers\Api\Admin\AdminUserController;
 use App\Http\Controllers\Api\Admin\AdminVerificationController;
+use App\Http\Controllers\Api\Admin\AdminCommunityExperienceController;
 use App\Http\Controllers\Api\Auth\AuthController;
 use App\Http\Controllers\Api\Auth\OtpController;
 use App\Http\Controllers\Api\Auth\PasswordResetController;
@@ -31,6 +32,7 @@ use App\Http\Controllers\Api\ReportController;
 use App\Http\Controllers\Api\ReviewController;
 use App\Http\Controllers\Api\SavedHelperController;
 use App\Http\Controllers\Api\VerificationReportController;
+use App\Http\Controllers\Api\CommunityExperienceController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -62,6 +64,10 @@ Route::get('/helpers/{helper}/employment', [HelperController::class, 'employment
 // Jobs
 Route::get('/jobs', [App\Http\Controllers\Api\JobController::class, 'index']);
 Route::get('/jobs/{job}', [App\Http\Controllers\Api\JobController::class, 'show'])->whereUuid('job');
+
+// Moderated stories and sourced safety videos from the wider community.
+Route::get('/community-experiences', [CommunityExperienceController::class, 'index']);
+Route::post('/community-experiences', [CommunityExperienceController::class, 'store'])->middleware('throttle:5,60');
 
 // Evidence downloads — authenticated + authorized, private disk
 Route::get('/evidence/{evidence}/download', [App\Http\Controllers\Api\EvidenceController::class, 'download'])
@@ -212,6 +218,8 @@ Route::middleware('auth:sanctum')->group(function () {
     |--------------------------------------------------------------------------
     */
     Route::prefix('admin')->middleware('admin')->group(function () {
+        Route::get('/community-experiences', [AdminCommunityExperienceController::class, 'index']);
+        Route::post('/community-experiences/{communityExperience}/moderate', [AdminCommunityExperienceController::class, 'moderate']);
         Route::get('/users', [AdminUserController::class, 'index']);
         Route::get('/users/{user}', [AdminUserController::class, 'show'])->whereUuid('user');
         Route::patch('/users/{user}/status', [AdminUserController::class, 'suspend'])->whereUuid('user');

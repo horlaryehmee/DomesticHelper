@@ -17,6 +17,7 @@ import { cn } from '@/lib/utils'
 const links = [
   { to: '/search', label: 'Find Helpers' },
   { to: '/jobs', label: 'Jobs' },
+  { to: '/community', label: 'Community Stories' },
 ]
 
 export function PublicLayout() {
@@ -156,6 +157,7 @@ export function PublicLayout() {
             <ul className="mt-3 space-y-2 text-sm text-muted-foreground">
               <li><Link to="/search" className="hover:text-foreground">Find Helpers</Link></li>
               <li><Link to="/jobs" className="hover:text-foreground">Browse Jobs</Link></li>
+              <li><Link to="/community" className="hover:text-foreground">Community Stories</Link></li>
               <li><Link to="/register" className="hover:text-foreground">Create Profile</Link></li>
               <li><Link to="/login" className="hover:text-foreground">Log in</Link></li>
             </ul>

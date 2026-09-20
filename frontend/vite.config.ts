@@ -22,6 +22,10 @@ export default defineConfig({
         target: 'http://127.0.0.1:8010',
         changeOrigin: true,
       },
+      '/community-media': {
+        target: 'http://127.0.0.1:8010',
+        changeOrigin: true,
+      },
     },
   },
   build: {

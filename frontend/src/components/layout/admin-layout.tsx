@@ -3,6 +3,7 @@ import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom'
 import {
   ShieldCheck, LayoutDashboard, Users, UserCheck, FileText, Star, ClipboardCheck,
   Briefcase, CreditCard, Gauge, ScrollText, Settings, LogOut, Menu,
+  MessagesSquare,
 } from 'lucide-react'
 import { useAuth } from '@/lib/auth'
 import { cn } from '@/lib/utils'
@@ -12,6 +13,7 @@ const nav = [
   { to: '/admin/users', label: 'Users', icon: Users },
   { to: '/admin/verifications', label: 'Verifications', icon: UserCheck },
   { to: '/admin/reports', label: 'Reports', icon: FileText },
+  { to: '/admin/community-experiences', label: 'Community Stories', icon: MessagesSquare },
   { to: '/admin/reviews', label: 'Reviews', icon: Star },
   { to: '/admin/disputes', label: 'Disputes', icon: ClipboardCheck },
   { to: '/admin/jobs', label: 'Jobs', icon: Briefcase },

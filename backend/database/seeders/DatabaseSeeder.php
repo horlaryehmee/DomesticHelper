@@ -18,6 +18,7 @@ class DatabaseSeeder extends Seeder
             JobSeeder::class,
             ReportAndDisputeSeeder::class,
             LowScoreHelperSeeder::class,
+            CommunityExperienceSeeder::class,
         ]);
     }
 }

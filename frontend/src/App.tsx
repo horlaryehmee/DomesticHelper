@@ -18,6 +18,7 @@ import { ForgotPasswordPage } from './features/auth/forgot-password-page'
 import { NotFoundPage } from './features/misc/not-found-page'
 import { VerifyEmploymentPage } from './features/misc/verify-employment-page'
 import { PaymentCallbackPage } from './features/payments/payment-callback-page'
+import { CommunityExperiencesPage } from './features/community/community-experiences-page'
 
 import { EmployerDashboardPage } from './features/employer/dashboard-page'
 import { EmployerProfilePage } from './features/employer/profile-page'
@@ -51,6 +52,7 @@ import { AdminPaymentsPage } from './features/admin/payments-page'
 import { AdminTrustScorePage } from './features/admin/trust-score-page'
 import { AdminAuditLogsPage } from './features/admin/audit-logs-page'
 import { AdminSettingsPage } from './features/admin/settings-page'
+import { AdminCommunityExperiencesPage } from './features/admin/community-experiences-page'
 
 function Protected({ children, types }: { children: ReactNode; types?: string[] }) {
   const { user, loading } = useAuth()
@@ -69,6 +71,7 @@ export default function App() {
         <Route path="/helpers/:uuid" element={<HelperProfilePage />} />
         <Route path="/jobs" element={<JobsPage />} />
         <Route path="/jobs/:uuid" element={<JobDetailPage />} />
+        <Route path="/community" element={<CommunityExperiencesPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
@@ -135,6 +138,7 @@ export default function App() {
         <Route path="/admin/users" element={<AdminUsersPage />} />
         <Route path="/admin/verifications" element={<AdminVerificationsPage />} />
         <Route path="/admin/reports" element={<AdminReportsPage />} />
+        <Route path="/admin/community-experiences" element={<AdminCommunityExperiencesPage />} />
         <Route path="/admin/reviews" element={<AdminReviewsPage />} />
         <Route path="/admin/disputes" element={<AdminDisputesPage />} />
         <Route path="/admin/jobs" element={<AdminJobsPage />} />
