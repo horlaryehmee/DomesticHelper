@@ -30,7 +30,11 @@ class EmploymentRecordResource extends JsonResource
                 'uuid' => $this->helper->uuid,
                 'name' => $this->helper->full_name,
             ]),
-            'review' => $this->whenLoaded('review', fn () => new ReviewResource($this->review)),
+            'review' => $this->whenLoaded('reviews', function () use ($request) {
+                $direction = $request->user()?->isEmployer() ? 'employer_to_helper' : 'helper_to_employer';
+                $review = $this->reviews->firstWhere('direction', $direction);
+                return $review ? new ReviewResource($review) : null;
+            }),
             'created_at' => $this->created_at?->toIso8601String(),
         ];
     }

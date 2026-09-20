@@ -15,7 +15,7 @@ class Review extends Model
     use RoutesByUuid;
 
     protected $fillable = [
-        'uuid', 'helper_id', 'employer_id', 'employment_record_id',
+        'uuid', 'helper_id', 'employer_id', 'employment_record_id', 'direction',
         'rating', 'work_type', 'duration_worked', 'feedback', 'status',
         'moderated_by', 'moderated_at', 'moderation_note',
     ];

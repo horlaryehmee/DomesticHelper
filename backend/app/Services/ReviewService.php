@@ -19,16 +19,17 @@ class ReviewService
      * Submit a review tied to a real employment record. Validation of the
      * employment relationship happens in ReviewPolicy before this runs.
      */
-    public function create(User $employer, User $helper, EmploymentRecord $record, array $data): Review
+    public function create(User $reviewer, EmploymentRecord $record, array $data): Review
     {
-        abort_unless($record->employer_id === $employer->id, 403);
-        abort_unless($record->helper_id === $helper->id, 403);
-        abort_if(Review::query()->where('employment_record_id', $record->id)->exists(), 422, 'A review has already been submitted for this employment.');
+        abort_unless(in_array($reviewer->id, [$record->employer_id, $record->helper_id], true), 403);
+        $direction = $reviewer->id === $record->employer_id ? 'employer_to_helper' : 'helper_to_employer';
+        abort_if(Review::query()->where('employment_record_id', $record->id)->where('direction', $direction)->exists(), 422, 'You have already reviewed this employment.');
 
         $review = Review::create([
-            'helper_id' => $helper->id,
-            'employer_id' => $employer->id,
+            'helper_id' => $record->helper_id,
+            'employer_id' => $record->employer_id,
             'employment_record_id' => $record->id,
+            'direction' => $direction,
             'rating' => $data['rating'],
             'work_type' => $data['work_type'] ?? null,
             'duration_worked' => $data['duration_worked'] ?? null,
@@ -54,7 +55,7 @@ class ReviewService
             'moderation_note' => $note,
         ])->save();
 
-        if ($status === ReviewStatus::Approved && $review->rating >= 4) {
+        if ($status === ReviewStatus::Approved && $review->rating >= 4 && $review->direction === 'employer_to_helper') {
             $already = $review->helper->trustScoreEvents()
                 ->where('event_type', 'positive_review')
                 ->where('source_type', Review::class)

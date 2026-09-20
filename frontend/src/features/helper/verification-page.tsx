@@ -29,11 +29,11 @@ export function HelperVerificationPage() {
 
   const { data, isLoading } = useQuery({
     queryKey: ['my-verifications'],
-    queryFn: () => api.get<{ data: Verification[] }>('/helpers/me/verifications'),
+    queryFn: () => api.get<{ data: Verification[] }>('/me/verifications'),
   })
 
   const request = useMutation({
-    mutationFn: (type: string) => api.post(`/helpers/me/verifications/${type}`),
+    mutationFn: (type: string) => api.post(`/me/verifications/${type}`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['my-verifications'] })
       toast.success('Verification request submitted. Our team will review it.')
@@ -47,9 +47,9 @@ export function HelperVerificationPage() {
   return (
     <div className="mx-auto max-w-3xl space-y-6">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight">Verification</h1>
+        <h1 className="text-2xl font-bold tracking-tight">{user?.user_type === 'employer' ? 'Employer verification' : 'Helper verification'}</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Each badge on your public profile reflects a verification that actually happened.
+          Every badge is awarded only after the underlying information has been checked and approved.
         </p>
       </div>
 

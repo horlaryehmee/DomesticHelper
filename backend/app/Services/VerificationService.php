@@ -18,10 +18,6 @@ class VerificationService
      */
     public function badgesFor(User $helper): array
     {
-        if (! $helper->isHelper()) {
-            return [];
-        }
-
         $badges = [];
         if ($helper->phone_verified_at) {
             $badges[] = 'phone_verified';
@@ -49,12 +45,13 @@ class VerificationService
             $badges[] = 'identity_verified';
         }
 
-        $profile = $helper->helperProfile;
+        $profile = $helper->isHelper() ? $helper->helperProfile : $helper->employerProfile;
         if ($profile?->profile_completed && ($verifications->has('photo') || $verifications->has('nin'))) {
             $badges[] = 'profile_verified';
         }
 
-        $hasVerifiedEmployment = $helper->employmentRecordsAsHelper()
+        $employmentRelation = $helper->isHelper() ? $helper->employmentRecordsAsHelper() : $helper->employmentRecordsAsEmployer();
+        $hasVerifiedEmployment = $employmentRelation
             ->where('verification_status', 'verified')
             ->exists();
         if ($hasVerifiedEmployment) {

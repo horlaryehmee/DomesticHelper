@@ -11,15 +11,10 @@ class ReviewPolicy
      * A review may only exist on top of a real employment relationship,
      * and only for employment that has actually ended (or is active).
      */
-    public function create(User $user, User $helper, $employmentRecord): bool
+    public function create(User $user, $employmentRecord): bool
     {
-        if (! $user->isEmployer()) {
-            return false;
-        }
-
         return $employmentRecord !== null
-            && (int) $employmentRecord->employer_id === $user->id
-            && (int) $employmentRecord->helper_id === $helper->id
+            && in_array($user->id, [(int) $employmentRecord->employer_id, (int) $employmentRecord->helper_id], true)
             && in_array($employmentRecord->status->value, ['completed', 'terminated', 'active'], true);
     }
 

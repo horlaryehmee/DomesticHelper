@@ -13,6 +13,7 @@ class ReviewResource extends JsonResource
         return [
             'uuid' => $this->uuid,
             'rating' => $this->rating,
+            'direction' => $this->direction ?? 'employer_to_helper',
             'work_type' => $this->work_type,
             'duration_worked' => $this->duration_worked,
             'feedback' => $this->feedback,

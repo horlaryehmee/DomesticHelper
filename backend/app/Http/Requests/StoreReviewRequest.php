@@ -14,7 +14,7 @@ class StoreReviewRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'helper_uuid' => ['required', 'string', 'exists:users,uuid'],
+            'helper_uuid' => ['nullable', 'string', 'exists:users,uuid'],
             'employment_record_uuid' => ['required', 'string', 'exists:employment_records,uuid'],
             'rating' => ['required', 'integer', 'between:1,5'],
             'work_type' => ['nullable', 'string', 'max:120'],

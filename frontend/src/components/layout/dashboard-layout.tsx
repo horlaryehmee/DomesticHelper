@@ -21,6 +21,7 @@ export function DashboardLayout() {
       ? [
           { to: `${base}/saved-helpers`, label: 'Saved Helpers', icon: Heart },
           { to: `${base}/verification-reports`, label: 'Verification Reports', icon: ClipboardCheck },
+          { to: `${base}/verification`, label: 'My Verification', icon: ShieldCheck },
         ]
       : [
           { to: `${base}/verification`, label: 'Verification', icon: ShieldCheck },

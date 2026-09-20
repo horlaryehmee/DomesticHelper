@@ -124,12 +124,12 @@ export function EmploymentsPage() {
                         Request verification
                       </Button>
                     )}
-                    {isEmployer && r.status !== 'active' && !r.review && (
+                    {r.status !== 'active' && !r.review && (
                       <Dialog>
                         <DialogTrigger asChild>
                           <Button size="sm">Leave a review</Button>
                         </DialogTrigger>
-                        <ReviewDialog record={r} />
+                        <ReviewDialog record={r} isEmployer={isEmployer} />
                       </Dialog>
                     )}
                   </div>
@@ -200,7 +200,7 @@ function CompleteDialog({ record, onClose, onSubmit, pending }: {
   )
 }
 
-function ReviewDialog({ record }: { record: EmploymentRecord }) {
+function ReviewDialog({ record, isEmployer }: { record: EmploymentRecord; isEmployer: boolean }) {
   const queryClient = useQueryClient()
   const [rating, setRating] = useState(5)
   const [feedback, setFeedback] = useState('')
@@ -224,7 +224,7 @@ function ReviewDialog({ record }: { record: EmploymentRecord }) {
   return (
     <DialogContent>
       <DialogHeader>
-        <DialogTitle>Review {record.helper.name}</DialogTitle>
+        <DialogTitle>Review {isEmployer ? record.helper.name : record.employer.name}</DialogTitle>
         <DialogDescription>
           Only reviews tied to real employment are accepted, and every review is moderated before it appears publicly.
         </DialogDescription>
@@ -243,7 +243,7 @@ function ReviewDialog({ record }: { record: EmploymentRecord }) {
             className="flex min-h-24 w-full rounded-md border bg-transparent px-3 py-2 text-sm shadow-xs outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
             value={feedback}
             onChange={(e) => setFeedback(e.target.value)}
-            placeholder="How was your experience with this helper?"
+            placeholder={`How was your experience with this ${isEmployer ? 'helper' : 'employer'}?`}
           />
         </div>
       </div>

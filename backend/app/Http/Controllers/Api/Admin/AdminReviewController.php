@@ -45,12 +45,14 @@ class AdminReviewController extends Controller
 
         $reviews->moderate($review, ReviewStatus::from($data['status']), $request->user(), $data['note'] ?? null);
 
-        $notifications->send($review->employer, new PlatformNotification(
+        $reviewer = $review->direction === 'helper_to_employer' ? $review->helper : $review->employer;
+        $reviewee = $review->direction === 'helper_to_employer' ? $review->employer : $review->helper;
+        $notifications->send($reviewer, new PlatformNotification(
             type: 'review_moderated',
             title: 'Review moderation',
             body: "Your review has been ".ReviewStatus::from($data['status'])->label().'.',
         ));
-        $notifications->send($review->helper, new PlatformNotification(
+        $notifications->send($reviewee, new PlatformNotification(
             type: 'review_moderated',
             title: 'Review moderation',
             body: "A review about you has been ".ReviewStatus::from($data['status'])->label().'.',

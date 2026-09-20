@@ -33,6 +33,7 @@ use App\Http\Controllers\Api\ReviewController;
 use App\Http\Controllers\Api\SavedHelperController;
 use App\Http\Controllers\Api\VerificationReportController;
 use App\Http\Controllers\Api\CommunityExperienceController;
+use App\Http\Controllers\Api\AccountVerificationController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -206,6 +207,9 @@ Route::middleware('auth:sanctum')->group(function () {
     });
 
     // Shared participant views (reviews & reports)
+    Route::get('/me/verifications', [AccountVerificationController::class, 'index']);
+    Route::post('/me/verifications/{type}', [AccountVerificationController::class, 'store'])
+        ->whereIn('type', ['photo', 'nin', 'address']);
     Route::get('/reviews', [ReviewController::class, 'index']);
     Route::get('/reviews/{review}', [ReviewController::class, 'show'])->whereUuid('review');
     Route::post('/reviews/{review}/respond', [ReviewController::class, 'respond'])->whereUuid('review');

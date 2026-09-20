@@ -22,6 +22,7 @@ interface Review {
   duration_worked: string | null
   feedback: string
   status: string
+  direction: 'employer_to_helper' | 'helper_to_employer'
   employment: { uuid: string; job_role: string; start_date: string | null; end_date: string | null } | null
   employer: { uuid: string; name: string }
   helper: { uuid: string; name: string }
@@ -60,7 +61,7 @@ export function ReviewsPage() {
       <div>
         <h1 className="text-2xl font-bold tracking-tight">Reviews</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          {isEmployer ? 'Reviews you have written. They appear publicly after moderation.' : 'Reviews from verified employers about your work.'}
+          Mutual reviews from verified employment relationships. Every review is checked before publication or score impact.
         </p>
       </div>
 
@@ -82,7 +83,7 @@ export function ReviewsPage() {
                       </Badge>
                     </div>
                     <div className="mt-1 text-sm text-muted-foreground">
-                      {isEmployer ? `About ${r.helper.name}` : `From ${r.employer.name}`}
+                      {r.direction === 'employer_to_helper' ? `Employer review of ${r.helper.name}` : `Helper review of ${r.employer.name}`}
                       {r.employment?.job_role ? ` · ${r.employment.job_role}` : ''} · {formatDate(r.created_at)}
                     </div>
                     <p className="mt-2 text-sm leading-relaxed">{r.feedback}</p>
@@ -93,7 +94,7 @@ export function ReviewsPage() {
                       </div>
                     ))}
                   </div>
-                  {!isEmployer && (
+                  {((isEmployer && r.direction === 'helper_to_employer') || (!isEmployer && r.direction === 'employer_to_helper')) && (
                     <Dialog open={!!replyTarget && replyTarget.uuid === r.uuid} onOpenChange={(o) => !o && setReplyTarget(null)}>
                       <DialogTrigger asChild>
                         <Button size="sm" variant="outline" onClick={() => setReplyTarget(r)}>Reply</Button>

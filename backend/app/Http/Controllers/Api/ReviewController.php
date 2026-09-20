@@ -44,17 +44,18 @@ class ReviewController extends Controller
      */
     public function store(StoreReviewRequest $request, ReviewService $reviews, NotificationService $notifications): JsonResponse
     {
-        $helper = User::where('uuid', $request->input('helper_uuid'))->firstOrFail();
         $record = EmploymentRecord::where('uuid', $request->input('employment_record_uuid'))->firstOrFail();
 
-        $this->authorize('create', [Review::class, $helper, $record]);
+        $this->authorize('create', [Review::class, $record]);
 
-        $review = $reviews->create($request->user(), $helper, $record, $request->validated());
+        $review = $reviews->create($request->user(), $record, $request->validated());
 
-        $notifications->send($helper, new PlatformNotification(
+        $recipient = $request->user()->id === $record->employer_id ? $record->helper : $record->employer;
+
+        $notifications->send($recipient, new PlatformNotification(
             type: 'review_received',
             title: 'New review received',
-            body: 'An employer has submitted a review of your work. It will appear publicly after moderation.',
+            body: 'The other party in a verified employment has submitted a review. It will appear after moderation.',
         ));
 
         return response()->json(['data' => new ReviewResource($review->load(['helper', 'employer', 'employmentRecord']))], 201);

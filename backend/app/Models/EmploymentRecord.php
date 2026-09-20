@@ -70,6 +70,11 @@ class EmploymentRecord extends Model
         return $this->hasOne(Review::class);
     }
 
+    public function reviews(): HasMany
+    {
+        return $this->hasMany(Review::class);
+    }
+
     public function evidence(): MorphMany
     {
         return $this->morphMany(Evidence::class, 'evidenceable');

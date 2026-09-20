@@ -36,6 +36,16 @@ class TrustScoreService
         ?string $note = null,
         ?User $createdBy = null,
     ): TrustScoreEvent {
+        if ($source instanceof \App\Models\Review) {
+            abort_unless($source->status?->value === 'approved', 422, 'A review must be approved before it can affect a trust score.');
+        }
+        if ($source instanceof \App\Models\Report) {
+            abort_unless(in_array($source->outcome?->value, ['verified', 'partially_verified'], true), 422, 'A report must be verified before it can affect a trust score.');
+        }
+        if ($source instanceof \App\Models\EmploymentRecord) {
+            abort_unless($source->verification_status?->value === 'verified', 422, 'Employment must be verified before it can affect a trust score.');
+        }
+
         return DB::transaction(function () use ($helper, $eventType, $points, $source, $note, $createdBy) {
             $rule = null;
 

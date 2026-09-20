@@ -91,6 +91,7 @@ export default function App() {
       >
         <Route path="/employer" element={<EmployerDashboardPage />} />
         <Route path="/employer/profile" element={<EmployerProfilePage />} />
+        <Route path="/employer/verification" element={<HelperVerificationPage />} />
         <Route path="/employer/saved-helpers" element={<SavedHelpersPage />} />
         <Route path="/employer/jobs" element={<EmployerJobsPage />} />
         <Route path="/employer/applications" element={<EmployerApplicationsPage />} />

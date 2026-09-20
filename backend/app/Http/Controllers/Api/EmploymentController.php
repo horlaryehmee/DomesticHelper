@@ -26,7 +26,7 @@ class EmploymentController extends Controller
 
         $query = EmploymentRecord::query()
             ->where(fn ($q) => $q->where('employer_id', $user->id)->orWhere('helper_id', $user->id))
-            ->with(['employer', 'helper', 'review'])
+            ->with(['employer', 'helper', 'reviews'])
             ->latest();
 
         $records = $query->paginate(12);
@@ -46,7 +46,7 @@ class EmploymentController extends Controller
     {
         $this->authorize('view', $record);
 
-        return response()->json(['data' => new EmploymentRecordResource($record->load(['employer', 'helper', 'review']))]);
+        return response()->json(['data' => new EmploymentRecordResource($record->load(['employer', 'helper', 'reviews']))]);
     }
 
     /** Employer confirms a hire → active employment record. */
