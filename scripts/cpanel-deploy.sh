@@ -43,6 +43,10 @@ if [ "${RUN_MIGRATIONS:-0}" = "1" ]; then
   php "$ROOT/backend/artisan" migrate --force
 fi
 
+# The platform-owned Community Stories sources are idempotent and must exist
+# even when a production database was created before the feature was added.
+php "$ROOT/backend/artisan" db:seed --class=CommunityExperienceSeeder --force
+
 # 4. Cache clear + warm.
 #    IMPORTANT: config/route caching bakes APP_ENV in — never do it in a dev
 #    environment (it poisons `php artisan test` and local .env changes).
