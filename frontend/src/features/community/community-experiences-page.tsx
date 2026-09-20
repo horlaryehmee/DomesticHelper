@@ -55,7 +55,7 @@ export function CommunityExperiencesPage() {
   })
   const update = (key: keyof typeof form, value: string) => setForm((current) => ({ ...current, [key]: value }))
   const onSubmit = (event: FormEvent) => { event.preventDefault(); submit.mutate() }
-  const visibleItems = (data?.data ?? []).filter((item) => item.content_type !== 'video' || item.media_url || item.slides?.length)
+  const visibleItems = data?.data ?? []
 
   return (
     <div className="min-h-screen bg-muted/30">
@@ -107,7 +107,7 @@ export function CommunityExperiencesPage() {
                 <video src={item.media_url} poster={item.poster_url ?? undefined} title={item.title} className="block max-h-[78vh] w-full bg-black object-contain" controls playsInline preload="none" />
                 {item.source_url && <div className="flex justify-end px-3 py-2"><Button asChild variant="ghost" size="sm" className="h-8 px-2 text-xs"><a href={item.source_url} target="_blank" rel="noopener noreferrer">View source <ExternalLink /></a></Button></div>}
               </div>
-              return <Card key={item.uuid} className="mx-3 gap-0 py-0 sm:mx-0"><CardContent className="px-4 py-4"><div className="flex items-start gap-3"><AlertTriangle className="mt-0.5 size-4 shrink-0 text-destructive"/><div><p className="text-sm font-semibold">{item.title}</p><p className="mt-1 text-sm leading-5 text-muted-foreground">{item.description}</p>{item.source_url&&<a href={item.source_url} target="_blank" rel="noreferrer" className="mt-2 inline-flex items-center gap-1 text-xs font-medium text-primary">View source <ExternalLink className="size-3"/></a>}</div></div></CardContent></Card>
+              return <Card key={item.uuid} className="mx-3 gap-0 py-0 sm:mx-0"><CardContent className="px-4 py-4"><div className="flex items-start gap-3"><AlertTriangle className="mt-0.5 size-4 shrink-0 text-destructive"/><div className="min-w-0 flex-1"><p className="text-sm font-semibold">{item.title}</p><p className="mt-1 text-sm leading-5 text-muted-foreground">{item.content_type === 'video' ? 'The Instagram source is approved. Its slide images are awaiting upload.' : item.description}</p>{item.source_url&&<a href={item.source_url} target="_blank" rel="noreferrer" className="mt-3 inline-flex items-center gap-1 text-xs font-medium text-primary">View source <ExternalLink className="size-3"/></a>}</div></div></CardContent></Card>
             })}
             {!visibleItems.length && <p className="mx-3 rounded-lg border border-dashed bg-background py-14 text-center text-sm text-muted-foreground sm:mx-0">No approved entries in this category yet.</p>}
           </div>
