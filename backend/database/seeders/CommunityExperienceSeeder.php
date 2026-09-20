@@ -52,5 +52,9 @@ class CommunityExperienceSeeder extends Seeder
                 ],
             );
         }
+
+        CommunityExperience::query()
+            ->where('source_url', 'like', '%/reel/DaKTeeDsVjY/%')
+            ->update(['title' => 'Instagram slides – DaKTeeDsVjY']);
     }
 }

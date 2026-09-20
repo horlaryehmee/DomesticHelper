@@ -14,10 +14,10 @@ import { Skeleton } from '@/components/ui/skeleton'
 interface Item { uuid:string; content_type:string; title:string; description:string; category:string; subject_name:string|null; source_url:string|null; status:string; verification_level:string; submitter_name:string; submitter_email:string; submitter_phone:string|null; moderation_note:string|null; created_at:string; slides:{id:number;url:string}[] }
 
 export function AdminCommunityExperiencesPage() {
-  const [status, setStatus] = useState('pending')
-  const { data, isLoading } = useQuery({ queryKey:['admin-community-experiences', status], queryFn:()=>api.get<{data:Item[]}>('/admin/community-experiences',{status}) })
+  const [status, setStatus] = useState('all')
+  const { data, isLoading } = useQuery({ queryKey:['admin-community-experiences', status], queryFn:()=>api.get<{data:Item[]}>('/admin/community-experiences',{status:status==='all'?undefined:status}) })
   return <div className="space-y-6"><div><h1 className="text-2xl font-bold tracking-tight">Community experiences</h1><p className="mt-1 text-sm text-muted-foreground">Review off-platform accounts and sourced videos before they appear publicly.</p></div>
-    <div className="flex gap-2">{['pending','published','rejected','removed'].map((s)=><Button key={s} size="sm" variant={status===s?'default':'outline'} onClick={()=>setStatus(s)}>{s}</Button>)}</div>
+    <div className="flex gap-2 overflow-x-auto">{['all','pending','published','rejected','removed'].map((s)=><Button key={s} size="sm" variant={status===s?'default':'outline'} onClick={()=>setStatus(s)}>{s}</Button>)}</div>
     {isLoading ? [1,2].map((i)=><Skeleton key={i} className="h-44" />) : <div className="space-y-4">{(data?.data??[]).map((item)=><ModerationCard key={item.uuid} item={item}/>) }{!data?.data.length&&<p className="rounded-lg border border-dashed py-12 text-center text-sm text-muted-foreground">No submissions in this state.</p>}</div>}
   </div>
 }
