@@ -12,6 +12,7 @@ class CommunityExperienceResource extends JsonResource
         $isAdmin = $request->user()?->isAdmin() ?? false;
         preg_match('~instagram\.com/(?:reel|p)/([^/?#]+)~i', (string) $this->source_url, $sourceMatch);
         $mediaFile = isset($sourceMatch[1]) ? public_path('community-media/'.$sourceMatch[1].'.mp4') : null;
+        $posterFile = isset($sourceMatch[1]) ? public_path('community-media/'.$sourceMatch[1].'.jpg') : null;
 
         return [
             'uuid' => $this->uuid,
@@ -24,6 +25,7 @@ class CommunityExperienceResource extends JsonResource
             'incident_date' => $this->incident_date?->toDateString(),
             'source_url' => $this->source_url,
             'media_url' => $mediaFile && is_file($mediaFile) ? '/community-media/'.$sourceMatch[1].'.mp4' : null,
+            'poster_url' => $posterFile && is_file($posterFile) ? '/community-media/'.$sourceMatch[1].'.jpg' : null,
             'status' => $this->when($isAdmin, $this->status),
             'verification_level' => $this->verification_level,
             'submitter_name' => $this->when($isAdmin, $this->submitter_name),

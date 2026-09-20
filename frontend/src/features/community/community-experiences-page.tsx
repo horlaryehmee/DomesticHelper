@@ -23,6 +23,7 @@ interface CommunityExperience {
   incident_date: string | null
   source_url: string | null
   media_url: string | null
+  poster_url: string | null
   verification_level: 'submitted' | 'source_linked' | 'evidence_reviewed'
   published_at: string
 }
@@ -101,7 +102,7 @@ export function CommunityExperiencesPage() {
           <div className="space-y-3">
             {visibleItems.map((item) => {
               if (item.content_type === 'video' && item.media_url) return <div key={item.uuid} className="mx-auto w-full max-w-[405px] overflow-hidden bg-background sm:rounded-xl sm:border">
-                <video src={item.media_url} title={item.title} className="block max-h-[78vh] w-full bg-black object-contain" controls playsInline preload="metadata" />
+                <video src={item.media_url} poster={item.poster_url ?? undefined} title={item.title} className="block max-h-[78vh] w-full bg-black object-contain" controls playsInline preload="none" />
                 {item.source_url && <div className="flex justify-end px-3 py-2"><Button asChild variant="ghost" size="sm" className="h-8 px-2 text-xs"><a href={item.source_url} target="_blank" rel="noopener noreferrer">View source <ExternalLink /></a></Button></div>}
               </div>
               return <Card key={item.uuid} className="mx-3 gap-0 py-0 sm:mx-0"><CardContent className="px-4 py-4"><div className="flex items-start gap-3"><AlertTriangle className="mt-0.5 size-4 shrink-0 text-destructive"/><div><p className="text-sm font-semibold">{item.title}</p><p className="mt-1 text-sm leading-5 text-muted-foreground">{item.description}</p>{item.source_url&&<a href={item.source_url} target="_blank" rel="noreferrer" className="mt-2 inline-flex items-center gap-1 text-xs font-medium text-primary">View source <ExternalLink className="size-3"/></a>}</div></div></CardContent></Card>
