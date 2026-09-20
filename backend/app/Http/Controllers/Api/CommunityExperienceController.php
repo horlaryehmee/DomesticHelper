@@ -16,6 +16,7 @@ class CommunityExperienceController extends Controller
     {
         $items = CommunityExperience::query()
             ->where('status', 'published')
+            ->with('media')
             ->when($request->input('type'), fn ($q, $type) => $q->where('content_type', $type))
             ->orderByDesc('published_at')
             ->paginate(12);

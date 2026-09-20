@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Models\Concerns\RoutesByUuid;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Str;
 
 class CommunityExperience extends Model
@@ -35,5 +36,10 @@ class CommunityExperience extends Model
     public function moderator(): BelongsTo
     {
         return $this->belongsTo(User::class, 'moderated_by');
+    }
+
+    public function media(): HasMany
+    {
+        return $this->hasMany(CommunityExperienceMedia::class)->orderBy('position');
     }
 }

@@ -220,6 +220,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::prefix('admin')->middleware('admin')->group(function () {
         Route::get('/community-experiences', [AdminCommunityExperienceController::class, 'index']);
         Route::post('/community-experiences/{communityExperience}/moderate', [AdminCommunityExperienceController::class, 'moderate']);
+        Route::post('/community-experiences/{communityExperience}/media', [AdminCommunityExperienceController::class, 'uploadMedia']);
         Route::get('/users', [AdminUserController::class, 'index']);
         Route::get('/users/{user}', [AdminUserController::class, 'show'])->whereUuid('user');
         Route::patch('/users/{user}/status', [AdminUserController::class, 'suspend'])->whereUuid('user');

@@ -26,6 +26,11 @@ class CommunityExperienceResource extends JsonResource
             'source_url' => $this->source_url,
             'media_url' => $mediaFile && is_file($mediaFile) ? '/community-media/'.$sourceMatch[1].'.mp4' : null,
             'poster_url' => $posterFile && is_file($posterFile) ? '/community-media/'.$sourceMatch[1].'.jpg' : null,
+            'slides' => $this->whenLoaded('media', fn () => $this->media->map(fn ($media) => [
+                'id' => $media->id,
+                'url' => '/'.$media->path,
+                'mime_type' => $media->mime_type,
+            ])->values()),
             'status' => $this->when($isAdmin, $this->status),
             'verification_level' => $this->verification_level,
             'submitter_name' => $this->when($isAdmin, $this->submitter_name),

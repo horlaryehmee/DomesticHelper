@@ -1,7 +1,7 @@
-import { useState, type FormEvent } from 'react'
+import { useRef, useState, type FormEvent, type UIEvent } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
-import { AlertTriangle, ExternalLink, Plus, ShieldCheck } from 'lucide-react'
+import { AlertTriangle, ChevronLeft, ChevronRight, ExternalLink, Plus, ShieldCheck } from 'lucide-react'
 import { api, ApiError } from '@/lib/api'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
@@ -24,6 +24,7 @@ interface CommunityExperience {
   source_url: string | null
   media_url: string | null
   poster_url: string | null
+  slides: { id: number; url: string; mime_type: string }[]
   verification_level: 'submitted' | 'source_linked' | 'evidence_reviewed'
   published_at: string
 }
@@ -54,7 +55,7 @@ export function CommunityExperiencesPage() {
   })
   const update = (key: keyof typeof form, value: string) => setForm((current) => ({ ...current, [key]: value }))
   const onSubmit = (event: FormEvent) => { event.preventDefault(); submit.mutate() }
-  const visibleItems = (data?.data ?? []).filter((item) => item.content_type !== 'video' || item.media_url)
+  const visibleItems = (data?.data ?? []).filter((item) => item.content_type !== 'video' || item.media_url || item.slides?.length)
 
   return (
     <div className="min-h-screen bg-muted/30">
@@ -101,6 +102,7 @@ export function CommunityExperiencesPage() {
         {isLoading ? <div className="space-y-3">{[1, 2].map((i) => <Skeleton key={i} className="h-[520px] rounded-none sm:rounded-xl" />)}</div> : (
           <div className="space-y-3">
             {visibleItems.map((item) => {
+              if (item.slides?.length) return <SlideCarousel key={item.uuid} item={item} />
               if (item.content_type === 'video' && item.media_url) return <div key={item.uuid} className="mx-auto w-full max-w-[405px] overflow-hidden bg-background sm:rounded-xl sm:border">
                 <video src={item.media_url} poster={item.poster_url ?? undefined} title={item.title} className="block max-h-[78vh] w-full bg-black object-contain" controls playsInline preload="none" />
                 {item.source_url && <div className="flex justify-end px-3 py-2"><Button asChild variant="ghost" size="sm" className="h-8 px-2 text-xs"><a href={item.source_url} target="_blank" rel="noopener noreferrer">View source <ExternalLink /></a></Button></div>}
@@ -113,4 +115,31 @@ export function CommunityExperiencesPage() {
       </section>
     </div>
   )
+}
+
+function SlideCarousel({ item }: { item: CommunityExperience }) {
+  const track = useRef<HTMLDivElement>(null)
+  const [active, setActive] = useState(0)
+  const move = (index: number) => {
+    const next = Math.max(0, Math.min(item.slides.length - 1, index))
+    track.current?.scrollTo({ left: next * track.current.clientWidth, behavior: 'smooth' })
+    setActive(next)
+  }
+  const onScroll = (event: UIEvent<HTMLDivElement>) => {
+    const width = event.currentTarget.clientWidth
+    if (width) setActive(Math.round(event.currentTarget.scrollLeft / width))
+  }
+
+  return <div className="mx-auto w-full max-w-[405px] overflow-hidden bg-background sm:rounded-xl sm:border">
+    <div className="relative bg-black">
+      <div ref={track} onScroll={onScroll} className="flex aspect-[4/5] snap-x snap-mandatory overflow-x-auto scroll-smooth [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        {item.slides.map((slide, index) => <img key={slide.id} src={slide.url} alt={`${item.title}, slide ${index + 1}`} loading={index === 0 ? 'eager' : 'lazy'} className="h-full w-full shrink-0 snap-center object-contain" />)}
+      </div>
+      {active > 0 && <button type="button" onClick={() => move(active - 1)} aria-label="Previous slide" className="absolute left-2 top-1/2 flex size-9 -translate-y-1/2 items-center justify-center rounded-full bg-black/65 text-white"><ChevronLeft className="size-5" /></button>}
+      {active < item.slides.length - 1 && <button type="button" onClick={() => move(active + 1)} aria-label="Next slide" className="absolute right-2 top-1/2 flex size-9 -translate-y-1/2 items-center justify-center rounded-full bg-black/65 text-white"><ChevronRight className="size-5" /></button>}
+      <span className="absolute right-3 top-3 rounded-full bg-black/70 px-2 py-1 text-xs text-white">{active + 1}/{item.slides.length}</span>
+      <div className="absolute bottom-3 left-1/2 flex -translate-x-1/2 gap-1.5">{item.slides.map((slide, index) => <button key={slide.id} type="button" onClick={() => move(index)} aria-label={`Go to slide ${index + 1}`} className={`size-1.5 rounded-full ${active === index ? 'bg-white' : 'bg-white/45'}`} />)}</div>
+    </div>
+    {item.source_url && <div className="flex justify-end px-3 py-2"><Button asChild variant="ghost" size="sm" className="h-8 px-2 text-xs"><a href={item.source_url} target="_blank" rel="noopener noreferrer">View source <ExternalLink /></a></Button></div>}
+  </div>
 }
