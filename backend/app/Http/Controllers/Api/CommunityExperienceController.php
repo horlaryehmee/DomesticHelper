@@ -6,14 +6,17 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\CommunityExperienceResource;
 use App\Models\CommunityExperience;
 use App\Services\AuditLogService;
+use App\Services\CommunityExperienceDefaults;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
 class CommunityExperienceController extends Controller
 {
-    public function index(Request $request): JsonResponse
+    public function index(Request $request, CommunityExperienceDefaults $defaults): JsonResponse
     {
+        $defaults->ensure();
+
         $items = CommunityExperience::query()
             ->where('status', 'published')
             ->with('media')
