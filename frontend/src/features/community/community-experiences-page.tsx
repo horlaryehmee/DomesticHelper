@@ -34,6 +34,11 @@ const initialForm = {
   location: '', incident_date: '', source_url: '', submitter_name: '', submitter_email: '', submitter_phone: '', website: '',
 }
 
+function instagramEmbedUrl(url: string | null) {
+  const match = url?.match(/instagram\.com\/(reel|p)\/([^/?#]+)/i)
+  return match ? `https://www.instagram.com/${match[1]}/${match[2]}/embed/` : null
+}
+
 export function CommunityExperiencesPage() {
   const queryClient = useQueryClient()
   const [type, setType] = useState('all')
@@ -106,6 +111,11 @@ export function CommunityExperiencesPage() {
               if (item.content_type === 'video' && item.media_url) return <div key={item.uuid} className="mx-auto w-full max-w-[405px] overflow-hidden bg-background sm:rounded-xl sm:border">
                 <video src={item.media_url} poster={item.poster_url ?? undefined} title={item.title} className="block max-h-[78vh] w-full bg-black object-contain" controls playsInline preload="none" />
                 {item.source_url && <div className="flex justify-end px-3 py-2"><Button asChild variant="ghost" size="sm" className="h-8 px-2 text-xs"><a href={item.source_url} target="_blank" rel="noopener noreferrer">View source <ExternalLink /></a></Button></div>}
+              </div>
+              const instagramEmbed = instagramEmbedUrl(item.source_url)
+              if (instagramEmbed) return <div key={item.uuid} className="mx-auto w-full max-w-[405px] overflow-hidden bg-background sm:rounded-xl sm:border">
+                <div className="aspect-[4/5] overflow-hidden bg-black"><iframe src={instagramEmbed} title={item.title} scrolling="no" loading="lazy" allow="autoplay; encrypted-media; picture-in-picture" className="h-full w-full border-0" /></div>
+                <div className="flex justify-end px-3 py-2"><Button asChild variant="ghost" size="sm" className="h-8 px-2 text-xs"><a href={item.source_url!} target="_blank" rel="noopener noreferrer">View source <ExternalLink /></a></Button></div>
               </div>
               return <Card key={item.uuid} className="mx-3 gap-0 py-0 sm:mx-0"><CardContent className="px-4 py-4"><div className="flex items-start gap-3"><AlertTriangle className="mt-0.5 size-4 shrink-0 text-destructive"/><div className="min-w-0 flex-1"><p className="text-sm font-semibold">{item.title}</p><p className="mt-1 text-sm leading-5 text-muted-foreground">{item.content_type === 'video' ? 'The Instagram source is approved. Its slide images are awaiting upload.' : item.description}</p>{item.source_url&&<a href={item.source_url} target="_blank" rel="noreferrer" className="mt-3 inline-flex items-center gap-1 text-xs font-medium text-primary">View source <ExternalLink className="size-3"/></a>}</div></div></CardContent></Card>
             })}
