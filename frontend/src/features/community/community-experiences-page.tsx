@@ -1,16 +1,11 @@
-import { useRef, useState, type FormEvent, type UIEvent } from 'react'
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { toast } from 'sonner'
+import { useRef, useState, type UIEvent } from 'react'
+import { useQuery } from '@tanstack/react-query'
 import { AlertTriangle, ChevronLeft, ChevronRight, ExternalLink, Plus, ShieldCheck } from 'lucide-react'
-import { api, ApiError } from '@/lib/api'
+import { api } from '@/lib/api'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Textarea } from '@/components/ui/textarea'
 import { Skeleton } from '@/components/ui/skeleton'
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
+import { CommunityStoryDialog } from './community-story-dialog'
 
 interface CommunityExperience {
   uuid: string
@@ -29,37 +24,17 @@ interface CommunityExperience {
   published_at: string
 }
 
-const initialForm = {
-  content_type: 'experience', title: '', description: '', category: 'other', subject_name: '',
-  location: '', incident_date: '', source_url: '', submitter_name: '', submitter_email: '', submitter_phone: '', website: '',
-}
-
 function instagramEmbedUrl(url: string | null) {
   const match = url?.match(/instagram\.com\/(reel|p)\/([^/?#]+)/i)
   return match ? `https://www.instagram.com/${match[1]}/${match[2]}/embed/` : null
 }
 
 export function CommunityExperiencesPage() {
-  const queryClient = useQueryClient()
   const [type, setType] = useState('all')
-  const [submitOpen, setSubmitOpen] = useState(false)
-  const [form, setForm] = useState(initialForm)
   const { data, isLoading } = useQuery({
     queryKey: ['community-experiences', type],
     queryFn: () => api.get<{ data: CommunityExperience[] }>('/community-experiences', { type: type === 'all' ? undefined : type }),
   })
-  const submit = useMutation({
-    mutationFn: () => api.post('/community-experiences', form),
-    onSuccess: () => {
-      setForm(initialForm)
-      setSubmitOpen(false)
-      queryClient.invalidateQueries({ queryKey: ['community-experiences'] })
-      toast.success('Submitted privately for review')
-    },
-    onError: (error) => toast.error(error instanceof ApiError ? error.message : 'Could not submit your experience'),
-  })
-  const update = (key: keyof typeof form, value: string) => setForm((current) => ({ ...current, [key]: value }))
-  const onSubmit = (event: FormEvent) => { event.preventDefault(); submit.mutate() }
   const visibleItems = data?.data ?? []
 
   return (
@@ -70,27 +45,7 @@ export function CommunityExperiencesPage() {
             <h1 className="truncate text-lg font-bold tracking-tight">Community Stories</h1>
             <p className="text-xs text-muted-foreground">Reviewed experiences and sourced media</p>
           </div>
-          <Dialog open={submitOpen} onOpenChange={setSubmitOpen}>
-            <DialogTrigger asChild><Button size="sm"><Plus /> Share</Button></DialogTrigger>
-            <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
-              <DialogHeader><DialogTitle>Share an experience or video</DialogTitle><DialogDescription>Your contact details stay private. Nothing is published until a moderator reviews it.</DialogDescription></DialogHeader>
-              <form onSubmit={onSubmit} className="grid gap-4 sm:grid-cols-2">
-                <div className="space-y-1.5"><Label>Submission type</Label><Select value={form.content_type} onValueChange={(v) => update('content_type', v)}><SelectTrigger className="w-full"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="experience">Written experience</SelectItem><SelectItem value="video">Sourced video</SelectItem></SelectContent></Select></div>
-                <div className="space-y-1.5"><Label>Category</Label><Select value={form.category} onValueChange={(v) => update('category', v)}><SelectTrigger className="w-full"><SelectValue /></SelectTrigger><SelectContent>{['theft','fraud','misconduct','abuse','property_damage','job_abandonment','other'].map((v) => <SelectItem key={v} value={v}>{v.replace(/_/g, ' ')}</SelectItem>)}</SelectContent></Select></div>
-                <div className="space-y-1.5 sm:col-span-2"><Label>Title</Label><Input required minLength={8} value={form.title} onChange={(e) => update('title', e.target.value)} placeholder="A short, factual summary" /></div>
-                <div className="space-y-1.5 sm:col-span-2"><Label>What happened?</Label><Textarea required minLength={30} rows={5} value={form.description} onChange={(e) => update('description', e.target.value)} placeholder="Describe what you personally experienced, including dates and context. Avoid private addresses or ID numbers." /></div>
-                <div className="space-y-1.5"><Label>Person’s name (optional)</Label><Input value={form.subject_name} onChange={(e) => update('subject_name', e.target.value)} /></div>
-                <div className="space-y-1.5"><Label>Location (optional)</Label><Input value={form.location} onChange={(e) => update('location', e.target.value)} /></div>
-                <div className="space-y-1.5"><Label>Incident date (optional)</Label><Input type="date" max={new Date().toISOString().slice(0, 10)} value={form.incident_date} onChange={(e) => update('incident_date', e.target.value)} /></div>
-                <div className="space-y-1.5"><Label>Public source link {form.content_type === 'video' && '(required)'}</Label><Input type="url" required={form.content_type === 'video'} value={form.source_url} onChange={(e) => update('source_url', e.target.value)} placeholder="https://www.instagram.com/reel/..." /></div>
-                <div className="space-y-1.5"><Label>Your name</Label><Input required value={form.submitter_name} onChange={(e) => update('submitter_name', e.target.value)} /></div>
-                <div className="space-y-1.5"><Label>Your email</Label><Input required type="email" value={form.submitter_email} onChange={(e) => update('submitter_email', e.target.value)} /></div>
-                <div className="space-y-1.5"><Label>Your phone (optional)</Label><Input value={form.submitter_phone} onChange={(e) => update('submitter_phone', e.target.value)} /></div>
-                <input tabIndex={-1} autoComplete="off" className="hidden" value={form.website} onChange={(e) => update('website', e.target.value)} aria-hidden="true" />
-                <div className="sm:col-span-2"><Button type="submit" className="w-full sm:w-auto" disabled={submit.isPending}>{submit.isPending ? 'Submitting…' : 'Submit privately for review'}</Button><p className="mt-2 text-xs text-muted-foreground">You confirm this account is honest to the best of your knowledge.</p></div>
-              </form>
-            </DialogContent>
-          </Dialog>
+          <CommunityStoryDialog trigger={<Button size="sm"><Plus /> Share</Button>} />
         </div>
       </section>
 

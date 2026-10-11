@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { useForm } from 'react-hook-form'
+import { useForm, type UseFormRegisterReturn } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { toast } from 'sonner'
@@ -35,6 +35,11 @@ const employerSchema = z.object({
   password_confirmation: z.string(),
   profile_type: z.enum(['individual', 'agency']),
   agency_name: z.string().optional(),
+  nin: z.string().regex(/^\d{11}$/, 'NIN must be 11 digits'),
+  address_line: z.string().min(1, 'Required'),
+  guarantor_name: z.string().min(1, 'Required'),
+  guarantor_phone: z.string().regex(/^\+?[0-9]{10,15}$/, 'Enter a valid phone number'),
+  guarantor_relationship: z.string().min(1, 'Required'),
   city: z.string().min(1, 'Required'),
   state: z.string().min(1, 'Required'),
 }).refine((d) => d.password === d.password_confirmation, { message: 'Passwords do not match', path: ['password_confirmation'] })
@@ -51,6 +56,10 @@ const helperSchema = z.object({
   state: z.string().min(1, 'Required'),
   city: z.string().min(1, 'Required'),
   nin: z.string().regex(/^\d{11}$/, 'NIN must be 11 digits'),
+  address_line: z.string().min(1, 'Required'),
+  guarantor_name: z.string().min(1, 'Required'),
+  guarantor_phone: z.string().regex(/^\+?[0-9]{10,15}$/, 'Enter a valid phone number'),
+  guarantor_relationship: z.string().min(1, 'Required'),
   skills: z.array(z.number()).min(1, 'Select at least one skill'),
   years_experience: z.coerce.number().min(0).max(60),
   availability: z.string().min(1, 'Required'),
@@ -121,6 +130,7 @@ export function RegisterPage() {
 
 function EmployerForm({ meta, onDone }: { meta?: Meta; onDone: (u: never) => void }) {
   const [submitting, setSubmitting] = useState(false)
+  const [addressProof, setAddressProof] = useState<File | null>(null)
   const { register, handleSubmit, watch, setValue, formState: { errors } } = useForm({
     resolver: zodResolver(employerSchema),
     defaultValues: { profile_type: 'individual', state: '' },
@@ -128,12 +138,16 @@ function EmployerForm({ meta, onDone }: { meta?: Meta; onDone: (u: never) => voi
   const profileType = watch('profile_type')
 
   const onSubmit = async (data: z.infer<typeof employerSchema>) => {
+    if (!addressProof) { toast.error('Upload proof of address'); return }
     setSubmitting(true)
     try {
-      const res = await api.post<{ token: string; user: never }>('/auth/register/employer', {
+      const form = new FormData()
+      Object.entries({
         ...data,
         agency_name: data.profile_type === 'agency' ? data.agency_name : undefined,
-      })
+      }).forEach(([key, value]) => { if (value !== undefined) form.append(key, String(value)) })
+      form.append('address_proof', addressProof)
+      const res = await api.upload<{ token: string; user: never }>('/auth/register/employer', form)
       setToken(res.token)
       toast.success('Account created!')
       onDone(res.user)
@@ -148,7 +162,7 @@ function EmployerForm({ meta, onDone }: { meta?: Meta; onDone: (u: never) => voi
     <Card className="gap-5">
       <CardHeader>
         <CardTitle className="text-2xl">Employer registration</CardTitle>
-        <CardDescription>Household or agency. Verify your phone and start hiring safely.</CardDescription>
+        <CardDescription>Provide your identity, guarantor, and address details to create a secure account.</CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
@@ -211,6 +225,7 @@ function EmployerForm({ meta, onDone }: { meta?: Meta; onDone: (u: never) => voi
               <Input {...register('city')} />
             </Field>
           </div>
+          <RegistrationVerificationFields registerField={(name) => register(name)} errors={errors} addressProof={addressProof} onProofChange={setAddressProof} />
           <Button type="submit" className="w-full" disabled={submitting}>
             {submitting ? <Spinner label="Creating account…" /> : 'Create account'}
           </Button>
@@ -222,6 +237,7 @@ function EmployerForm({ meta, onDone }: { meta?: Meta; onDone: (u: never) => voi
 
 function HelperForm({ meta, onDone }: { meta?: Meta; onDone: (u: never) => void }) {
   const [submitting, setSubmitting] = useState(false)
+  const [addressProof, setAddressProof] = useState<File | null>(null)
   const { register, handleSubmit, watch, setValue, formState: { errors } } = useForm({
     resolver: zodResolver(helperSchema),
     defaultValues: { skills: [], gender: 'female', employment_type: 'any' },
@@ -233,9 +249,17 @@ function HelperForm({ meta, onDone }: { meta?: Meta; onDone: (u: never) => void 
   }
 
   const onSubmit = async (data: z.infer<typeof helperSchema>) => {
+    if (!addressProof) { toast.error('Upload proof of address'); return }
     setSubmitting(true)
     try {
-      const res = await api.post<{ token: string; user: never }>('/auth/register/helper', data)
+      const form = new FormData()
+      Object.entries(data).forEach(([key, value]) => {
+        if (value === undefined) return
+        if (key === 'skills') (value as number[]).forEach((id) => form.append('skills[]', String(id)))
+        else form.append(key, String(value))
+      })
+      form.append('address_proof', addressProof)
+      const res = await api.upload<{ token: string; user: never }>('/auth/register/helper', form)
       setToken(res.token)
       toast.success('Account created! Welcome to the network.')
       onDone(res.user)
@@ -250,7 +274,7 @@ function HelperForm({ meta, onDone }: { meta?: Meta; onDone: (u: never) => void 
     <Card className="gap-5">
       <CardHeader>
         <CardTitle className="text-2xl">Helper registration</CardTitle>
-        <CardDescription>Your NIN is encrypted and never shown publicly. Only verification badges appear on your profile.</CardDescription>
+        <CardDescription>Your NIN and guarantor details are private. Upload a document that confirms your address.</CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
@@ -297,9 +321,6 @@ function HelperForm({ meta, onDone }: { meta?: Meta; onDone: (u: never) => void 
             </Field>
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
-            <Field label="NIN (11 digits, private)" error={errors.nin?.message}>
-              <Input inputMode="numeric" maxLength={11} {...register('nin')} />
-            </Field>
             <Field label="Expected salary (₦/month, min)" error={errors.expected_salary_min?.message}>
               <Input type="number" min={0} {...register('expected_salary_min')} />
             </Field>
@@ -357,6 +378,7 @@ function HelperForm({ meta, onDone }: { meta?: Meta; onDone: (u: never) => void 
           <Field label="About you (optional)">
             <Textarea rows={3} placeholder="Tell families about your experience…" {...register('bio')} />
           </Field>
+          <RegistrationVerificationFields registerField={(name) => register(name)} errors={errors} addressProof={addressProof} onProofChange={setAddressProof} />
           <Button type="submit" className="w-full" disabled={submitting}>
             {submitting ? <Spinner label="Creating account…" /> : 'Create my profile'}
           </Button>
@@ -364,6 +386,29 @@ function HelperForm({ meta, onDone }: { meta?: Meta; onDone: (u: never) => void 
       </CardContent>
     </Card>
   )
+}
+
+type VerificationField = 'nin' | 'address_line' | 'guarantor_name' | 'guarantor_phone' | 'guarantor_relationship'
+
+function RegistrationVerificationFields({ registerField, errors, addressProof, onProofChange }: {
+  registerField: (name: VerificationField) => UseFormRegisterReturn
+  errors: Partial<Record<VerificationField, { message?: string }>>
+  addressProof: File | null
+  onProofChange: (file: File | null) => void
+}) {
+  return <div className="space-y-4 rounded-lg border bg-muted/30 p-4">
+    <div><h3 className="font-semibold">Identity and address details</h3><p className="text-xs text-muted-foreground">These details and your document are stored privately and are not shown on public profiles.</p></div>
+    <div className="grid gap-4 sm:grid-cols-2">
+      <Field label="NIN (11 digits)" error={errors.nin?.message}><Input inputMode="numeric" maxLength={11} autoComplete="off" {...registerField('nin')} /></Field>
+      <Field label="Residential address" error={errors.address_line?.message}><Input autoComplete="street-address" {...registerField('address_line')} /></Field>
+    </div>
+    <div className="grid gap-4 sm:grid-cols-2">
+      <Field label="Guarantor's full name" error={errors.guarantor_name?.message}><Input {...registerField('guarantor_name')} /></Field>
+      <Field label="Guarantor's phone" error={errors.guarantor_phone?.message}><Input inputMode="tel" {...registerField('guarantor_phone')} /></Field>
+    </div>
+    <Field label="Relationship to guarantor" error={errors.guarantor_relationship?.message}><Input placeholder="For example, relative or former employer" {...registerField('guarantor_relationship')} /></Field>
+    <Field label="Proof of address (PDF or image, max 5 MB)"><Input type="file" accept=".pdf,.jpg,.jpeg,.png,.webp" required onChange={(event) => onProofChange(event.target.files?.[0] ?? null)} />{addressProof && <p className="text-xs text-muted-foreground">Selected: {addressProof.name}</p>}</Field>
+  </div>
 }
 
 function Field({ label, error, children }: { label: string; error?: string; children: React.ReactNode }) {

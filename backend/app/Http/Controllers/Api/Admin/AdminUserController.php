@@ -10,6 +10,10 @@ use App\Models\User;
 use App\Services\AuditLogService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Crypt;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class AdminUserController extends Controller
 {
@@ -41,6 +45,31 @@ class AdminUserController extends Controller
     public function show(User $user): JsonResponse
     {
         return response()->json(['data' => new UserResource($user->load(['employerProfile', 'helperProfile.skills', 'roles.permissions']))]);
+    }
+
+    public function registrationDetails(User $user): JsonResponse
+    {
+        $details = DB::table('registration_verification_details')->where('user_id', $user->id)->first();
+        abort_unless($details, 404);
+        AuditLogService::log('registration_details.viewed', $user);
+
+        return response()->json(['data' => [
+            'nin_last4' => $details->nin_last4,
+            'guarantor_name' => Crypt::decryptString($details->guarantor_name_encrypted),
+            'guarantor_phone' => Crypt::decryptString($details->guarantor_phone_encrypted),
+            'guarantor_relationship' => Crypt::decryptString($details->guarantor_relationship_encrypted),
+            'address_line' => $user->helperProfile?->address_line ?? $user->employerProfile?->address_line,
+            'has_address_proof' => true,
+        ]]);
+    }
+
+    public function addressProof(User $user): StreamedResponse
+    {
+        $details = DB::table('registration_verification_details')->where('user_id', $user->id)->first();
+        abort_unless($details && Storage::disk('private')->exists($details->address_proof_path), 404);
+        AuditLogService::log('registration_address_proof.downloaded', $user);
+
+        return Storage::disk('private')->download($details->address_proof_path);
     }
 
     public function suspend(Request $request, User $user): JsonResponse

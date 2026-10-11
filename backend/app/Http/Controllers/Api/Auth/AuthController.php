@@ -17,6 +17,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Validation\ValidationException;
 use App\Notifications\PlatformNotification;
@@ -26,8 +27,14 @@ class AuthController extends Controller
     public function registerEmployer(RegisterEmployerRequest $request, NotificationService $notifications): JsonResponse
     {
         $data = $request->validated();
+        $ninHash = hash('sha256', $data['nin']);
+        abort_if(DB::table('registration_verification_details')->where('nin_hash', $ninHash)->exists()
+            || HelperProfile::query()->where('nin_hash', $ninHash)->exists(), 422, 'An account with this NIN already exists.');
+        $proofPath = $request->file('address_proof')->store('registration/address-proof', 'private');
+        abort_unless($proofPath, 500, 'Could not save the address document.');
 
-        $user = DB::transaction(function () use ($data) {
+        try {
+            $user = DB::transaction(function () use ($data, $proofPath, $ninHash) {
             $user = User::create([
                 'first_name' => $data['first_name'],
                 'last_name' => $data['last_name'],
@@ -40,13 +47,19 @@ class AuthController extends Controller
             $user->employerProfile()->create([
                 'profile_type' => $data['profile_type'],
                 'agency_name' => $data['agency_name'] ?? null,
-                'address_line' => $data['address_line'] ?? null,
+                'address_line' => $data['address_line'],
                 'city' => $data['city'],
                 'state' => $data['state'],
             ]);
 
+            $this->saveRegistrationDetails($user, $data, $ninHash, $proofPath);
+
             return $user;
-        });
+            });
+        } catch (\Throwable $e) {
+            Storage::disk('private')->delete($proofPath);
+            throw $e;
+        }
 
         AuditLogService::log('auth.registered', $user, null, ['user_type' => 'employer']);
 
@@ -73,12 +86,17 @@ class AuthController extends Controller
         $ninHash = hash('sha256', $nin);
 
         abort_if(
-            HelperProfile::query()->where('nin_hash', $ninHash)->exists(),
+            HelperProfile::query()->where('nin_hash', $ninHash)->exists()
+                || DB::table('registration_verification_details')->where('nin_hash', $ninHash)->exists(),
             422,
             'A helper profile with this NIN already exists.',
         );
 
-        $user = DB::transaction(function () use ($data, $nin, $ninHash, $request) {
+        $proofPath = $request->file('address_proof')->store('registration/address-proof', 'private');
+        abort_unless($proofPath, 500, 'Could not save the address document.');
+
+        try {
+            $user = DB::transaction(function () use ($data, $nin, $ninHash, $request, $proofPath) {
             $user = User::create([
                 'first_name' => $data['first_name'],
                 'last_name' => $data['last_name'],
@@ -93,7 +111,7 @@ class AuthController extends Controller
                 'gender' => $data['gender'],
                 'state' => $data['state'],
                 'city' => $data['city'],
-                'address_line' => $data['address_line'] ?? null,
+                'address_line' => $data['address_line'],
                 'nin_encrypted' => Crypt::encryptString($nin), // encrypted at rest
                 'nin_hash' => $ninHash,
                 'nin_last4' => substr($nin, -4),
@@ -112,9 +130,14 @@ class AuthController extends Controller
             }
 
             $profile->skills()->sync($data['skills']);
+            $this->saveRegistrationDetails($user, $data, $ninHash, $proofPath);
 
             return $user;
-        });
+            });
+        } catch (\Throwable $e) {
+            Storage::disk('private')->delete($proofPath);
+            throw $e;
+        }
 
         AuditLogService::log('auth.registered', $user, null, ['user_type' => 'helper']);
 
@@ -131,6 +154,22 @@ class AuthController extends Controller
             'token' => $token,
             'user' => new UserResource($user->load('helperProfile.skills')),
         ], 201);
+    }
+
+    private function saveRegistrationDetails(User $user, array $data, string $ninHash, string $proofPath): void
+    {
+        DB::table('registration_verification_details')->insert([
+            'user_id' => $user->id,
+            'nin_encrypted' => Crypt::encryptString($data['nin']),
+            'nin_hash' => $ninHash,
+            'nin_last4' => substr($data['nin'], -4),
+            'guarantor_name_encrypted' => Crypt::encryptString($data['guarantor_name']),
+            'guarantor_phone_encrypted' => Crypt::encryptString($data['guarantor_phone']),
+            'guarantor_relationship_encrypted' => Crypt::encryptString($data['guarantor_relationship']),
+            'address_proof_path' => $proofPath,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
     }
 
     public function login(LoginRequest $request): JsonResponse

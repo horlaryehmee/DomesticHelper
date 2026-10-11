@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
-import { Search, ShieldOff, ShieldCheck } from 'lucide-react'
+import { Search, ShieldOff, ShieldCheck, FileCheck2 } from 'lucide-react'
 import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -11,7 +11,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Pagination } from '@/components/ui/pagination'
 import { Skeleton } from '@/components/ui/skeleton'
-import { api, ApiError } from '@/lib/api'
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { api, ApiError, getToken } from '@/lib/api'
 import { formatDate } from '@/lib/format'
 
 interface UserRow {
@@ -29,17 +30,53 @@ interface UserRow {
   created_at: string
 }
 
+interface RegistrationDetails {
+  nin_last4: string
+  guarantor_name: string
+  guarantor_phone: string
+  guarantor_relationship: string
+  address_line: string | null
+  has_address_proof: boolean
+}
+
 export function AdminUsersPage() {
   const queryClient = useQueryClient()
   const [type, setType] = useState('')
   const [status, setStatus] = useState('')
   const [q, setQ] = useState('')
   const [page, setPage] = useState(1)
+  const [selectedUser, setSelectedUser] = useState<UserRow | null>(null)
 
   const { data, isLoading } = useQuery({
     queryKey: ['admin-users', type, status, q, page],
     queryFn: () => api.get<{ data: UserRow[]; meta: { current_page: number; last_page: number; total: number } }>('/admin/users', { type: type || undefined, status: status || undefined, q: q || undefined, page }),
   })
+  const { data: registration, isLoading: detailsLoading, isError: detailsError } = useQuery({
+    queryKey: ['admin-registration-details', selectedUser?.uuid],
+    queryFn: () => api.get<{ data: RegistrationDetails }>(`/admin/users/${selectedUser!.uuid}/registration-details`),
+    enabled: !!selectedUser,
+    retry: false,
+  })
+
+  const downloadProof = async () => {
+    if (!selectedUser) return
+    try {
+      const response = await fetch(`/api/admin/users/${selectedUser.uuid}/address-proof`, {
+        headers: { Authorization: `Bearer ${getToken()}` },
+      })
+      if (!response.ok) throw new Error('Could not download address proof')
+      const url = URL.createObjectURL(await response.blob())
+      const link = document.createElement('a')
+      link.href = url
+      const mime = response.headers.get('content-type') ?? ''
+      const extension = mime.includes('pdf') ? 'pdf' : mime.includes('png') ? 'png' : mime.includes('webp') ? 'webp' : 'jpg'
+      link.download = `address-proof-${selectedUser.uuid}.${extension}`
+      link.click()
+      window.setTimeout(() => URL.revokeObjectURL(url), 60_000)
+    } catch {
+      toast.error('Could not download address proof')
+    }
+  }
 
   const suspend = useMutation({
     mutationFn: ({ uuid, newStatus }: { uuid: string; newStatus: string }) => api.patch(`/admin/users/${uuid}/status`, { status: newStatus }),
@@ -127,6 +164,7 @@ export function AdminUsersPage() {
                   </TableCell>
                   <TableCell className="text-sm text-muted-foreground">{formatDate(u.created_at)}</TableCell>
                   <TableCell className="text-right">
+                    {u.user_type !== 'admin' && <Button size="sm" variant="ghost" onClick={() => setSelectedUser(u)}><FileCheck2 /> Documents</Button>}
                     {u.status === 'active' ? (
                       <Button size="sm" variant="outline" className="text-destructive hover:text-destructive" onClick={() => suspend.mutate({ uuid: u.uuid, newStatus: 'suspended' })}>
                         <ShieldOff /> Suspend
@@ -145,6 +183,19 @@ export function AdminUsersPage() {
       </Card>
 
       {data && data.meta.last_page > 1 && <Pagination meta={data.meta as never} onChange={setPage} />}
+      <Dialog open={!!selectedUser} onOpenChange={(open) => { if (!open) setSelectedUser(null) }}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Registration documents</DialogTitle><DialogDescription>{selectedUser?.name} · Sensitive details are for staff review only.</DialogDescription></DialogHeader>
+          {detailsLoading ? <Skeleton className="h-32" /> : detailsError ? <p className="text-sm text-muted-foreground">No registration documents are available for this account.</p> : registration && <div className="space-y-3 text-sm">
+            <p><strong>NIN:</strong> ending in {registration.data.nin_last4}</p>
+            <p><strong>Address:</strong> {registration.data.address_line ?? 'Not provided'}</p>
+            <p><strong>Guarantor:</strong> {registration.data.guarantor_name}</p>
+            <p><strong>Relationship:</strong> {registration.data.guarantor_relationship}</p>
+            <p><strong>Guarantor phone:</strong> {registration.data.guarantor_phone}</p>
+            {registration.data.has_address_proof && <Button variant="outline" onClick={downloadProof}>Download proof of address</Button>}
+          </div>}
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

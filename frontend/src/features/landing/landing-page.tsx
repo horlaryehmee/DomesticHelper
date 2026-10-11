@@ -16,11 +16,12 @@ import type { HelperSummary, PaginationMeta } from '@/lib/types'
 import { useAuth } from '@/lib/auth'
 import { HeroAnimation } from './hero-animation'
 import { HeroBackground } from '@/components/ui/hero-background'
+import { CommunityStoryDialog } from '@/features/community/community-story-dialog'
 
 const faqs = [
   { q: 'How do trust scores work?', a: 'Every helper starts at a neutral score of 50. Points are added only for verified events: confirmed employment, positive moderated reviews and long-term roles. They are subtracted only when our admin team verifies a serious complaint. No single employer can change a helper\u2019s score.' },
   { q: 'How is a helper\u2019s identity verified?', a: 'We verify phone and email with OTPs, and offer NIN and photo verification which our verification officers review. NIN data is encrypted and never displayed publicly; only a verification badge is shown.' },
-  { q: 'Who can leave a review?', a: 'Only employers who have a confirmed employment record with the helper on the platform. Every review is moderated before it appears publicly, and helpers can reply, report, or dispute reviews.' },
+  { q: 'Who can leave a review?', a: 'Verified profile reviews require a confirmed employment record on Hire Safe. Anyone can also share a community story about a helper who is not on the platform. Stories are moderated before publication and do not change trust scores.' },
   { q: 'What happens when a report is submitted?', a: 'The helper is notified immediately and given the right to respond. Our team reviews the evidence. Until a complaint is verified, it stays private and never affects the helper\u2019s public trust score.' },
   { q: 'What can helpers dispute?', a: 'Helpers can dispute reviews, reports, trust score events and verification results. If a dispute is upheld, any score impact is reversed, and false accusations are corrected.' },
   { q: 'Is my personal information safe?', a: 'NIN, exact addresses, private phone numbers, evidence files and internal notes are never shown publicly. Evidence is stored on a private, access-controlled file system.' },
@@ -292,6 +293,20 @@ export function LandingPage() {
                 </CardContent>
               </Card>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ============ COMMUNITY STORIES ============ */}
+      <section className="border-y bg-muted/30">
+        <div className="mx-auto grid max-w-7xl gap-8 px-4 py-16 sm:px-6 lg:grid-cols-[1fr_auto] lg:items-center">
+          <div>
+            <Badge variant="secondary">Community Stories</Badge>
+            <h2 className="mt-4 text-3xl font-bold tracking-tight">Share your experience</h2>
+          </div>
+          <div className="flex flex-wrap gap-3 lg:justify-end">
+            <CommunityStoryDialog trigger={<Button size="lg">Submit for review <ChevronRight /></Button>} />
+            <Button size="lg" variant="outline" asChild><Link to="/community">Read community stories</Link></Button>
           </div>
         </div>
       </section>

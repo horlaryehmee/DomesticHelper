@@ -227,6 +227,8 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/community-experiences/{communityExperience}/media', [AdminCommunityExperienceController::class, 'uploadMedia']);
         Route::get('/users', [AdminUserController::class, 'index']);
         Route::get('/users/{user}', [AdminUserController::class, 'show'])->whereUuid('user');
+        Route::get('/users/{user}/registration-details', [AdminUserController::class, 'registrationDetails'])->whereUuid('user');
+        Route::get('/users/{user}/address-proof', [AdminUserController::class, 'addressProof'])->whereUuid('user');
         Route::patch('/users/{user}/status', [AdminUserController::class, 'suspend'])->whereUuid('user');
         Route::post('/users/{user}/roles', [AdminUserController::class, 'assignRole'])->whereUuid('user');
         Route::get('/roles', [AdminUserController::class, 'roles']);
