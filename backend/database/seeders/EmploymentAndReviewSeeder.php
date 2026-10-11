@@ -94,7 +94,7 @@ class EmploymentAndReviewSeeder extends Seeder
                 }
 
                 // Review per completed record (only for verified records → approved)
-                $review = $reviews->create($employer, $helper, $record, [
+                $review = $reviews->create($employer, $record, [
                     'rating' => $record->performance_rating,
                     'work_type' => $role,
                     'duration_worked' => $end->diffInMonths($start).' months',
