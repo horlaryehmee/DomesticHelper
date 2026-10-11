@@ -1,5 +1,7 @@
 @import "tailwindcss";
 @import "tw-animate-css";
+/* Self-hosted so the app never waits on a third-party font CDN at runtime. */
+@import "@fontsource-variable/bricolage-grotesque";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -45,6 +47,9 @@
 }
 
 @theme inline {
+  /* Bricolage Grotesque is the app face. It becomes Tailwind's default sans,
+     so every element inherits it without a font-family class anywhere. */
+  --font-sans: "Bricolage Grotesque Variable", "Bricolage Grotesque", ui-sans-serif, system-ui, sans-serif;
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
@@ -85,10 +90,17 @@
   * {
     @apply border-border outline-ring/50;
   }
-  body {
-    @apply bg-background text-foreground antialiased;
-  }
   html {
+    @apply font-sans;
     scroll-behavior: smooth;
+  }
+  body {
+    @apply bg-background font-sans text-foreground antialiased;
+  }
+  /* Bricolage Grotesque sits tight at heavy weights; titles and the wordmark
+     read better with headings set slightly tighter than body copy. */
+  h1, h2, h3, h4 {
+    @apply font-sans;
+    letter-spacing: -0.02em;
   }
 }
