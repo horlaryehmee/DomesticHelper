@@ -13,7 +13,7 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { useAuth } from '@/lib/auth'
 import { cn } from '@/lib/utils'
-import { LogoMark } from '@/components/logo'
+import { LogoLockup } from '@/components/logo'
 
 const links = [
   { to: '/search', label: 'Find Helpers' },
@@ -33,7 +33,7 @@ export function PublicLayout() {
       <header className="sticky top-0 z-40 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6">
           <Link to="/" aria-label="Hire Safe home">
-            <LogoMark className="h-8" />
+            <LogoLockup className="h-9" />
           </Link>
 
           <nav className="hidden items-center gap-1 md:flex">
@@ -140,7 +140,7 @@ export function PublicLayout() {
       <footer className="border-t bg-muted/30">
         <div className="mx-auto grid max-w-7xl gap-8 px-4 py-12 sm:px-6 md:grid-cols-4">
           <div className="md:col-span-2">
-            <LogoMark className="h-7" />
+            <LogoLockup className="h-12" />
             <p className="mt-3 max-w-sm text-sm text-muted-foreground">
               A verified trust network for domestic staff hiring in Nigeria. Safer hiring for families, fair reputation for good workers.
             </p>

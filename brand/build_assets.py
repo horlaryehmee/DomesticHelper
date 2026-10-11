@@ -24,15 +24,16 @@ def save(img, path, **kw):
     img.save(path, optimize=True, **kw)
     print(f"  {os.path.relpath(path, FE):60s} {img.size}  {os.path.getsize(path)/1024:.1f} KB")
 
-# --- full stacked logo, retina 2x of a ~260px display width ---
-target_w = 560
+# --- full stacked lockup ("hire" + "safe" + spark) ---
+# Used at up to ~48px tall in headers/footers, so emit 2x for retina.
+# Source is 999x662, so a 800px-wide render still downsamples (stays sharp).
+target_w = 800
 ratio = target_w / W
 lg = full.resize((target_w, round(H * ratio)), Image.LANCZOS)
 save(lg, os.path.join(OUT, "hire-safe-logo.png"))
 
-# 1x companion
-h1 = round(W * 260 / W)
-sm = full.resize((260, round(H * 260 / W)), Image.LANCZOS)
+# small companion for tight spots (mobile header)
+sm = full.resize((400, round(H * 400 / W)), Image.LANCZOS)
 save(sm, os.path.join(OUT, "hire-safe-logo-sm.png"))
 
 # --- mark only: top band (spark + 'hire'), using the row gap we detected (~y=572) ---
@@ -55,12 +56,10 @@ sq.paste(mark, ((side-mark.width)//2, (side-mark.height)//2), mark)
 save(mark, os.path.join(OUT, "hire-safe-mark.png"))
 save(sq.resize((256,256), Image.LANCZOS), os.path.join(OUT, "hire-safe-mark-square.png"))
 
-# --- favicons ---
-fav_src = sq.resize((512,512), Image.LANCZOS)
-fav_src.save(os.path.join(PUB, "favicon-512.png"), optimize=True)
-for s in (192, 180, 32, 16):
-    sq.resize((s,s), Image.LANCZOS).save(os.path.join(PUB, f"favicon-{s}.png"), optimize=True)
-print("  wrote PNG favicons 16/32/180/192/512 -> frontend/public/")
-fav_src.save(os.path.join(PUB, "apple-touch-icon.png"), optimize=True)
+# --- favicons live in build_favicon.py ---
+# They are composed from the coral spark on a purple tile, which is legible at
+# 16px; the wide wordmark is not. Generating them here from `sq` would silently
+# overwrite those with an illegible crop, so this script deliberately does not
+# touch frontend/public/*.png.
 
 print("\nDONE ->", OUT)

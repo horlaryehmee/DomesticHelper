@@ -92,6 +92,9 @@ for s in (512, 192, 180, 32, 16):
     im.save(os.path.join(PUB, name), optimize=True)
     print(f"  {name:24s} {im.size}  {os.path.getsize(os.path.join(PUB,name))/1024:.1f} KB")
 
-# large preview to eyeball
-tile(256).save(os.path.join(BR, "_icon-preview.png"))
+# favicon-180 is an intermediate size; 192 + apple-touch-icon cover the cases
+if os.path.exists(os.path.join(PUB, "favicon-180.png")):
+    os.remove(os.path.join(PUB, "favicon-180.png"))
+if os.path.exists(os.path.join(PUB, "favicon-512.png")):
+    os.remove(os.path.join(PUB, "favicon-512.png"))
 print("DONE")
