@@ -7,6 +7,7 @@ import {
 import { useAuth } from '@/lib/auth'
 import { cn } from '@/lib/utils'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { LogoLockup } from '@/components/logo'
 
 export function DashboardLayout() {
   const { user, logout } = useAuth()
@@ -43,11 +44,8 @@ export function DashboardLayout() {
   const content = (
     <>
       <div className="px-4 py-5">
-        <Link to={base} className="flex items-center gap-2.5">
-          <span className="flex size-9 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-            <ShieldCheck className="size-6" />
-          </span>
-          <span className="text-[15px] font-bold tracking-tight">Hire Safe</span>
+        <Link to={base} aria-label="Hire Safe home">
+          <LogoLockup className="h-11" />
         </Link>
       </div>
       <nav className="flex-1 space-y-1 overflow-y-auto px-3 pb-4">
@@ -109,11 +107,8 @@ export function DashboardLayout() {
           <button className="cursor-pointer rounded-md p-2 hover:bg-accent" onClick={() => setMobileOpen(true)} aria-label="Open menu">
             <Menu className="size-5" />
           </button>
-          <Link to={base} className="flex items-center gap-2.5">
-            <span className="flex size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-              <ShieldCheck className="size-5" />
-            </span>
-            <span className="font-bold tracking-tight">Hire Safe</span>
+          <Link to={base} aria-label="Hire Safe home">
+            <LogoLockup className="h-8" />
           </Link>
         </header>
         <main className="flex-1 bg-muted/20 px-4 py-6 sm:px-6 lg:px-8">

@@ -1,12 +1,13 @@
 import { useState } from 'react'
 import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom'
 import {
-  ShieldCheck, LayoutDashboard, Users, UserCheck, FileText, Star, ClipboardCheck,
+  LayoutDashboard, Users, UserCheck, FileText, Star, ClipboardCheck,
   Briefcase, CreditCard, Gauge, ScrollText, Settings, LogOut, Menu,
   MessagesSquare,
 } from 'lucide-react'
 import { useAuth } from '@/lib/auth'
 import { cn } from '@/lib/utils'
+import { LogoLockup } from '@/components/logo'
 
 const nav = [
   { to: '/admin', label: 'Dashboard', icon: LayoutDashboard, end: true },
@@ -31,14 +32,9 @@ export function AdminLayout() {
   const content = (
     <>
       <div className="px-4 py-5">
-        <Link to="/admin" className="flex items-center gap-2.5">
-          <span className="flex size-9 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-            <ShieldCheck className="size-6" />
-          </span>
-          <div>
-            <div className="text-sm font-bold leading-tight tracking-tight">Hire Safe</div>
-            <div className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Admin</div>
-          </div>
+        <Link to="/admin" aria-label="Hire Safe admin home" className="flex flex-col items-start gap-1">
+          <LogoLockup className="h-11" />
+          <span className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Admin</span>
         </Link>
       </div>
       <nav className="flex-1 space-y-1 overflow-y-auto px-3 pb-4">
@@ -87,11 +83,9 @@ export function AdminLayout() {
           <button className="cursor-pointer rounded-md p-2 hover:bg-accent" onClick={() => setMobileOpen(true)} aria-label="Open menu">
             <Menu className="size-5" />
           </button>
-          <Link to="/admin" className="flex items-center gap-2.5">
-            <span className="flex size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-              <ShieldCheck className="size-5" />
-            </span>
-            <span className="font-bold">Admin</span>
+          <Link to="/admin" aria-label="Hire Safe admin home" className="flex items-center gap-2.5">
+            <LogoLockup className="h-8" />
+            <span className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Admin</span>
           </Link>
         </header>
         <main className="flex-1 bg-muted/20 px-4 py-6 sm:px-6 lg:px-8">

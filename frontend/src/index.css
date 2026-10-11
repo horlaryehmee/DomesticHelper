@@ -5,34 +5,43 @@
 
 :root {
   --radius: 0.625rem;
-  --background: oklch(0.985 0.002 106);
-  --foreground: oklch(0.26 0.02 260);
+  /* Neutrals carry a faint warm-plum cast so they sit beside the deep purple ink. */
+  --background: oklch(0.9880 0.0041 91.4);
+  --foreground: oklch(0.2712 0.0307 304.4);
   --card: oklch(1 0 0);
-  --card-foreground: oklch(0.26 0.02 260);
+  --card-foreground: oklch(0.2712 0.0307 304.4);
   --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.26 0.02 260);
-  --primary: oklch(0.40 0.105 172);
-  --primary-foreground: oklch(0.985 0.002 106);
-  --secondary: oklch(0.955 0.008 178);
-  --secondary-foreground: oklch(0.35 0.08 178);
-  --muted: oklch(0.965 0.003 106);
-  --muted-foreground: oklch(0.53 0.012 260);
-  --accent: oklch(0.955 0.008 178);
-  --accent-foreground: oklch(0.35 0.08 178);
+  --popover-foreground: oklch(0.2712 0.0307 304.4);
+  /* Primary = the logo's deep purple ink. Dark enough that white text passes AA. */
+  --primary: oklch(0.2729 0.1278 308.7);
+  --primary-foreground: oklch(0.9880 0.0041 91.4);
+  --secondary: oklch(0.9479 0.0265 35.0);
+  --secondary-foreground: oklch(0.3811 0.1574 309.1);
+  --muted: oklch(0.9646 0.0130 310.5);
+  --muted-foreground: oklch(0.50 0.03 306);
+  --accent: oklch(0.9290 0.0263 310.4);
+  --accent-foreground: oklch(0.3811 0.1574 309.1);
   --destructive: oklch(0.577 0.215 27);
-  --destructive-foreground: oklch(0.985 0.002 106);
-  --success: oklch(0.62 0.15 160);
-  --success-foreground: oklch(0.32 0.09 160);
-  --warning: oklch(0.75 0.15 85);
-  --warning-foreground: oklch(0.3 0.06 85);
-  --border: oklch(0.915 0.005 106);
-  --input: oklch(0.915 0.005 106);
-  --ring: oklch(0.40 0.105 172);
-  --chart-1: oklch(0.40 0.105 172);
-  --chart-2: oklch(0.62 0.12 220);
-  --chart-3: oklch(0.7 0.14 85);
-  --chart-4: oklch(0.6 0.16 320);
-  --chart-5: oklch(0.6 0.12 140);
+  --destructive-foreground: oklch(0.9880 0.0041 91.4);
+  /* Success stays green (semantic: verified/positive) but leans cooler and
+     deeper so it sits beside the plum palette instead of fighting it. */
+  --success: oklch(0.53 0.115 168);
+  --success-foreground: oklch(0.30 0.075 168);
+  /* Warning leans amber-coral to bridge toward the brand spark. */
+  --warning: oklch(0.74 0.145 62);
+  --warning-foreground: oklch(0.33 0.075 55);
+  /* Coral is the logo's spark — used for emphasis. It is a light, saturated hue,
+     so text ON coral must be dark (white on coral only reaches ~3.0:1). */
+  --coral: oklch(0.6868 0.2014 32.4);
+  --coral-foreground: oklch(0.24 0.06 30);
+  --border: oklch(0.915 0.008 306);
+  --input: oklch(0.915 0.008 306);
+  --ring: oklch(0.3811 0.1574 309.1);
+  --chart-1: oklch(0.2729 0.1278 308.7);
+  --chart-2: oklch(0.6868 0.2014 32.4);
+  --chart-3: oklch(0.55 0.14 310);
+  --chart-4: oklch(0.75 0.15 85);
+  --chart-5: oklch(0.62 0.12 220);
 }
 
 @theme inline {
@@ -60,6 +69,8 @@
   --color-success-foreground: var(--success-foreground);
   --color-warning: var(--warning);
   --color-warning-foreground: var(--warning-foreground);
+  --color-coral: var(--coral);
+  --color-coral-foreground: var(--coral-foreground);
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);

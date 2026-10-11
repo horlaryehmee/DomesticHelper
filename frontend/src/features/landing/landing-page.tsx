@@ -48,10 +48,10 @@ export function LandingPage() {
         <div className="mx-auto grid max-w-7xl gap-10 px-4 py-20 sm:px-6 lg:grid-cols-2 lg:items-center lg:py-28">
           <div>
             <Badge variant="secondary" className="mb-5 gap-1.5 px-3 py-1">
-              <ShieldCheck className="size-3.5 text-primary" /> Nigeria&apos;s domestic staff trust network
+              <ShieldCheck className="size-3.5 text-coral" /> Nigeria&apos;s domestic staff trust network
             </Badge>
             <h1 className="text-4xl font-bold tracking-tight sm:text-5xl lg:text-6xl">
-              Hire Domestic Staff <span className="text-primary">You Can Trust</span>
+              Hire Domestic Staff <span className="text-coral">You Can Trust</span>
             </h1>
             <p className="mt-5 max-w-xl text-lg text-muted-foreground">
               Hire Safe is a verified trust network: check employment history, review trust scores, and hire with confidence.

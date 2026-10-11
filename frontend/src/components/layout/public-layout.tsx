@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom'
-import { Menu, X, ShieldCheck, LogOut, LayoutDashboard, Briefcase } from 'lucide-react'
+import { Menu, X, LogOut, LayoutDashboard, Briefcase } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import {
@@ -13,6 +13,7 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { useAuth } from '@/lib/auth'
 import { cn } from '@/lib/utils'
+import { LogoMark } from '@/components/logo'
 
 const links = [
   { to: '/search', label: 'Find Helpers' },
@@ -31,11 +32,8 @@ export function PublicLayout() {
     <div className="flex min-h-screen flex-col">
       <header className="sticky top-0 z-40 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6">
-          <Link to="/" className="flex items-center gap-2.5">
-            <span className="flex size-9 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-              <ShieldCheck className="size-6" />
-            </span>
-            <span className="text-lg font-bold tracking-tight">Hire Safe</span>
+          <Link to="/" aria-label="Hire Safe home">
+            <LogoMark className="h-8" />
           </Link>
 
           <nav className="hidden items-center gap-1 md:flex">
@@ -142,12 +140,7 @@ export function PublicLayout() {
       <footer className="border-t bg-muted/30">
         <div className="mx-auto grid max-w-7xl gap-8 px-4 py-12 sm:px-6 md:grid-cols-4">
           <div className="md:col-span-2">
-            <div className="flex items-center gap-2.5">
-              <span className="flex size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-                <ShieldCheck className="size-5" />
-              </span>
-              <span className="font-bold tracking-tight">Hire Safe</span>
-            </div>
+            <LogoMark className="h-7" />
             <p className="mt-3 max-w-sm text-sm text-muted-foreground">
               A verified trust network for domestic staff hiring in Nigeria. Safer hiring for families, fair reputation for good workers.
             </p>
