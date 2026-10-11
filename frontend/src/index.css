@@ -25,13 +25,17 @@
   --accent-foreground: oklch(0.3811 0.1574 309.1);
   --destructive: oklch(0.577 0.215 27);
   --destructive-foreground: oklch(0.9880 0.0041 91.4);
-  /* Success stays green (semantic: verified/positive) but leans cooler and
-     deeper so it sits beside the plum palette instead of fighting it. */
-  --success: oklch(0.53 0.115 168);
-  --success-foreground: oklch(0.30 0.075 168);
-  /* Warning leans amber-coral to bridge toward the brand spark. */
-  --warning: oklch(0.74 0.145 62);
-  --warning-foreground: oklch(0.33 0.075 55);
+  /* Positive/verified states use a warm amber rather than green: it is the
+     natural complement to the purple and reads as "good" without dragging the
+     old teal palette back in. --success is the FILL tone (rings, tints, bars);
+     text sitting on a light surface must use --success-foreground, which is a
+     darker amber that clears AA. */
+  --success: oklch(0.58 0.15 66);
+  --success-foreground: oklch(0.45 0.115 58);
+  /* Warning moves to a deeper red-orange so it stays distinct from success
+     and from the brand coral. */
+  --warning: oklch(0.63 0.17 42);
+  --warning-foreground: oklch(0.35 0.11 35);
   /* Coral is the logo's spark — used for emphasis. It is a light, saturated hue,
      so text ON coral must be dark (white on coral only reaches ~3.0:1). */
   --coral: oklch(0.6868 0.2014 32.4);

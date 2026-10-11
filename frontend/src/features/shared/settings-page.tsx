@@ -52,7 +52,7 @@ export function SettingsPage() {
         </CardHeader>
         <CardContent>
           {user?.phone_verified ? (
-            <p className="text-sm text-success">✓ Your phone number is verified.</p>
+            <p className="text-sm text-success-foreground">✓ Your phone number is verified.</p>
           ) : (
             <Button variant="outline" onClick={() => sendOtp.mutate()} disabled={sendOtp.isPending}>
               Send verification code

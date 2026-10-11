@@ -103,7 +103,7 @@ export function AdminTrustScorePage() {
                       </div>
                       <div className="mt-0.5 text-xs text-muted-foreground">{r.event_type}</div>
                     </div>
-                    <span className={`font-mono text-xl font-bold ${r.points >= 0 ? 'text-success' : 'text-destructive'}`}>
+                    <span className={`font-mono text-xl font-bold ${r.points >= 0 ? 'text-success-foreground' : 'text-destructive'}`}>
                       {r.points >= 0 ? '+' : ''}{r.points}
                     </span>
                   </div>
@@ -139,7 +139,7 @@ export function AdminTrustScorePage() {
                       <div className="flex flex-wrap items-center gap-2">
                         <span className="font-medium">{e.helper_name}</span>
                         <Badge variant="outline">{e.event_type}</Badge>
-                        <span className={`font-mono font-bold ${e.points >= 0 ? 'text-success' : 'text-destructive'}`}>
+                        <span className={`font-mono font-bold ${e.points >= 0 ? 'text-success-foreground' : 'text-destructive'}`}>
                           {e.points >= 0 ? '+' : ''}{e.points}
                         </span>
                       </div>

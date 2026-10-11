@@ -238,7 +238,7 @@ export function HelperProfilePage() {
                   ].map(([label, pts]) => (
                     <div key={label} className="flex items-center justify-between rounded-md border px-3 py-2">
                       <span>{label}</span>
-                      <span className={`font-mono font-bold ${pts.startsWith('+') ? 'text-success' : 'text-destructive'}`}>{pts}</span>
+                      <span className={`font-mono font-bold ${pts.startsWith('+') ? 'text-success-foreground' : 'text-destructive'}`}>{pts}</span>
                     </div>
                   ))}
                   <p className="pt-2 text-xs text-muted-foreground">

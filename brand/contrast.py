@@ -42,10 +42,10 @@ T = {
  'accent-fg':   (0.3811, 0.1574, 309.1),
  'coral':       (0.6868, 0.2014, 32.4),
  'coral-fg':    (0.24, 0.06, 30),
- 'success':     (0.53, 0.115, 168),
- 'success-fg':  (0.30, 0.075, 168),
- 'warning':     (0.74, 0.145, 62),
- 'warning-fg':  (0.33, 0.075, 55),
+ 'success':     (0.58, 0.15, 66),
+ 'success-fg':  (0.45, 0.115, 58),
+ 'warning':     (0.63, 0.17, 42),
+ 'warning-fg':  (0.35, 0.11, 35),
  'destructive': (0.577, 0.215, 27),
  'border':      (0.915, 0.008, 306),
 }
@@ -60,16 +60,21 @@ pairs = [
  ('coral-fg','coral','white on coral'),
  ('secondary-fg','secondary','secondary text'),
  ('accent-fg','accent','accent text'),
- ('success-fg','card','success fg on card'),
- ('warning-fg','card','warning fg on card'),
+ ('success-fg','card','success text on card'),
+ ('warning-fg','card','warning text on card'),
  ('foreground','card','body on card'),
+ ('success','card','success fill as a UI element (ring/bar)'),
+ ('warning','card','warning fill as a UI element'),
 ]
-print("\ncontrast ratios (AA normal >= 4.5, AA large/UI >= 3.0):")
+print("\ncontrast ratios (text needs >= 4.5 AA; UI elements need >= 3.0):")
 worst = []
 for fg, bg, label in pairs:
     r = ratio(rgb[fg], rgb[bg])
-    flag = 'PASS' if r >= 4.5 else ('large-only' if r >= 3.0 else 'FAIL')
-    print(f"  {r:5.2f}  {flag:10s}  {label}")
-    if r < 4.5:
-        worst.append((label, round(r,2), flag))
-print("\nbelow AA-normal:", worst if worst else "none")
+    # Fills used as UI elements (rings, bars, icon strokes) only need 3.0.
+    is_ui = 'UI element' in label
+    need = 3.0 if is_ui else 4.5
+    flag = 'PASS' if r >= need else ('large-only' if r >= 3.0 and not is_ui else 'FAIL')
+    print(f"  {r:5.2f}  (need {need})  {flag:10s}  {label}")
+    if r < need:
+        worst.append((label, round(r, 2), flag))
+print("\nbelow threshold:", worst if worst else "none")

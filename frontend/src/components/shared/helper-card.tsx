@@ -18,11 +18,11 @@ export function HelperCard({ helper, onSave, saved }: { helper: HelperSummary; o
   const score = helper.trust_score
   const scoreColor =
     score.category === 'high'
-      ? 'text-success'
+      ? 'text-success-foreground'
       : score.category === 'moderate'
         ? 'text-primary'
         : score.category === 'needs_review'
-          ? 'text-warning'
+          ? 'text-warning-foreground'
           : 'text-muted-foreground'
 
   const badges = PRIORITY_BADGES.filter((b) => helper.verification_badges.includes(b))

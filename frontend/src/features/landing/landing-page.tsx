@@ -211,7 +211,7 @@ export function LandingPage() {
             <div className="rounded-2xl border bg-card p-8 shadow-sm">
               <TrustScoreRing score={85} category="high" size={200} stroke={14} />
               <div className="mt-4 text-center">
-                <div className="font-semibold text-success">High Trust</div>
+                <div className="font-semibold text-success-foreground">High Trust</div>
                 <div className="text-sm text-muted-foreground">80 to 100</div>
               </div>
             </div>
@@ -225,10 +225,10 @@ export function LandingPage() {
             </p>
             <div className="mt-8 space-y-4">
               {[
-                ['Verified job completion', '+20', 'text-success'],
-                ['Positive moderated review', '+10', 'text-success'],
-                ['Long-term employment (12+ months)', '+10', 'text-success'],
-                ['Additional verified employment', '+5', 'text-success'],
+                ['Verified job completion', '+20', 'text-success-foreground'],
+                ['Positive moderated review', '+10', 'text-success-foreground'],
+                ['Long-term employment (12+ months)', '+10', 'text-success-foreground'],
+                ['Additional verified employment', '+5', 'text-success-foreground'],
                 ['Verified complaint', '−15', 'text-destructive'],
                 ['Verified job abandonment', '−20', 'text-destructive'],
               ].map(([label, pts, color]) => (
