@@ -1,8 +1,8 @@
-# Domestic Helper
+# Hire Safe
 
 **A verified trust network for domestic staff hiring in Nigeria.**
 
-Domestic Helper connects employers (households and agencies) with domestic helpers
+Hire Safe connects employers (households and agencies) with domestic helpers
 (housekeepers, nannies, cooks, drivers, caregivers and more) through a controlled
 verification and reputation system. It helps families hire safer, helps good helpers
 build verified reputations, and gives both sides fair, audited protection.

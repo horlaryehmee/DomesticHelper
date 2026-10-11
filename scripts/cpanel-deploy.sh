@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Domestic Helper — cPanel deploy script.
+# Hire Safe cPanel deploy script.
 # Run from the REPO ROOT on the server, after `git pull` + `composer install`.
 #
 #   cd ~/domestichelper.yourdomain.com

@@ -52,7 +52,7 @@ class AuthController extends Controller
 
         $notifications->send($user, new PlatformNotification(
             type: 'welcome',
-            title: 'Welcome to Domestic Helper',
+            title: 'Welcome to Hire Safe',
             body: 'Your employer account has been created. Verify your phone to start hiring safely.',
         ));
 
@@ -120,7 +120,7 @@ class AuthController extends Controller
 
         $notifications->send($user, new PlatformNotification(
             type: 'welcome',
-            title: 'Welcome to Domestic Helper',
+            title: 'Welcome to Hire Safe',
             body: 'Your helper profile has been created. Verify your phone and complete your identity verification to build trust.',
         ));
 

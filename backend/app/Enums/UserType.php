@@ -12,7 +12,7 @@ enum UserType: string
     {
         return match ($this) {
             self::Employer => 'Employer',
-            self::Helper => 'Domestic Helper',
+            self::Helper => 'Hire Safe Helper',
             self::Admin => 'Administrator',
         };
     }

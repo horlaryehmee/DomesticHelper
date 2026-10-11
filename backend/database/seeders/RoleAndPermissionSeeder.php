@@ -15,7 +15,7 @@ class RoleAndPermissionSeeder extends Seeder
         ['slug' => 'moderator', 'name' => 'Moderator', 'description' => 'Reviews, reports and disputes moderation'],
         ['slug' => 'support-agent', 'name' => 'Support Agent', 'description' => 'Customer support'],
         ['slug' => 'employer', 'name' => 'Employer', 'description' => 'Hiring households and agencies'],
-        ['slug' => 'helper', 'name' => 'Domestic Helper', 'description' => 'Verified domestic staff'],
+        ['slug' => 'helper', 'name' => 'Hire Safe Helper', 'description' => 'Verified domestic staff'],
     ];
 
     private array $permissions = [

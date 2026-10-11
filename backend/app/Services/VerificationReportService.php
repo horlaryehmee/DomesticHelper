@@ -80,7 +80,7 @@ class VerificationReportService
             'average_rating' => round($approvedReviews->avg('rating') ?? 0, 1),
             'verified_jobs_count' => $verifiedEmployment->count(),
             'generated_at' => now()->toIso8601String(),
-            'disclaimer' => 'This report reflects information verified by Domestic Helper at the time of generation. It is provided to support hiring decisions and is not a guarantee of future conduct. Report only valid for the purchasing employer.',
+            'disclaimer' => 'This report reflects information verified by Hire Safe at the time of generation. It is provided to support hiring decisions and is not a guarantee of future conduct. Report only valid for the purchasing employer.',
         ];
     }
 }

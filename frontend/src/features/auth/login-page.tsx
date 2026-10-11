@@ -96,7 +96,7 @@ export function LoginPage() {
             <ShieldCheck className="size-6 text-primary" />
           </span>
           <CardTitle className="text-2xl">Welcome back</CardTitle>
-          <CardDescription>Log in to your Domestic Helper account</CardDescription>
+          <CardDescription>Log in to your Hire Safe account</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">

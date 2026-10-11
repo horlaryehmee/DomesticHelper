@@ -90,14 +90,14 @@ class OtpService
                 Log::info("OTP for {$recipient} ({$purpose}): {$code}");
                 return;
             }
-            Mail::raw("Your Domestic Helper verification code is: {$code}. It expires in 10 minutes.", fn ($m) => $m->to($recipient)->subject('Your verification code'));
+            Mail::raw("Your Hire Safe verification code is: {$code}. It expires in 10 minutes.", fn ($m) => $m->to($recipient)->subject('Your verification code'));
             return;
         }
 
         // Phone — SMS via Termii when configured, otherwise log (dev).
         $apiKey = config('services.termii.key');
         if ($apiKey) {
-            app(SmsService::class)->send($recipient, "Your Domestic Helper verification code is {$code}. It expires in 10 minutes.");
+            app(SmsService::class)->send($recipient, "Your Hire Safe verification code is {$code}. It expires in 10 minutes.");
         } else {
             Log::info("OTP for {$recipient} ({$purpose}): {$code}");
         }

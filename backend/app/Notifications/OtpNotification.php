@@ -24,7 +24,7 @@ class OtpNotification extends Notification implements ShouldQueue
     {
         return (new MailMessage)
             ->subject('Your verification code')
-            ->line("Your Domestic Helper {$this->purpose} code is:")
+            ->line("Your Hire Safe {$this->purpose} code is:")
             ->line("**{$this->code}**")
             ->line('This code expires in 10 minutes. If you did not request this, you can safely ignore this message.');
     }

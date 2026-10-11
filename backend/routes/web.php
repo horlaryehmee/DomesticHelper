@@ -22,7 +22,7 @@ Route::get('/{any?}', function () {
     }
 
     return response()->json([
-        'app' => 'Domestic Helper API',
+        'app' => 'Hire Safe API',
         'status' => 'ok',
         'docs' => 'The API lives under /api. The React frontend runs at '.(string) config('app.frontend_url').' in development.',
     ]);

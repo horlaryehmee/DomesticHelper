@@ -51,10 +51,10 @@ export function LandingPage() {
               <ShieldCheck className="size-3.5 text-primary" /> Nigeria&apos;s domestic staff trust network
             </Badge>
             <h1 className="text-4xl font-bold tracking-tight sm:text-5xl lg:text-6xl">
-              Find Domestic Helpers <span className="text-primary">You Can Trust</span>
+              Hire Domestic Staff <span className="text-primary">You Can Trust</span>
             </h1>
             <p className="mt-5 max-w-xl text-lg text-muted-foreground">
-              Discover verified domestic staff, check employment history, review trust scores, and hire with greater confidence.
+              Hire Safe is a verified trust network: check employment history, review trust scores, and hire with confidence.
             </p>
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
               <Button size="lg" asChild>
