@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 import {
   ShieldCheck, Search, UserCheck, Handshake, FileCheck2, Scale, Star, BadgeCheck,
-  Phone, Fingerprint, Briefcase, ChevronRight, Quote, Sparkles, AlertTriangle, Lock,
+  Phone, Fingerprint, Briefcase, ChevronRight, Quote, Sparkles, AlertTriangle,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -14,6 +14,8 @@ import { api } from '@/lib/api'
 import { Skeleton } from '@/components/ui/skeleton'
 import type { HelperSummary, PaginationMeta } from '@/lib/types'
 import { useAuth } from '@/lib/auth'
+import { HeroAnimation } from './hero-animation'
+import { HeroBackground } from '@/components/ui/hero-background'
 
 const faqs = [
   { q: 'How do trust scores work?', a: 'Every helper starts at a neutral score of 50. Points are added only for verified events: confirmed employment, positive moderated reviews and long-term roles. They are subtracted only when our admin team verifies a serious complaint. No single employer can change a helper\u2019s score.' },
@@ -43,26 +45,26 @@ export function LandingPage() {
   return (
     <div>
       {/* ============ HERO ============ */}
-      <section className="relative overflow-hidden border-b bg-gradient-to-b from-primary/5 via-background to-background">
-        <div className="pointer-events-none absolute -top-32 right-0 size-[500px] rounded-full bg-primary/10 blur-3xl" />
-        <div className="mx-auto grid max-w-7xl gap-10 px-4 py-20 sm:px-6 lg:grid-cols-2 lg:items-center lg:py-28">
+      <section className="relative isolate overflow-hidden border-b bg-[#140e1d] text-white">
+        <HeroBackground />
+        <div className="relative mx-auto grid max-w-7xl gap-10 px-4 py-20 sm:px-6 lg:grid-cols-2 lg:items-center lg:py-28">
           <div>
-            <Badge variant="secondary" className="mb-5 gap-1.5 px-3 py-1">
+            <Badge variant="secondary" className="mb-5 gap-1.5 border border-white/15 bg-white/10 px-3 py-1 text-white">
               <ShieldCheck className="size-3.5 text-coral" /> Nigeria&apos;s domestic staff trust network
             </Badge>
             <h1 className="text-4xl font-bold tracking-tight sm:text-5xl lg:text-6xl">
               Hire Domestic Staff <span className="text-coral">You Can Trust</span>
             </h1>
-            <p className="mt-5 max-w-xl text-lg text-muted-foreground">
+            <p className="mt-5 max-w-xl text-lg text-white/75">
               Hire Safe is a verified trust network: check employment history, review trust scores, and hire with confidence.
             </p>
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-              <Button size="lg" asChild>
+              <Button size="lg" className="bg-coral text-coral-foreground hover:bg-coral/90" asChild>
                 <Link to="/search">
                   <Search /> Find a Helper
                 </Link>
               </Button>
-              <Button size="lg" variant="outline" asChild>
+              <Button size="lg" variant="outline" className="border-white/35 bg-transparent text-white hover:bg-white/10 hover:text-white" asChild>
                 <Link to={heroCta}>
                   Create Your Profile <ChevronRight />
                 </Link>
@@ -74,44 +76,15 @@ export function LandingPage() {
                 ['100%', 'Moderated reviews'],
                 ['0 to 100', 'Transparent trust score'],
               ].map(([value, label]) => (
-                <div key={label} className="border-l-2 border-primary/30 pl-3">
+                <div key={label} className="border-l-2 border-coral/70 pl-3">
                   <div className="text-xl font-bold">{value}</div>
-                  <div className="text-xs text-muted-foreground">{label}</div>
+                  <div className="text-xs text-white/65">{label}</div>
                 </div>
               ))}
             </div>
           </div>
 
-          <div className="relative">
-            <Card className="mx-auto max-w-md gap-5 p-6 shadow-xl">
-              <div className="flex items-center gap-4">
-                <div className="flex size-14 items-center justify-center rounded-full bg-primary/10">
-                  <ShieldCheck className="size-7 text-primary" />
-                </div>
-                <div>
-                  <div className="font-semibold">A verified helper profile</div>
-                  <div className="text-sm text-muted-foreground">Lekki, Lagos · Nanny</div>
-                </div>
-                <div className="ml-auto">
-                  <TrustScoreRing score={85} category="high" size={72} stroke={6} />
-                </div>
-              </div>
-              <div className="flex flex-wrap gap-1.5">
-                {['Identity Verified', 'Phone Verified', 'Employment Verified', 'Reference Checked'].map((b) => (
-                  <Badge key={b} variant="success" className="font-normal">
-                    <BadgeCheck className="size-3" /> {b}
-                  </Badge>
-                ))}
-              </div>
-              <div className="space-y-2 rounded-lg border bg-muted/40 p-4 text-sm">
-                <div className="flex items-center gap-2 font-medium"><Star className="size-4 fill-warning text-warning" /> 4.8 average from 3 verified employers</div>
-                <div className="text-muted-foreground">6 years experience · Verified employment history · Reference checked</div>
-              </div>
-              <div className="rounded-lg border border-success/30 bg-success/10 p-3 text-sm text-success-foreground">
-                <Lock className="mr-1.5 inline size-4" /> NIN &amp; address never shown publicly. Only verified information appears on profiles.
-              </div>
-            </Card>
-          </div>
+          <HeroAnimation />
         </div>
       </section>
 
@@ -387,3 +360,4 @@ export function LandingPage() {
     </div>
   )
 }
+
