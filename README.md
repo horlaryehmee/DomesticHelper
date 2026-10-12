@@ -301,70 +301,119 @@ notes, internal trust calculations.
 
 ## Deployment to cPanel / shared hosting
 
-The repo is structured so it deploys with **git alone** (the production SPA build in
-`frontend/dist` is committed), and ships `scripts/cpanel-deploy.sh` to finish the
-job on the server.
+The committed `frontend/dist` is the production React build. cPanel needs PHP 8.3+
+for both the website and CLI, Composer, MySQL/MariaDB, Git, and Terminal/SSH access.
+Keep the repository **outside** `public_html`; only `backend/public` should be web
+accessible. Confirm the account's PHP extensions satisfy `composer check-platform-reqs`.
 
-### 1. One-time server setup (SSH into your cPanel account)
+### First deployment
+
+1. In cPanel **Domains**, add the Hire Safe domain or subdomain and point its
+   document root to `hiresafe/backend/public` (relative to your cPanel home).
+   cPanel does not let you change the primary domain's document root in the
+   normal Domains interface. If Hire Safe is the primary domain, ask the host
+   to point it at this path, or use an addon domain/subdomain that allows a
+   custom document root.
+2. In **MultiPHP Manager**, select PHP 8.3 or newer for the domain. In
+   **Database Wizard**, create a database and user, grant that user access,
+   and note their full cPanel-prefixed names.
+3. In **Git Version Control**, clone
+   `https://github.com/horlaryehmee/DomesticHelper.git` into
+   `/home/<account>/hiresafe` (not `public_html`). For a private GitHub
+   repository, first set up a read-only SSH deploy key and use the SSH clone
+   URL.
+4. Open cPanel **Terminal** and prepare the environment:
+
+   ```bash
+   cd ~/hiresafe
+   cp backend/.env.example backend/.env
+   nano backend/.env
+   ```
+
+   Set at least these values in `backend/.env` (replace the examples):
+
+   ```dotenv
+   APP_NAME="Hire Safe"
+   APP_ENV=production
+   APP_DEBUG=false
+   APP_URL=https://hiresafe.example.com
+   DB_CONNECTION=mysql
+   DB_HOST=localhost
+   DB_PORT=3306
+   DB_DATABASE=<full_cpanel_database_name>
+   DB_USERNAME=<full_cpanel_database_user>
+   DB_PASSWORD=<database_password>
+   QUEUE_CONNECTION=database
+   DB_QUEUE_TABLE=queue_jobs
+   MAIL_MAILER=log
+   ```
+
+   Configure real SMTP credentials before relying on verification/reset
+   emails. Configure Paystack or Flutterwave keys before accepting live
+   payments; with neither key, the app selects its sandbox payment provider.
+   Keep `backend/.env` private and never commit it.
+
+5. Still in Terminal, install the PHP dependencies, create a **new** app key,
+   and deploy the committed frontend:
+
+   ```bash
+   cd ~/hiresafe
+   composer --working-dir=backend install --no-dev --prefer-dist --optimize-autoloader --no-interaction
+   php backend/artisan key:generate
+   bash scripts/cpanel-deploy.sh
+   ```
+
+   The deploy script copies `frontend/dist` into `backend/public`, creates
+   the storage link, migrates the database, and warms Laravel caches.
+
+6. Seed only the reference data for a real launch. Do **not** run
+   `db:seed` or `migrate:fresh --seed` in production: the default seeder
+   creates fictional users, reviews, and an admin with a known password.
+
+   ```bash
+   php backend/artisan db:seed --class=RoleAndPermissionSeeder --force
+   php backend/artisan db:seed --class=SkillAndLocationSeeder --force
+   php backend/artisan db:seed --class=TrustScoreRuleSeeder --force
+   php backend/artisan db:seed --class=SettingSeeder --force
+   ```
+
+   Create a real super-admin account with a unique password through
+   `php backend/artisan tinker` after the role seeder finishes:
+
+   ```php
+   $admin = App\Models\User::create(['first_name' => 'Your', 'last_name' => 'Name', 'email' => 'you@hiresafe.example.com', 'password' => 'REPLACE_WITH_A_LONG_UNIQUE_PASSWORD', 'user_type' => 'admin', 'email_verified_at' => now()]);
+   $admin->roles()->attach(App\Models\Role::where('slug', 'super-admin')->firstOrFail());
+   ```
+
+7. In **SSL/TLS Status**, confirm the domain has a valid certificate (run
+   AutoSSL if needed). Open the HTTPS homepage, `/up`, and `/api/meta`.
+   Test sign-in and a deep React route such as `/search`. Ensure
+   `backend/storage` and `backend/bootstrap/cache` are writable by PHP.
+8. Add two cPanel **Cron Jobs** (replace `<account>` with the actual
+   username and use the correct PHP CLI path if `php` is not PHP 8.3+):
+
+   ```cron
+   * * * * * cd /home/<account>/hiresafe && php backend/artisan schedule:run >> /dev/null 2>&1
+   * * * * * cd /home/<account>/hiresafe && php backend/artisan queue:work --stop-when-empty --max-time=50 >> /dev/null 2>&1
+   ```
+
+### Later updates
+
+After pushing to GitHub, open **Git Version Control → Manage → Pull or Deploy**,
+click **Update from Remote**, then **Deploy HEAD Commit**. The checked-in
+`.cpanel.yml` runs Composer in `backend` and the deploy script. A GitHub
+push alone does not trigger cPanel pull deployment. Alternatively, in Terminal:
 
 ```bash
-# Create the project directory next to your other apps (adjust paths to your cPanel)
-cd ~
-git clone https://github.com/horlaryehmee/DomesticHelper.git domestichelper.yourdomain.com
-cd domestichelper.yourdomain.com
-php ~/composer.phar install --no-dev --optimize-autoloader --no-interaction
-cp backend/.env.example backend/.env
-nano backend/.env     # set DB creds, APP_URL, SESSION_DOMAIN, PAYMENT keys
-php backend/artisan key:generate
-php backend/artisan migrate --seed --force
-php backend/artisan storage:link
+cd ~/hiresafe
+git pull --ff-only origin main
+composer --working-dir=backend install --no-dev --prefer-dist --optimize-autoloader --no-interaction
 bash scripts/cpanel-deploy.sh
 ```
 
-### 2. Point the subdomain at the app
-
-In cPanel → **Domains** → create `domestichelper.yourdomain.com` (or use an existing
-addon domain) and set its **document root** to:
-
-```
-/home/<account>/domestichelper.yourdomain.com/backend/public
-```
-
-> `backend/public` is the only web-exposed directory. Everything else (app code,
-> `.env`, private storage) lives above the document root. The Laravel web routes
-> serve the SPA (`public/index.html`) with a catch-all so React Router deep links
-> work, while `/api/*` and `/storage/*` are handled by Laravel and Apache
-> respectively.
-
-### 3. Ensure the scheduler runs (trust-score jobs, notifications, cleanup)
-
-Add a cron job in cPanel (every minute):
-
-```
-* * * * * php /home/<account>/domestichelper.yourdomain.com/backend/artisan schedule:run >> /dev/null 2>&1
-```
-
-(Queue workers also use the `database` driver; the scheduler processes queued jobs via
-`php artisan queue:work --once` on the default schedule.)
-
-### 4. Deploying updates
-
-Either **manually** over SSH:
-
-```bash
-cd ~/domestichelper.yourdomain.com
-git pull origin main
-php ~/composer.phar install --no-dev --optimize-autoloader --no-interaction
-php backend/artisan migrate --force
-bash scripts/cpanel-deploy.sh
-```
-
-Or via **cPanel Git Version Control** (Git Version Control → create repository,
-select branch `main`, set the same document root as above) — `.cpanel.yml` at the
-repo root runs the same commands automatically after every push.
-
-`scripts/cpanel-deploy.sh` (re)installs the committed SPA build into
-`backend/public/`, clears caches, and warms the app — safe to run after every pull.
+Do not run the deploy script before `backend/.env` exists. The generated
+`backend/public/assets` and `backend/public/index.html` are ignored by Git,
+so deploying them does not dirty the cPanel-managed checkout.
 
 ## Roadmap
 

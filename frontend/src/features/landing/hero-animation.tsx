@@ -2,7 +2,7 @@
 import { ArrowRight, BadgeCheck, BriefcaseBusiness, CheckCircle2, MapPin, Search, ShieldCheck, Star } from 'lucide-react'
 import './hero-animation.css'
 
-const LOOP = 7000
+const DURATION = 6200
 
 export function HeroAnimation() {
   const root = useRef<HTMLDivElement>(null)
@@ -21,18 +21,22 @@ export function HeroAnimation() {
   }, [])
 
   useEffect(() => {
-    if (reducedMotion || !visible) return
+    if (reducedMotion || !visible || elapsed >= DURATION) return
     const started = performance.now() - elapsed
-    const timer = window.setInterval(() => setElapsed((performance.now() - started) % LOOP), 50)
+    const timer = window.setInterval(() => {
+      const next = Math.min(DURATION, performance.now() - started)
+      setElapsed(next)
+      if (next >= DURATION) window.clearInterval(timer)
+    }, 50)
     return () => window.clearInterval(timer)
     // Preserve progress while this illustration is outside the viewport.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [visible, reducedMotion])
 
-  const time = reducedMotion ? 6200 : elapsed
+  const time = reducedMotion ? DURATION : elapsed
   const show = (start: number, duration = 350) => Math.max(0, Math.min(1, (time - start) / duration))
   const reveal = (start: number) => ({ opacity: show(start), transform: `translateY(${8 * (1 - show(start))}px)` })
-  const cardProgress = Math.min(show(100, 600), 1 - show(6550, 400))
+  const cardProgress = show(100, 600)
 
   return (
     <div ref={root} className="hero-preview" style={{ opacity: cardProgress, transform: `translateY(${20 * (1 - cardProgress)}px) scale(${0.96 + 0.04 * cardProgress})` }} aria-label="Preview of verified domestic helper search results">

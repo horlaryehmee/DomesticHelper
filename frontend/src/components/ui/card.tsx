@@ -11,6 +11,34 @@ function Card({ className, ...props }: React.ComponentProps<'div'>) {
   )
 }
 
+function DotsCard({ className, children, ...props }: React.ComponentProps<'div'>) {
+  return (
+    <div
+      data-slot="dots-card"
+      className={cn('relative w-full bg-transparent text-card-foreground', className)}
+      {...props}
+    >
+      <span className="absolute inset-x-0 top-0 h-px bg-border" aria-hidden="true" />
+      <span className="absolute inset-x-0 bottom-0 h-px bg-border" aria-hidden="true" />
+      <div className="relative h-full border-x border-border py-8">
+        {[
+          'top-0 left-0 -translate-x-1/2 -translate-y-1/2',
+          'top-0 right-0 translate-x-1/2 -translate-y-1/2',
+          'bottom-0 left-0 -translate-x-1/2 translate-y-1/2',
+          'bottom-0 right-0 translate-x-1/2 translate-y-1/2',
+        ].map((position) => (
+          <span
+            key={position}
+            className={cn('absolute z-10 size-1 rounded-full bg-coral ring-4 ring-background', position)}
+            aria-hidden="true"
+          />
+        ))}
+        {children}
+      </div>
+    </div>
+  )
+}
+
 function CardHeader({ className, ...props }: React.ComponentProps<'div'>) {
   return (
     <div
@@ -47,4 +75,4 @@ function CardFooter({ className, ...props }: React.ComponentProps<'div'>) {
   return <div data-slot="card-footer" className={cn('flex items-center px-6', className)} {...props} />
 }
 
-export { Card, CardHeader, CardFooter, CardTitle, CardAction, CardDescription, CardContent }
+export { Card, DotsCard, CardHeader, CardFooter, CardTitle, CardAction, CardDescription, CardContent }

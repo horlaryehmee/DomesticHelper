@@ -1,22 +1,7 @@
----
-# cPanel Git Version Control auto-deployment for Hire Safe.
-#
-# IMPORTANT — adjust DEPLOYPATH to your cPanel account path before first use.
-# The document root of the (sub)domain must point at:
-#   <DEPLOYPATH>/backend/public
-#
-# NOTE: .env is NOT committed (credentials). After the first deploy, create
-# backend/.env on the server manually (see README, "Deployment to cPanel").
-# Subsequent pushes will not touch it.
-#
+# cPanel Git Version Control runs these tasks from the repository root.
+# Clone the repository outside public_html and point the domain document root
+# to <repository>/backend/public. Create backend/.env before first deployment.
 deployment:
   tasks:
-    - export DEPLOYPATH=/home/REPLACE_WITH_CPANEL_ACCOUNT/domestichelper.yourdomain.com
-    - /bin/cp -R backend $DEPLOYPATH
-    - /bin/cp -R frontend/dist/. $DEPLOYPATH/backend/public/
-    - /bin/cp -R scripts $DEPLOYPATH
-    - export PATH=$PATH:/usr/local/bin
-    - command -v composer >/dev/null 2>&1 && composer install --no-dev --optimize-autoloader --no-interaction || echo "composer not on PATH, skipping install"
-    - /bin/bash $DEPLOYPATH/scripts/cpanel-deploy.sh
-    - /usr/bin/php $DEPLOYPATH/backend/artisan migrate --force
-    - /usr/bin/php $DEPLOYPATH/backend/artisan optimize:clear
+    - composer --working-dir=backend install --no-dev --prefer-dist --optimize-autoloader --no-interaction
+    - /bin/bash scripts/cpanel-deploy.sh

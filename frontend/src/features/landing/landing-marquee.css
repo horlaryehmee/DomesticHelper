@@ -1,0 +1,107 @@
+.trust-marquee {
+  overflow: hidden;
+  border-bottom: 1px solid var(--border);
+  background: var(--background);
+  color: var(--primary);
+  padding-block: 0.95rem;
+}
+
+.trust-marquee-track,
+.trust-marquee-group,
+.trust-marquee-item {
+  display: flex;
+  align-items: center;
+}
+
+.trust-marquee-track {
+  width: max-content;
+  animation: trust-marquee-scroll 55s linear infinite;
+}
+
+.trust-marquee:hover .trust-marquee-track {
+  animation-play-state: paused;
+}
+
+.trust-marquee-group {
+  flex: none;
+  min-width: 100vw;
+}
+
+.trust-marquee-item {
+  flex: none;
+  gap: 1.75rem;
+  padding-left: 1.75rem;
+  white-space: nowrap;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.trust-marquee-divider {
+  display: block;
+  width: 0.3rem;
+  height: 0.3rem;
+  border-radius: 50%;
+  background: var(--coral);
+}
+
+@keyframes trust-marquee-scroll {
+  to { transform: translateX(-50%); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .trust-marquee { overflow: visible; }
+  .trust-marquee-track { width: auto; animation: none; }
+  .trust-marquee-group { flex-wrap: wrap; row-gap: 0.75rem; }
+  .trust-marquee-group[aria-hidden='true'] { display: none; }
+}
+
+.experience-marquee {
+  overflow: hidden;
+  mask-image: linear-gradient(to right, transparent, black 3%, black 97%, transparent);
+}
+
+.experience-marquee-track,
+.experience-marquee-group {
+  display: flex;
+}
+
+.experience-marquee-track {
+  width: max-content;
+  animation: experience-marquee-scroll 65s linear infinite;
+}
+
+.experience-marquee:hover .experience-marquee-track,
+.experience-marquee:focus-within .experience-marquee-track {
+  animation-play-state: paused;
+}
+
+.experience-marquee-group {
+  flex: none;
+  min-width: 100vw;
+  gap: 1.25rem;
+  padding-right: 1.25rem;
+}
+
+.experience-marquee-card {
+  display: flex;
+  flex: 0 0 clamp(280px, 30vw, 380px);
+  flex-direction: column;
+  min-height: 235px;
+  padding: 1.5rem;
+  border: 1px solid var(--border);
+  border-radius: 1rem;
+  background: var(--card);
+  box-shadow: 0 2px 12px rgb(0 0 0 / 0.04);
+}
+
+@keyframes experience-marquee-scroll {
+  to { transform: translateX(-50%); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .experience-marquee { overflow: visible; mask-image: none; }
+  .experience-marquee-track { width: auto; animation: none; }
+  .experience-marquee-group { flex-wrap: wrap; justify-content: center; padding-inline: 1rem; }
+  .experience-marquee-group[aria-hidden='true'] { display: none; }
+}

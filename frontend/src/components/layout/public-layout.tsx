@@ -16,6 +16,7 @@ import { cn } from '@/lib/utils'
 import { LogoLockup } from '@/components/logo'
 
 const links = [
+  { to: '/', label: 'Home' },
   { to: '/search', label: 'Find Helpers' },
   { to: '/jobs', label: 'Jobs' },
   { to: '/community', label: 'Community Stories' },
@@ -41,6 +42,7 @@ export function PublicLayout() {
               <NavLink
                 key={l.to}
                 to={l.to}
+                end={l.to === '/'}
                 className={({ isActive }) =>
                   cn('rounded-md px-3 py-2 text-sm font-medium transition-colors', isActive ? 'bg-accent text-accent-foreground' : 'text-muted-foreground hover:text-foreground')
                 }
@@ -102,7 +104,7 @@ export function PublicLayout() {
           <div className="border-t px-4 py-3 md:hidden">
             <div className="flex flex-col gap-1">
               {links.map((l) => (
-                <NavLink key={l.to} to={l.to} onClick={() => setMobileOpen(false)} className="rounded-md px-3 py-2 text-sm font-medium hover:bg-accent">
+                <NavLink key={l.to} to={l.to} end={l.to === '/'} onClick={() => setMobileOpen(false)} className={({ isActive }) => cn('rounded-md px-3 py-2 text-sm font-medium', isActive ? 'bg-accent text-accent-foreground' : 'hover:bg-accent')}>
                   {l.label}
                 </NavLink>
               ))}
@@ -148,6 +150,7 @@ export function PublicLayout() {
           <div>
             <h4 className="text-sm font-semibold">Platform</h4>
             <ul className="mt-3 space-y-2 text-sm text-muted-foreground">
+              <li><Link to="/" className="hover:text-foreground">Home</Link></li>
               <li><Link to="/search" className="hover:text-foreground">Find Helpers</Link></li>
               <li><Link to="/jobs" className="hover:text-foreground">Browse Jobs</Link></li>
               <li><Link to="/community" className="hover:text-foreground">Community Stories</Link></li>
