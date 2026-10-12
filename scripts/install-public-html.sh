@@ -44,31 +44,74 @@ esac
 
 PUBLIC_DIR="$REPO_ROOT/backend/public"
 
+# --- Refuse to run anywhere unauthorised -------------------------------------
+# THIS GUARD IS THE POINT OF THE SCRIPT. An explicit target is the ONLY
+# authoritative signal, because the fallback heuristics below cannot distinguish
+# a server document root from a workstation checkout that merely happens to sit
+# somewhere unnamed. Without this, running the script in the wrong directory
+# silently drops a router into an unrelated site's web root — which is exactly
+# how a sibling project gets taken down.
+SUBSTITUTE="${PUBLIC_HTML:-}"
+if [ -z "$SUBSTITUTE" ] && [ ! -f "$REPO_ROOT/.cpanel-install-approved" ]; then
+  if [ "$(basename "$REPO_ROOT")" != "public_html" ] \
+     && [ "$(basename "$(cd "$REPO_ROOT/.." && pwd)")" != "public_html" ]; then
+    cat >&2 <<EOF
+REFUSING TO INSTALL.
+
+No target was given, and this checkout is neither named public_html nor sitting
+inside a directory named public_html:
+
+  checkout : $REPO_ROOT
+  parent   : $(cd "$REPO_ROOT/.." && pwd)
+
+If this really is the server's document root, confirm it once with:
+  touch "$REPO_ROOT/.cpanel-install-approved"
+then re-run. Otherwise name the target explicitly:
+
+  PUBLIC_HTML=/home/<user>/public_html bash scripts/install-public-html.sh
+
+Nothing was written.
+EOF
+    exit 2
+  fi
+fi
+
 # --- Resolve the public_html target -----------------------------------------
-# NEVER guess from an unverified parent: on a workstation the parent directory
-# holds unrelated projects and writing router files there would break them.
+# Two supported layouts, and they install into DIFFERENT directories:
+#
+#   A) repo IS the document root   -> cPanel Git Version Control cloned into
+#      "public_html", so ~/public_html/.git and ~/public_html/backend both
+#      exist. Router goes in the checkout root.
+#
+#   B) repo INSIDE the document root -> ~/public_html/hiresafe/backend.
+#      Router goes in the PARENT, i.e. ~/public_html.
+SELF_BASE="$(basename "$REPO_ROOT")"
 PARENT="$(cd "$REPO_ROOT/.." && pwd)"
 
 if [ -n "${PUBLIC_HTML:-}" ]; then
+  # An explicit target wins, but an unrecognised one is refused rather than
+  # guessed at, because the failure mode is silently breaking another site.
+  case "$(basename "$PUBLIC_HTML")" in
+    public_html|htaccess-test|*-test) : ;;
+    *)
+      echo "WARNING: PUBLIC_HTML=$PUBLIC_HTML is not named public_html." >&2
+      echo "         Proceeding because you set it explicitly." >&2
+      ;;
+  esac
   PUBLIC_HTML="$(cd "$(dirname "$PUBLIC_HTML")" && pwd)/$(basename "$PUBLIC_HTML")"
+elif [ "$SELF_BASE" = "public_html" ]; then
+  # Layout A: the checkout IS the document root.
+  PUBLIC_HTML="$REPO_ROOT"
 elif [ "$(basename "$PARENT")" = "public_html" ]; then
+  # Layout B: the checkout sits inside the document root.
   PUBLIC_HTML="$PARENT"
 else
-  cat >&2 <<EOF
-ERROR: cannot determine the public_html target.
-
-The checkout lives at:
-  $REPO_ROOT
-and its parent, "$(basename "$PARENT")", is not named public_html — this is
-probably a development machine, not the server.
-
-Pass the target explicitly, for example:
-  PUBLIC_HTML=/home/hiresafe/public_html bash scripts/install-public-html.sh
-
-To rehearse the install locally without touching anything permanent:
-  PUBLIC_HTML="\$HOME/.hiresafe-htaccess-test" bash scripts/install-public-html.sh
-EOF
-  exit 2
+  # Layout A variant: the checkout is the document root but is not literally
+  # named public_html (e.g. a staging copy). Only reachable after the explicit
+  # .cpanel-install-approved opt-in above.
+  echo ">> Checkout is not named public_html; installing into the checkout root."
+  echo ">> (approved by .cpanel-install-approved)"
+  PUBLIC_HTML="$REPO_ROOT"
 fi
 
 echo ">> Checkout root  : $REPO_ROOT"
