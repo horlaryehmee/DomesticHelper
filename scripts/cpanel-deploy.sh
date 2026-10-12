@@ -30,10 +30,35 @@ fi
 
 # 1. Install the SPA into the Laravel public dir.
 #    - assets/ is cleared first so stale hashed bundles don't linger.
-#    - Laravel's own files (index.php, .htaccess, robots.txt) are never touched.
+#    - Laravel's own files (index.php, robots.txt) are never touched.
+#    - public/.htaccess IS refreshed: the stock Laravel stub has no
+#      proxy/TLS detection and no myapp.request_uri normalisation, and it is
+#      gitignored, so a fresh clone would ship a broken one.
 echo ">> Installing SPA build into backend/public"
 rm -rf "$PUBLIC/assets" "$PUBLIC/index.html"
 cp -R "$DIST/." "$PUBLIC/"
+cp "$ROOT/cpanel/backend-public.htaccess" "$PUBLIC/.htaccess"
+
+# 1c. Main-domain (public_html) front controller. No-op when the document root
+#     already points at backend/public.
+#
+#     NOTE: Composer's generated autoloader is fully portable — every path in
+#     vendor/composer/*.php is __DIR__-relative with no absolute prefix — so it
+#     does NOT need regenerating after the checkout moves to its final location.
+#     Do not "fix" it by deleting autoload_static.php: with
+#     --optimize-autoloader, autoload_real.php hard-requires that file and every
+#     request 500s until composer regenerates it.
+if [ -f "$ROOT/cpanel/public_html.htaccess" ]; then
+  PARENT_DIR="$(dirname "$ROOT")"
+  # Only touch a parent that is genuinely this site's public_html.
+  if [ "$(basename "$PARENT_DIR")" = "public_html" ] || [ -f "$PARENT_DIR/.cpanel.yml" ]; then
+    echo ">> Ensuring public_html router files are current"
+    cp "$ROOT/cpanel/public_html.htaccess" "$PARENT_DIR/.htaccess"
+    cp "$ROOT/cpanel/public_html.index.php" "$PARENT_DIR/index.php"
+  else
+    echo ">> Parent is not public_html — skipping router install (run scripts/install-public-html.sh explicitly)"
+  fi
+fi
 
 # 2. Storage symlink (idempotent) for public profile images.
 php "$ROOT/backend/artisan" storage:link >/dev/null 2>&1 || true

@@ -1,0 +1,237 @@
+# Hire Safe — main-domain router for cPanel shared hosting.
+#
+# cPanel will not let you move the MAIN domain's document root away from
+# public_html, so this file lives in public_html and forwards every request
+# into the Laravel public directory at public_html/backend/public.
+#
+# Nothing in here is needed on a host where the document root CAN be pointed
+# at backend/public — see README ("Document root options").
+#
+# Files this file expects to sit next to it in public_html:
+#   index.php    shim that boots backend/public/index.php
+#   backend/     the checkout (Laravel lives in backend/, SPA in frontend/dist)
+#
+# Served from here:
+#   /assets/*            the committed React build (copied in by the deploy script)
+#   /favicon*.png /apple-touch-icon.png
+#   /storage/*           public profile images (symlinked by `artisan storage:link`)
+#   /community-media/*   platform-owned story videos and posters
+#   /api/*               Laravel API
+#   everything else      Laravel catch-all route -> React Router deep links
+#
+# Private files that must never be reachable: backend/.env, backend/vendor,
+# backend/storage/app/private (NIN documents + evidence), backend/database.
+# The rule below is a NET, not the only defence: the checkout must also be
+# created empty, or cPanel's index.php stub must be removed. See the README
+# step "6. Create the checkout empty".
+
+# ---------------------------------------------------------------------------
+# Rewrite engine
+# ---------------------------------------------------------------------------
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    # RewriteBase stays commented out — always comment it out on cPanel.
+    # Uncomment only if a host installs public_html under a subpath.
+
+    # Do not echo the directory contents if mod_autoindex is unavailable.
+    <IfModule mod_negotiation.c>
+        Options -MultiViews -Indexes
+    </IfModule>
+
+    # Blanket block for checkout internals and dotfiles. Requests for
+    # /assets/... or /storage/... contain no slash-dot pair, so they are
+    # unaffected by this rule.
+    RewriteRule (^|/)\. - [F,L]
+
+    # -----------------------------------------------------------------------
+    # 1. Strict HTTPS (canonical https:// YOURDOMAIN)
+    #    Most cPanel hosts terminate TLS at a proxy and set X-Forwarded-Proto.
+    # -----------------------------------------------------------------------
+    RewriteCond %{HTTP:X-Forwarded-Proto} !https
+    RewriteCond %{HTTPS} !=on
+    RewriteRule ^ https://YOURDOMAIN%{REQUEST_URI} [R=301,L]
+
+    # -----------------------------------------------------------------------
+    # 1b. Block the checkout. MUST run before the front controller, otherwise
+    #     /backend/config/database.php reaches Laravel and gets a 200 SPA shell
+    #     instead of a refusal. (The SPA shell leaks nothing, but a 200 for a
+    #     config path is wrong and hides real misconfiguration.)
+    # -----------------------------------------------------------------------
+    RewriteRule ^(?:backend|frontend|scripts|brand)(?:/|$) - [F,L]
+
+    # -----------------------------------------------------------------------
+    # 2. Serve the app's real static files.
+    #
+    #    REQUEST_FILENAME is always resolved against public_html/, so
+    #    /assets/index-abc.js maps to public_html/assets/index-abc.js — which
+    #    does not exist, because the file really lives in
+    #    backend/public/assets/. The !-f test below would therefore hand the
+    #    request to Laravel, which answers with its HTML 404 page. A browser
+    #    refuses to execute a module script served as text/html, so the SPA
+    #    silently never mounts: a blank white page with no console error.
+    #
+    #    These rewrites map each served directory onto its real location BEFORE
+    #    the front-controller rule, so Apache serves the bytes (and the correct
+    #    MIME type, cache headers and byte ranges) directly.
+    # -----------------------------------------------------------------------
+    RewriteRule ^(assets|community-media)(/.*)?$ backend/public/$1$2 [L]
+    RewriteRule ^(favicon[^/]*\.(png|ico)|apple-touch-icon\.png|robots\.txt)$ backend/public/$1 [L]
+
+    # /storage/... is the symlink created by `artisan storage:link`. Rewriting
+    # into it keeps public profile photos working without exposing anything else.
+    RewriteRule ^storage(/.*)?$ backend/public/storage$1 [L]
+
+    # -----------------------------------------------------------------------
+    # 3. Front controller: everything else (API + SPA deep links).
+    #
+    #    In a per-directory context the URI being matched has NO leading slash,
+    #    so the pattern must be ^(.*)$ (NOT ^(/.*)$ — that never matches and the
+    #    request falls through to a 404). The leading slash comes from the
+    #    substitution: "backend/public/index.php/$1" with $1 = "api/meta"
+    #    yields the target "backend/public/index.php/api/meta".
+    #
+    #    Putting the path into the rewrite TARGET rather than appending it is
+    #    also what makes Laravel generate clean URLs: PHP's SCRIPT_NAME becomes
+    #    "/backend/public/index.php" and REQUEST_URI
+    #    "/backend/public/index.php/api/meta", so Laravel derives base
+    #    "/backend/public" and uri "/api/meta". That is why asset('storage/x.jpg')
+    #    resolves to a working URL instead of a 404.
+    #
+    #    REDIRECT_STATUS guard: it is empty on the first pass and set on any
+    #    internal redirect, so the rule cannot re-process its own output (which
+    #    otherwise loops until Apache aborts with AH00124).
+    # -----------------------------------------------------------------------
+    RewriteCond %{ENV:REDIRECT_STATUS} ^$
+    RewriteRule ^(.*)$ backend/public/index.php/$1 [QSA,L]
+</IfModule>
+
+# ---------------------------------------------------------------------------
+# 3. Directory index + fallback when mod_rewrite is unavailable
+# ---------------------------------------------------------------------------
+DirectoryIndex index.php index.html
+
+<IfModule !mod_rewrite.c>
+    # Without mod_rewrite the app cannot route at all. Serve the committed SPA
+    # shell so the site is not a blank page, and say so.
+    ErrorDocument 404 /index.html
+</IfModule>
+
+# ---------------------------------------------------------------------------
+# 4. Security headers
+#    Kept as `unset` + `always set` so PHP cannot accidentally duplicate them.
+# ---------------------------------------------------------------------------
+<IfModule mod_headers.c>
+    Header always unset X-Powered-By
+    Header always unset Server
+
+    Header always set X-Content-Type-Options "nosniff"
+    Header always set X-Frame-Options "SAMEORIGIN"
+    Header always set Referrer-Policy "strict-origin-when-cross-origin"
+    Header always set Permissions-Policy "geolocation=(), microphone=(), camera=()"
+    Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains"
+    Header always set Cross-Origin-Opener-Policy "same-origin-allow-popups"
+
+    # Do NOT add `require-trusted-types-for 'script'` here: it breaks every
+    # innerHTML assignment, which kills the admin rich-text editors.
+    # Note: /assets/* is served with cache headers by Apache's own mime module.
+
+    # Hashed Vite bundles are immutable; the SPA shell must never be cached or
+    # users keep loading an old bundle after a deploy.
+    <FilesMatch "^index\.html$">
+        Header always set Cache-Control "no-store, must-revalidate"
+    </FilesMatch>
+    <FilesMatch "^.*-[A-Za-z0-9_-]{8}\.(js|css)$">
+        Header always set Cache-Control "public, max-age=31536000, immutable"
+    </FilesMatch>
+</IfModule>
+
+# ---------------------------------------------------------------------------
+# 5. Never serve these file types raw, wherever they sit.
+#    .env is the critical one: it holds the DB password, APP_KEY and the
+#    Paystack/Flutterwave secret keys, and it grants every session in the DB.
+# ---------------------------------------------------------------------------
+<FilesMatch "(^\.|\.(env|key|log|sql|sqlite|sqlite3|bak|old|orig|save|swp|swo|ini|sh|yml|yaml|json\.bak|dist|lock|conf|cnf|pem|crt|p12)(\..*)?$)">
+    Require all denied
+</FilesMatch>
+
+<Files ".env">
+    Require all denied
+</Files>
+
+<Files "composer.json">
+    Require all denied
+</Files>
+
+<Files "composer.lock">
+    Require all denied
+</Files>
+
+# ---------------------------------------------------------------------------
+# 6. Checkout protection notice
+#     The active block for backend|frontend|scripts|brand lives in rewrite rule
+#     1b above, deliberately BEFORE the front controller so it returns 403
+#     rather than letting a config path fall through to Laravel.
+#     The FileMatch rules at the top of this file are the second layer.
+# ---------------------------------------------------------------------------
+
+# ---------------------------------------------------------------------------
+# 7. Redirects
+# ---------------------------------------------------------------------------
+# NOTE: there is deliberately no rule here that 301s /public/... to /...
+# Two reasons:
+#   1. The front controller only ever emits clean URLs, so /public/ never
+#      appears in a link and needs no correction.
+#   2. A rule like `RewriteRule ^public/(.*)$ /$1 [R=301,L]` would also match
+#      the INTERNAL rewrite target "public_html/backend/public/..." and bounce
+#      legitimate requests into an infinite external redirect.
+# If a stray /public/ URL is ever seen, fix the source of the link instead.
+
+# ---------------------------------------------------------------------------
+# 8. PHP hardening
+# ---------------------------------------------------------------------------
+<IfModule mod_php.c>
+    php_flag display_errors Off
+    php_flag expose_php Off
+</IfModule>
+
+# ---------------------------------------------------------------------------
+# 9. Compression
+#    Vite bundles are already minified; gzip/brotli still buys ~70% on the
+#    JS/CSS/HTML and on the story videos' poster images.
+# ---------------------------------------------------------------------------
+<IfModule mod_deflate.c>
+    AddOutputFilterByType DEFLATE text/html text/plain text/xml text/css text/javascript
+    AddOutputFilterByType DEFLATE application/javascript application/x-javascript
+    AddOutputFilterByType DEFLATE application/json application/ld+json
+    AddOutputFilterByType DEFLATE image/svg+xml
+</IfModule>
+
+<IfModule mod_brotli.c>
+    AddOutputFilterByType BROTLI_COMPRESS text/html text/css text/javascript
+    AddOutputFilterByType BROTLI_COMPRESS application/javascript application/json
+    AddOutputFilterByType BROTLI_COMPRESS image/svg+xml
+</IfModule>
+
+# ---------------------------------------------------------------------------
+# 10. Cache lifetimes for static assets Apache serves directly.
+#     Hashed assets are covered by the immutable rule in step 4.
+# ---------------------------------------------------------------------------
+<IfModule mod_expires.c>
+    ExpiresActive On
+    ExpiresByType image/png            "access plus 1 month"
+    ExpiresByType image/jpeg           "access plus 1 month"
+    ExpiresByType image/webp           "access plus 1 month"
+    ExpiresByType image/svg+xml        "access plus 1 month"
+    ExpiresByType image/x-icon         "access plus 1 month"
+    ExpiresByType font/woff2           "access plus 1 year"
+    ExpiresByType video/mp4            "access plus 1 month"
+</IfModule>
+
+# ---------------------------------------------------------------------------
+# 11. Error pages
+#     Deliberately NO ErrorDocument for 403. Pointing 403 at /index.html makes
+#     Apache serve the SPA shell WITH a 403 status, and under mod_rewrite the
+#     subrequest can recurse into a 500. Apache's own 403 page is correct here.
+# ---------------------------------------------------------------------------
+ErrorDocument 404 /index.html
+ErrorDocument 500 /index.html

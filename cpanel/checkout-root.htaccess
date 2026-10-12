@@ -1,0 +1,40 @@
+# Hire Safe checkout root — everything below this file is private.
+#
+# This directory is the cloned repository (backend/ + frontend/ + scripts/),
+# which normally sits inside public_html because cPanel will not let the main
+# domain's document root move out of public_html.
+#
+# Apache would otherwise happily serve:
+#   /backend/.env                     DB password, APP_KEY, payment secret keys
+#   /backend/vendor/**/*.php          dependency source
+#   /backend/storage/app/private/**   NIN documents and evidence files
+#   /backend/database/database.sqlite
+#
+# public_html/.htaccess already blocks ^backend, ^frontend, ^scripts, ^brand
+# and denies dotfiles. This file is the second lock: if the root rules are ever
+# edited, or a subdomain is added that points HERE by mistake, nothing leaks.
+#
+# backend/public stays reachable: Apache grants access to the closest
+# .htaccess, so backend/public/.htaccess overrides the deny below for the
+# public directory only.
+
+# Apache 2.4
+<IfModule mod_authz_core.c>
+    Require all denied
+</IfModule>
+
+# Apache 2.2 (only if a host still runs it; wrapped so 2.4 does not warn)
+<IfModule !mod_authz_core.c>
+    <IfModule mod_access_compat.c>
+        Order deny,allow
+        Deny from all
+    </IfModule>
+</IfModule>
+
+# Belt and braces for the files that matter most, in case the deny above is
+# skipped by an odd vhost configuration.
+<FilesMatch "(^\.|\.(env|key|log|sqlite3?|sql|bak|old|pem|crt|p12)$)">
+    <IfModule mod_authz_core.c>
+        Require all denied
+    </IfModule>
+</FilesMatch>
