@@ -34,6 +34,7 @@ use App\Http\Controllers\Api\ReviewController;
 use App\Http\Controllers\Api\SavedHelperController;
 use App\Http\Controllers\Api\VerificationReportController;
 use App\Http\Controllers\Api\CommunityExperienceController;
+use App\Http\Controllers\Api\ContactInquiryController;
 use App\Http\Controllers\Api\AccountVerificationController;
 use Illuminate\Support\Facades\Route;
 
@@ -57,6 +58,7 @@ Route::prefix('auth')->middleware('throttle:auth')->group(function () {
 // Meta (skills, locations, enum options)
 Route::get('/meta', [MetaController::class, 'index']);
 Route::get('/demo/accounts', [AdminDemoController::class, 'accounts']);
+Route::post('/contact', [ContactInquiryController::class, 'store'])->middleware('throttle:5,60');
 
 // Helper discovery
 Route::get('/helpers', [HelperController::class, 'index']);
@@ -276,6 +278,8 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/audit-logs', [AdminAuditLogController::class, 'index']);
 
         // Settings
+        Route::get('/contact-inquiries', [ContactInquiryController::class, 'index']);
+        Route::patch('/contact-inquiries/{inquiry}', [ContactInquiryController::class, 'update']);
         Route::get('/settings', [AdminSettingController::class, 'index']);
         Route::put('/settings', [AdminSettingController::class, 'update']);
         Route::get('/settings/smtp', [AdminSettingController::class, 'smtp']);

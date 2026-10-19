@@ -20,6 +20,7 @@ const links = [
   { to: '/search', label: 'Find Helpers' },
   { to: '/jobs', label: 'Jobs' },
   { to: '/community', label: 'Community Stories' },
+  { to: '/contact', label: 'Contact' },
 ]
 
 export function PublicLayout() {
@@ -156,15 +157,19 @@ export function PublicLayout() {
               <li><Link to="/community" className="hover:text-foreground">Community Stories</Link></li>
               <li><Link to="/register" className="hover:text-foreground">Create Profile</Link></li>
               <li><Link to="/login" className="hover:text-foreground">Log in</Link></li>
+              <li><Link to="/about" className="hover:text-foreground">About us</Link></li>
+              <li><Link to="/how-it-works" className="hover:text-foreground">How it works</Link></li>
+              <li><Link to="/contact" className="hover:text-foreground">Contact</Link></li>
             </ul>
           </div>
           <div>
             <h4 className="text-sm font-semibold">Trust &amp; Safety</h4>
             <ul className="mt-3 space-y-2 text-sm text-muted-foreground">
-              <li>Identity Verification</li>
-              <li>Verified Employment History</li>
-              <li>Moderated Reviews</li>
-              <li>Dispute Protection</li>
+              <li><Link to="/safety" className="hover:text-foreground">Safety</Link></li>
+              <li><Link to="/faq" className="hover:text-foreground">FAQs</Link></li>
+              <li><Link to="/privacy" className="hover:text-foreground">Privacy Policy</Link></li>
+              <li><Link to="/terms" className="hover:text-foreground">Terms and Conditions</Link></li>
+              <li><Link to="/cookies" className="hover:text-foreground">Cookie Notice</Link></li>
             </ul>
           </div>
         </div>

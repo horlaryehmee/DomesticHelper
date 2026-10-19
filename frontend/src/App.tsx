@@ -19,6 +19,9 @@ import { NotFoundPage } from './features/misc/not-found-page'
 import { VerifyEmploymentPage } from './features/misc/verify-employment-page'
 import { PaymentCallbackPage } from './features/payments/payment-callback-page'
 import { CommunityExperiencesPage } from './features/community/community-experiences-page'
+import { ContactPage } from './features/info/contact-page'
+import { AboutPage, HowItWorksPage, SafetyPage, FaqPage, PrivacyPage, TermsPage, CookiesPage } from './features/info/information-pages'
+import { AdminContactInquiriesPage } from './features/admin/contact-inquiries-page'
 
 import { EmployerDashboardPage } from './features/employer/dashboard-page'
 import { EmployerProfilePage } from './features/employer/profile-page'
@@ -72,6 +75,14 @@ export default function App() {
         <Route path="/jobs" element={<JobsPage />} />
         <Route path="/jobs/:uuid" element={<JobDetailPage />} />
         <Route path="/community" element={<CommunityExperiencesPage />} />
+        <Route path="/contact" element={<ContactPage />} />
+        <Route path="/about" element={<AboutPage />} />
+        <Route path="/how-it-works" element={<HowItWorksPage />} />
+        <Route path="/safety" element={<SafetyPage />} />
+        <Route path="/faq" element={<FaqPage />} />
+        <Route path="/privacy" element={<PrivacyPage />} />
+        <Route path="/terms" element={<TermsPage />} />
+        <Route path="/cookies" element={<CookiesPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
@@ -147,6 +158,7 @@ export default function App() {
         <Route path="/admin/trust-scores" element={<AdminTrustScorePage />} />
         <Route path="/admin/audit-logs" element={<AdminAuditLogsPage />} />
         <Route path="/admin/settings" element={<AdminSettingsPage />} />
+        <Route path="/admin/contact-inquiries" element={<AdminContactInquiriesPage />} />
       </Route>
     </Routes>
   )
