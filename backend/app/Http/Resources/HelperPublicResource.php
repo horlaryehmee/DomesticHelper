@@ -31,6 +31,7 @@ class HelperPublicResource extends JsonResource
             'uuid' => $this->uuid,
             'name' => $this->full_name,
             'photo_url' => $profile?->photo_path ? asset('storage/'.$profile->photo_path) : null,
+            'intro_video_url' => $profile?->intro_video_path ? asset('storage/'.$profile->intro_video_path) : null,
             'city' => $profile?->city,
             'state' => $profile?->state,
             'gender' => $profile?->gender?->value,

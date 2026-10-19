@@ -66,7 +66,7 @@ class AuthController extends Controller
         $notifications->send($user, new PlatformNotification(
             type: 'welcome',
             title: 'Welcome to Hire Safe',
-            body: 'Your employer account has been created. Verify your phone to start hiring safely.',
+            body: 'Your employer account has been created. You can now start hiring.',
         ));
 
         $token = $user->createToken('auth')->plainTextToken;
@@ -95,8 +95,11 @@ class AuthController extends Controller
         $proofPath = $request->file('address_proof')->store('registration/address-proof', 'private');
         abort_unless($proofPath, 500, 'Could not save the address document.');
 
+        $photoPath = $request->file('photo')?->store('profiles', 'public');
+        $videoPath = $request->file('intro_video')?->store('profile-videos', 'public');
+
         try {
-            $user = DB::transaction(function () use ($data, $nin, $ninHash, $request, $proofPath) {
+            $user = DB::transaction(function () use ($data, $nin, $ninHash, $proofPath, $photoPath, $videoPath) {
             $user = User::create([
                 'first_name' => $data['first_name'],
                 'last_name' => $data['last_name'],
@@ -121,13 +124,10 @@ class AuthController extends Controller
                 'expected_salary_min' => $data['expected_salary_min'],
                 'expected_salary_max' => $data['expected_salary_max'] ?? null,
                 'bio' => $data['bio'] ?? null,
+                'photo_path' => $photoPath,
+                'intro_video_path' => $videoPath,
                 'is_public' => true,
             ]);
-
-            if ($request->hasFile('photo')) {
-                $path = $request->file('photo')->store('profiles', 'public');
-                $profile->forceFill(['photo_path' => $path])->save();
-            }
 
             $profile->skills()->sync($data['skills']);
             $this->saveRegistrationDetails($user, $data, $ninHash, $proofPath);
@@ -136,6 +136,8 @@ class AuthController extends Controller
             });
         } catch (\Throwable $e) {
             Storage::disk('private')->delete($proofPath);
+            if ($photoPath) Storage::disk('public')->delete($photoPath);
+            if ($videoPath) Storage::disk('public')->delete($videoPath);
             throw $e;
         }
 
@@ -144,7 +146,7 @@ class AuthController extends Controller
         $notifications->send($user, new PlatformNotification(
             type: 'welcome',
             title: 'Welcome to Hire Safe',
-            body: 'Your helper profile has been created. Verify your phone and complete your identity verification to build trust.',
+            body: 'Your helper profile has been created. Complete your identity verification to build trust.',
         ));
 
         $token = $user->createToken('auth')->plainTextToken;

@@ -67,10 +67,15 @@ class UserSeeder extends Seeder
 
     public function run(TrustScoreService $trustScore): void
     {
+        $masterPassword = config('hiresafe.master_admin_password');
+        if (! $masterPassword || strlen($masterPassword) < 16) {
+            throw new \RuntimeException('Set MASTER_ADMIN_PASSWORD to at least 16 characters before seeding.');
+        }
+
         // --- Staff ---
         $super = User::create([
             'first_name' => 'Platform', 'last_name' => 'Administrator',
-            'email' => 'admin@domestichelper.test', 'password' => 'password',
+            'email' => 'info@hiresafe.ng', 'password' => $masterPassword,
             'user_type' => 'admin', 'email_verified_at' => now(), 'phone_verified_at' => now(),
         ]);
         $super->roles()->attach(Role::where('slug', 'super-admin')->first());

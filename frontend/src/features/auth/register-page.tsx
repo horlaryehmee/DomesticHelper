@@ -1,10 +1,10 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useForm, type UseFormRegisterReturn } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { toast } from 'sonner'
-import { Briefcase, UserRound, ArrowLeft, ShieldCheck } from 'lucide-react'
+import { Briefcase, UserRound, ArrowLeft, ShieldCheck, Camera, Video } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -131,11 +131,19 @@ export function RegisterPage() {
 function EmployerForm({ meta, onDone }: { meta?: Meta; onDone: (u: never) => void }) {
   const [submitting, setSubmitting] = useState(false)
   const [addressProof, setAddressProof] = useState<File | null>(null)
-  const { register, handleSubmit, watch, setValue, formState: { errors } } = useForm({
+  const [step, setStep] = useState(0)
+  const { register, handleSubmit, watch, setValue, trigger, formState: { errors } } = useForm({
     resolver: zodResolver(employerSchema),
     defaultValues: { profile_type: 'individual', state: '' },
   })
   const profileType = watch('profile_type')
+
+  const nextStep = async () => {
+    const fields = step === 0
+      ? ['first_name', 'last_name', 'email', 'phone', 'password', 'password_confirmation']
+      : ['profile_type', 'agency_name', 'state', 'city']
+    if (await trigger(fields as never)) setStep(step + 1)
+  }
 
   const onSubmit = async (data: z.infer<typeof employerSchema>) => {
     if (!addressProof) { toast.error('Upload proof of address'); return }
@@ -166,6 +174,8 @@ function EmployerForm({ meta, onDone }: { meta?: Meta; onDone: (u: never) => voi
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+          <StepProgress steps={['Account', 'Profile', 'Verification']} current={step} />
+          {step === 0 && <div className="space-y-4">
           <div className="grid gap-4 sm:grid-cols-2">
             <Field label="First name" error={errors.first_name?.message}>
               <Input {...register('first_name')} />
@@ -178,7 +188,7 @@ function EmployerForm({ meta, onDone }: { meta?: Meta; onDone: (u: never) => voi
             <Field label="Email" error={errors.email?.message}>
               <Input type="email" {...register('email')} />
             </Field>
-            <Field label="Phone (for OTP)" error={errors.phone?.message}>
+            <Field label="Phone number" error={errors.phone?.message}>
               <Input placeholder="0803 000 0000" {...register('phone')} />
             </Field>
           </div>
@@ -190,6 +200,8 @@ function EmployerForm({ meta, onDone }: { meta?: Meta; onDone: (u: never) => voi
               <Input type="password" {...register('password_confirmation')} />
             </Field>
           </div>
+          </div>}
+          {step === 1 && <div className="space-y-4">
           <Field label="Profile type">
             <div className="flex gap-2">
               {(['individual', 'agency'] as const).map((t) => (
@@ -225,10 +237,15 @@ function EmployerForm({ meta, onDone }: { meta?: Meta; onDone: (u: never) => voi
               <Input {...register('city')} />
             </Field>
           </div>
-          <RegistrationVerificationFields registerField={(name) => register(name)} errors={errors} addressProof={addressProof} onProofChange={setAddressProof} />
-          <Button type="submit" className="w-full" disabled={submitting}>
-            {submitting ? <Spinner label="Creating account…" /> : 'Create account'}
-          </Button>
+          </div>}
+          {step === 2 && <RegistrationVerificationFields registerField={(name) => register(name)} errors={errors} addressProof={addressProof} onProofChange={setAddressProof} />}
+          <div className="flex gap-3 pt-2">
+            {step > 0 && <Button type="button" variant="outline" onClick={() => setStep(step - 1)} disabled={submitting}>Back</Button>}
+            {step < 2 ? <Button type="button" className="flex-1" onClick={nextStep}>Continue</Button> :
+              <Button type="submit" className="flex-1" disabled={submitting}>
+                {submitting ? <Spinner label="Creating account…" /> : 'Create account'}
+              </Button>}
+          </div>
         </form>
       </CardContent>
     </Card>
@@ -238,7 +255,10 @@ function EmployerForm({ meta, onDone }: { meta?: Meta; onDone: (u: never) => voi
 function HelperForm({ meta, onDone }: { meta?: Meta; onDone: (u: never) => void }) {
   const [submitting, setSubmitting] = useState(false)
   const [addressProof, setAddressProof] = useState<File | null>(null)
-  const { register, handleSubmit, watch, setValue, formState: { errors } } = useForm({
+  const [photo, setPhoto] = useState<File | null>(null)
+  const [introVideo, setIntroVideo] = useState<File | null>(null)
+  const [step, setStep] = useState(0)
+  const { register, handleSubmit, watch, setValue, trigger, formState: { errors } } = useForm({
     resolver: zodResolver(helperSchema),
     defaultValues: { skills: [], gender: 'female', employment_type: 'any' },
   })
@@ -246,6 +266,17 @@ function HelperForm({ meta, onDone }: { meta?: Meta; onDone: (u: never) => void 
 
   const toggleSkill = (id: number) => {
     setValue('skills', selectedSkills.includes(id) ? selectedSkills.filter((s) => s !== id) : [...selectedSkills, id])
+  }
+
+  const nextStep = async () => {
+    const fields = [
+      ['first_name', 'last_name', 'email', 'phone', 'password', 'password_confirmation', 'date_of_birth', 'gender'],
+      ['years_experience', 'expected_salary_min', 'state', 'city', 'availability', 'skills'],
+      ['nin', 'address_line', 'guarantor_name', 'guarantor_phone', 'guarantor_relationship'],
+    ] as const
+    if (!(await trigger([...fields[step]] as never))) return
+    if (step === 2 && !addressProof) { toast.error('Upload proof of address'); return }
+    setStep((current) => current + 1)
   }
 
   const onSubmit = async (data: z.infer<typeof helperSchema>) => {
@@ -259,6 +290,8 @@ function HelperForm({ meta, onDone }: { meta?: Meta; onDone: (u: never) => void 
         else form.append(key, String(value))
       })
       form.append('address_proof', addressProof)
+      if (photo) form.append('photo', photo)
+      if (introVideo) form.append('intro_video', introVideo)
       const res = await api.upload<{ token: string; user: never }>('/auth/register/helper', form)
       setToken(res.token)
       toast.success('Account created! Welcome to the network.')
@@ -274,10 +307,12 @@ function HelperForm({ meta, onDone }: { meta?: Meta; onDone: (u: never) => void 
     <Card className="gap-5">
       <CardHeader>
         <CardTitle className="text-2xl">Helper registration</CardTitle>
-        <CardDescription>Your NIN and guarantor details are private. Upload a document that confirms your address.</CardDescription>
+        <CardDescription>Build your profile in four steps. Your identity and guarantor details stay private.</CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+          <StepProgress steps={['Account', 'Your work', 'Verification', 'Photo & video']} current={step} />
+          {step === 0 && <div className="space-y-4">
           <div className="grid gap-4 sm:grid-cols-2">
             <Field label="First name" error={errors.first_name?.message}>
               <Input {...register('first_name')} />
@@ -290,7 +325,7 @@ function HelperForm({ meta, onDone }: { meta?: Meta; onDone: (u: never) => void 
             <Field label="Email" error={errors.email?.message}>
               <Input type="email" {...register('email')} />
             </Field>
-            <Field label="Phone (for OTP)" error={errors.phone?.message}>
+            <Field label="Phone number" error={errors.phone?.message}>
               <Input placeholder="0812 000 0000" {...register('phone')} />
             </Field>
           </div>
@@ -316,10 +351,12 @@ function HelperForm({ meta, onDone }: { meta?: Meta; onDone: (u: never) => void 
                 </SelectContent>
               </Select>
             </Field>
-            <Field label="Years of experience" error={errors.years_experience?.message}>
-              <Input type="number" min={0} {...register('years_experience')} />
-            </Field>
           </div>
+          </div>}
+          {step === 1 && <div className="space-y-4">
+          <Field label="Years of experience" error={errors.years_experience?.message}>
+            <Input type="number" min={0} {...register('years_experience')} />
+          </Field>
           <div className="grid gap-4 sm:grid-cols-2">
             <Field label="Expected salary (₦/month, min)" error={errors.expected_salary_min?.message}>
               <Input type="number" min={0} {...register('expected_salary_min')} />
@@ -378,10 +415,16 @@ function HelperForm({ meta, onDone }: { meta?: Meta; onDone: (u: never) => void 
           <Field label="About you (optional)">
             <Textarea rows={3} placeholder="Tell families about your experience…" {...register('bio')} />
           </Field>
-          <RegistrationVerificationFields registerField={(name) => register(name)} errors={errors} addressProof={addressProof} onProofChange={setAddressProof} />
-          <Button type="submit" className="w-full" disabled={submitting}>
-            {submitting ? <Spinner label="Creating account…" /> : 'Create my profile'}
-          </Button>
+          </div>}
+          {step === 2 && <RegistrationVerificationFields registerField={(name) => register(name)} errors={errors} addressProof={addressProof} onProofChange={setAddressProof} />}
+          {step === 3 && <ProfileMediaFields photo={photo} onPhotoChange={setPhoto} video={introVideo} onVideoChange={setIntroVideo} />}
+          <div className="flex gap-3 pt-2">
+            {step > 0 && <Button type="button" variant="outline" onClick={() => setStep(step - 1)} disabled={submitting}>Back</Button>}
+            {step < 3 ? <Button type="button" className="flex-1" onClick={nextStep}>Continue</Button> :
+              <Button type="submit" className="flex-1" disabled={submitting}>
+                {submitting ? <Spinner label="Creating account…" /> : 'Create my profile'}
+              </Button>}
+          </div>
         </form>
       </CardContent>
     </Card>
@@ -389,6 +432,113 @@ function HelperForm({ meta, onDone }: { meta?: Meta; onDone: (u: never) => void 
 }
 
 type VerificationField = 'nin' | 'address_line' | 'guarantor_name' | 'guarantor_phone' | 'guarantor_relationship'
+
+function StepProgress({ steps, current }: { steps: string[]; current: number }) {
+  return <ol className="grid grid-cols-4 gap-2 pb-4" aria-label="Registration progress">
+    {steps.map((label, index) => <li key={label} className={cn('border-t-4 pt-2 text-xs font-medium', index <= current ? 'border-primary text-foreground' : 'border-muted text-muted-foreground')} aria-current={index === current ? 'step' : undefined}>
+      <span className="block">Step {index + 1}</span>{label}
+    </li>)}
+  </ol>
+}
+
+function ProfileMediaFields({ photo, onPhotoChange, video, onVideoChange }: {
+  photo: File | null
+  onPhotoChange: (file: File | null) => void
+  video: File | null
+  onVideoChange: (file: File | null) => void
+}) {
+  const [recording, setRecording] = useState(false)
+  const cameraRef = useRef<HTMLVideoElement>(null)
+  const recorderRef = useRef<MediaRecorder | null>(null)
+  const streamRef = useRef<MediaStream | null>(null)
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const [photoUrl, setPhotoUrl] = useState<string | null>(null)
+  const [videoUrl, setVideoUrl] = useState<string | null>(null)
+
+  useEffect(() => {
+    const url = photo ? URL.createObjectURL(photo) : null
+    setPhotoUrl(url)
+    return () => { if (url) URL.revokeObjectURL(url) }
+  }, [photo])
+  useEffect(() => {
+    const url = video ? URL.createObjectURL(video) : null
+    setVideoUrl(url)
+    return () => { if (url) URL.revokeObjectURL(url) }
+  }, [video])
+  useEffect(() => () => {
+    if (timerRef.current) clearTimeout(timerRef.current)
+    recorderRef.current?.stop()
+    streamRef.current?.getTracks().forEach((track) => track.stop())
+  }, [])
+  useEffect(() => {
+    if (recording && cameraRef.current && streamRef.current) {
+      cameraRef.current.srcObject = streamRef.current
+      void cameraRef.current.play()
+    }
+  }, [recording])
+
+  const stopRecording = () => {
+    if (timerRef.current) clearTimeout(timerRef.current)
+    if (recorderRef.current?.state === 'recording') recorderRef.current.stop()
+    streamRef.current?.getTracks().forEach((track) => track.stop())
+    streamRef.current = null
+    setRecording(false)
+  }
+
+  const startRecording = async () => {
+    if (!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === 'undefined') {
+      toast.error('Camera recording is unavailable in this browser. Upload a video instead.')
+      return
+    }
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true })
+      const mimeType = ['video/mp4', 'video/webm'].find((type) => MediaRecorder.isTypeSupported(type))
+      if (!mimeType) { stream.getTracks().forEach((track) => track.stop()); toast.error('Video recording is unsupported. Upload a video instead.'); return }
+      const chunks: Blob[] = []
+      const recorder = new MediaRecorder(stream, { mimeType })
+      recorder.ondataavailable = (event) => { if (event.data.size) chunks.push(event.data) }
+      recorder.onstop = () => {
+        const file = new File(chunks, `introduction.${mimeType === 'video/mp4' ? 'mp4' : 'webm'}`, { type: mimeType })
+        if (file.size > 20 * 1024 * 1024) toast.error('Video must be 20 MB or smaller. Please record a shorter clip.')
+        else if (file.size) onVideoChange(file)
+      }
+      recorderRef.current = recorder
+      streamRef.current = stream
+      recorder.start()
+      setRecording(true)
+      timerRef.current = setTimeout(stopRecording, 30000)
+    } catch {
+      toast.error('Could not access your camera and microphone. You can upload a video instead.')
+    }
+  }
+
+  return <div className="space-y-5">
+    <div><h3 className="font-semibold">Show families who you are</h3><p className="text-sm text-muted-foreground">Add a clear profile picture and a short introduction about the work you do. Both appear on your public profile. You can skip either for now.</p></div>
+    <Field label="Profile picture (JPG, PNG or WebP, max 2 MB)">
+      <Input type="file" accept="image/jpeg,image/png,image/webp" onChange={(event) => {
+        const file = event.target.files?.[0] ?? null
+        if (file && file.size > 2 * 1024 * 1024) { toast.error('Picture must be 2 MB or smaller'); event.target.value = ''; return }
+        onPhotoChange(file)
+      }} />
+      {photoUrl && <img src={photoUrl} alt="Your selected profile" className="mt-3 size-28 rounded-xl object-cover" />}
+    </Field>
+    <Field label="Introduction video (MP4, WebM or MOV, max 20 MB)">
+      <Input type="file" accept="video/mp4,video/webm,video/quicktime" onChange={(event) => {
+        const file = event.target.files?.[0] ?? null
+        if (file && file.size > 20 * 1024 * 1024) { toast.error('Video must be 20 MB or smaller'); event.target.value = ''; return }
+        onVideoChange(file)
+      }} />
+    </Field>
+    <div className="rounded-lg border bg-muted/30 p-4">
+      <p className="mb-3 text-sm text-muted-foreground">Or record up to 30 seconds using your camera and microphone.</p>
+      {recording && <video ref={cameraRef} muted playsInline autoPlay className="mb-3 w-full rounded-lg bg-black" />}
+      <Button type="button" variant="outline" onClick={recording ? stopRecording : startRecording}>
+        {recording ? <><Video /> Stop recording</> : <><Camera /> Record introduction</>}
+      </Button>
+    </div>
+    {videoUrl && <div><p className="mb-2 text-sm font-medium">Preview: {video?.name}</p><video src={videoUrl} controls className="w-full rounded-lg bg-black" /></div>}
+  </div>
+}
 
 function RegistrationVerificationFields({ registerField, errors, addressProof, onProofChange }: {
   registerField: (name: VerificationField) => UseFormRegisterReturn

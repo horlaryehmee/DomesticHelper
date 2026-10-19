@@ -11,7 +11,7 @@ import { cn } from '@/lib/utils'
 import type { HelperSummary } from '@/lib/types'
 import { useAuth } from '@/lib/auth'
 
-const PRIORITY_BADGES: VerificationBadgeKey[] = ['identity_verified', 'nin_verified', 'employment_verified', 'phone_verified', 'reference_checked']
+const PRIORITY_BADGES: VerificationBadgeKey[] = ['identity_verified', 'nin_verified', 'employment_verified', 'reference_checked']
 
 export function HelperCard({ helper, onSave, saved }: { helper: HelperSummary; onSave?: () => void; saved?: boolean }) {
   const { user } = useAuth()

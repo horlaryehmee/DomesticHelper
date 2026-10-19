@@ -15,7 +15,7 @@ class VerifyOtpRequest extends FormRequest
     {
         return [
             'recipient' => ['required', 'string', 'max:255'],
-            'purpose' => ['required', 'in:register_phone,verify_phone,login,reset_password'],
+            'purpose' => ['required', 'in:login,reset_password'],
             'code' => ['required', 'digits:6'],
         ];
     }

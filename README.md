@@ -128,6 +128,8 @@ composer install
 cp .env.example .env
 php artisan key:generate
 
+# Set MASTER_ADMIN_PASSWORD in backend/.env to a unique password of at least 16 characters.
+
 # 2. Create the database and point .env at it (example for Laragon)
 #    DB_DATABASE=domestichelper  DB_USERNAME=root  DB_PASSWORD=
 
@@ -444,7 +446,7 @@ their real names) and installed by `scripts/install-public-html.sh`, which
 
 6. Seed only the reference data for a real launch. Do **not** run
    `db:seed` or `migrate:fresh --seed` in production: the default seeder
-   creates fictional users, reviews, and an admin with a known password.
+   creates fictional users and reviews, and would replace production data.
 
    ```bash
    php backend/artisan db:seed --class=RoleAndPermissionSeeder --force

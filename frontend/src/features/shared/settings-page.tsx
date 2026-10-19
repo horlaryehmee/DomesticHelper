@@ -10,7 +10,6 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Spinner } from '@/components/ui/spinner'
 import { api, ApiError } from '@/lib/api'
-import { useAuth } from '@/lib/auth'
 
 const passwordSchema = z.object({
   current_password: z.string().min(1, 'Enter your current password'),
@@ -19,7 +18,6 @@ const passwordSchema = z.object({
 }).refine((d) => d.new_password === d.new_password_confirmation, { message: 'Passwords do not match', path: ['new_password_confirmation'] })
 
 export function SettingsPage() {
-  const { user } = useAuth()
   const [submitting, setSubmitting] = useState(false)
   const { register, handleSubmit, reset, formState: { errors } } = useForm({ resolver: zodResolver(passwordSchema) })
 
@@ -32,34 +30,12 @@ export function SettingsPage() {
     onError: (e) => toast.error(e instanceof ApiError ? e.message : 'Could not update password'),
   })
 
-  const sendOtp = useMutation({
-    mutationFn: () => api.post('/auth/otp/send', { recipient: user?.phone, purpose: 'verify_phone' }),
-    onSuccess: () => toast.success('Verification code sent to your phone'),
-    onError: () => toast.error('Could not send code'),
-  })
-
   return (
     <div className="mx-auto max-w-2xl space-y-6">
       <div>
         <h1 className="text-2xl font-bold tracking-tight">Settings</h1>
         <p className="mt-1 text-sm text-muted-foreground">Manage your account security.</p>
       </div>
-
-      <Card className="gap-5">
-        <CardHeader>
-          <CardTitle>Phone verification</CardTitle>
-          <CardDescription>Your phone number: {user?.phone ?? 'not set'}</CardDescription>
-        </CardHeader>
-        <CardContent>
-          {user?.phone_verified ? (
-            <p className="text-sm text-success-foreground">✓ Your phone number is verified.</p>
-          ) : (
-            <Button variant="outline" onClick={() => sendOtp.mutate()} disabled={sendOtp.isPending}>
-              Send verification code
-            </Button>
-          )}
-        </CardContent>
-      </Card>
 
       <Card className="gap-5">
         <CardHeader>

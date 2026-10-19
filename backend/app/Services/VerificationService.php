@@ -19,9 +19,6 @@ class VerificationService
     public function badgesFor(User $helper): array
     {
         $badges = [];
-        if ($helper->phone_verified_at) {
-            $badges[] = 'phone_verified';
-        }
         if ($helper->email_verified_at) {
             $badges[] = 'email_verified';
         }
@@ -182,7 +179,6 @@ class VerificationService
             $checks = [
                 $user->first_name && $user->last_name,
                 (bool) $user->phone,
-                (bool) $user->phone_verified_at,
                 (bool) $p->photo_path,
                 (bool) $p->date_of_birth,
                 (bool) $p->gender,
@@ -207,7 +203,6 @@ class VerificationService
         $checks = [
             $user->first_name && $user->last_name,
             (bool) $user->phone,
-            (bool) $user->phone_verified_at,
             (bool) $user->email_verified_at,
             (bool) $p->city,
             (bool) $p->state,

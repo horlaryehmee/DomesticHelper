@@ -9,7 +9,6 @@ export interface AuthUser {
   last_name: string
   email: string | null
   phone: string | null
-  phone_verified: boolean
   email_verified: boolean
   user_type: 'employer' | 'helper' | 'admin'
   avatar_url: string | null

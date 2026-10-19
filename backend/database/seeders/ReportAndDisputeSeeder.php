@@ -19,7 +19,7 @@ class ReportAndDisputeSeeder extends Seeder
     {
         $employers = UserSeeder::$employerUsers;
         $helpers = UserSeeder::$helperUsers;
-        $admin = User::where('email', 'admin@domestichelper.test')->first();
+        $admin = User::whereHas('roles', fn ($query) => $query->where('slug', 'super-admin'))->first();
 
         $records = EmploymentRecord::query()
             ->where('status', 'completed')

@@ -44,21 +44,6 @@ class OtpController extends Controller
         $otpRecord = $otp->verify($recipient, $purpose, $request->input('code'));
 
         $user = null;
-        if ($purpose === 'verify_phone' && $request->user()) {
-            $user = $request->user();
-            if ($user->phone !== $recipient) {
-                abort(422, 'This code was not sent to your registered phone number.');
-            }
-            $user->forceFill(['phone_verified_at' => now()])->save();
-        }
-
-        if ($purpose === 'register_phone') {
-            $user = User::query()->where('phone', $recipient)->first();
-            if ($user && ! $user->phone_verified_at) {
-                $user->forceFill(['phone_verified_at' => now()])->save();
-            }
-        }
-
         if ($purpose === 'reset_password' || $purpose === 'login') {
             $user = User::query()
                 ->where(fn ($q) => $q->where('phone', $recipient)->orWhere('email', $recipient))

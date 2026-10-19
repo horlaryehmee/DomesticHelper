@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
-import { Fingerprint, Camera, MapPin, Phone, Mail, BadgeCheck } from 'lucide-react'
+import { Fingerprint, Camera, MapPin, Mail, BadgeCheck } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -16,7 +16,6 @@ interface Verification {
 }
 
 const STEPS = [
-  { type: 'phone', label: 'Phone verification', icon: Phone, desc: 'Verify your phone number with an OTP.' },
   { type: 'email', label: 'Email verification', icon: Mail, desc: 'Confirm your email address.' },
   { type: 'photo', label: 'Photo verification', icon: Camera, desc: 'A verification officer confirms your photo matches your identity.' },
   { type: 'nin', label: 'NIN verification', icon: Fingerprint, desc: 'Your National ID is checked and stored encrypted.' },
@@ -59,8 +58,8 @@ export function HelperVerificationPage() {
         <div className="space-y-4">
           {STEPS.map((step) => {
             const v = byType[step.type]
-            const isPhoneOrEmail = step.type === 'phone' || step.type === 'email'
-            const isVerified = step.type === 'phone' ? user?.phone_verified : step.type === 'email' ? user?.email_verified : v?.status === 'approved'
+            const isPhoneOrEmail = step.type === 'email'
+            const isVerified = step.type === 'email' ? user?.email_verified : v?.status === 'approved'
             const isPending = v?.status === 'pending' || v?.status === 'rejected'
             return (
               <Card key={step.type} className="gap-4 py-5">

@@ -15,7 +15,7 @@ class HelperProfile extends Model
 {
     protected $fillable = [
         'user_id', 'date_of_birth', 'gender', 'state', 'city', 'address_line',
-        'nin_encrypted', 'nin_hash', 'nin_last4', 'photo_path', 'bio', 'years_experience',
+        'nin_encrypted', 'nin_hash', 'nin_last4', 'photo_path', 'intro_video_path', 'bio', 'years_experience',
         'availability', 'employment_type', 'expected_salary_min', 'expected_salary_max',
         'is_public', 'verification_status', 'profile_completed',
     ];

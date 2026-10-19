@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 import {
   ShieldCheck, Search, UserCheck, Handshake, FileCheck2, Scale, Star, BadgeCheck,
-  Phone, Fingerprint, Briefcase, ChevronRight, Quote, Sparkles,
+  Fingerprint, Briefcase, ChevronRight, Quote, Sparkles,
   MapPin, ArrowLeft, ArrowRight, Clock3, ExternalLink, BookOpen, MessageCircleQuestion,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -116,7 +116,7 @@ function TrustMarquee() {
 
 const faqs = [
   { category: 'hiring', q: 'How do trust scores work?', a: 'Every helper starts at a neutral score of 50. Points are added only for verified events: confirmed employment, positive moderated reviews and long-term roles. They are subtracted only when our admin team verifies a serious complaint. No single employer can change a helper\u2019s score.' },
-  { category: 'hiring', q: 'How is a helper\u2019s identity verified?', a: 'We verify phone and email with OTPs, and offer NIN and photo verification which our verification officers review. NIN data is encrypted and never displayed publicly; only a verification badge is shown.' },
+  { category: 'hiring', q: 'How is a helper\u2019s identity verified?', a: 'Helpers can request NIN and photo verification, which our verification officers review. NIN data is encrypted and never displayed publicly; only an approved verification badge is shown.' },
   { category: 'hiring', q: 'Who can leave a review?', a: 'Verified profile reviews require a confirmed employment record on Hire Safe. Anyone can also share a community story about a helper who is not on the platform. Stories are moderated before publication and do not change trust scores.' },
   { category: 'safety', q: 'What happens when a report is submitted?', a: 'The helper is notified immediately and given the right to respond. Our team reviews the evidence. Until a complaint is verified, it stays private and never affects the helper\u2019s public trust score.' },
   { category: 'safety', q: 'What can helpers dispute?', a: 'Helpers can dispute reviews, reports, trust score events and verification results. If a dispute is upheld, any score impact is reversed, and false accusations are corrected.' },
@@ -124,7 +124,6 @@ const faqs = [
 ]
 
 const verificationSteps = [
-  { icon: Phone, title: 'Phone & Email', text: 'OTP-verified contact details confirm the helper is reachable.' },
   { icon: Fingerprint, title: 'NIN Check', text: 'National ID validated and stored encrypted, never displayed.' },
   { icon: UserCheck, title: 'Photo Verification', text: 'A verification officer confirms the photo matches the identity.' },
   { icon: Briefcase, title: 'Employment Check', text: 'Previous employers confirm roles, dates and performance.' },

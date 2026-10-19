@@ -20,6 +20,7 @@ class RegisterHelperRequest extends FormRequest
             'phone' => ['required', 'string', 'max:20', 'regex:/^\+?[0-9]{10,15}$/', 'unique:users,phone'],
             'password' => ['required', 'string', 'min:8', 'confirmed'],
             'photo' => ['nullable', 'image', 'max:2048'],
+            'intro_video' => ['nullable', 'file', 'mimetypes:video/mp4,video/webm,video/quicktime', 'max:20480'],
             'date_of_birth' => ['required', 'date', 'before:-18 years'],
             'gender' => ['required', 'in:male,female,other'],
             'state' => ['required', 'string', 'max:100'],

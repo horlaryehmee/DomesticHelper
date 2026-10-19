@@ -276,5 +276,8 @@ Route::middleware('auth:sanctum')->group(function () {
         // Settings
         Route::get('/settings', [AdminSettingController::class, 'index']);
         Route::put('/settings', [AdminSettingController::class, 'update']);
+        Route::get('/settings/smtp', [AdminSettingController::class, 'smtp']);
+        Route::put('/settings/smtp', [AdminSettingController::class, 'updateSmtp']);
+        Route::post('/settings/smtp/test', [AdminSettingController::class, 'testSmtp']);
     });
 });

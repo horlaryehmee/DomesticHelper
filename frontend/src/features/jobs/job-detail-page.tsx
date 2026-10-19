@@ -123,7 +123,7 @@ export function JobDetailPage() {
               <div className="capitalize text-muted-foreground">{job.employer?.profile_type === 'agency' ? 'Agency' : 'Individual household'}</div>
               {job.employer?.state && <div className="text-muted-foreground">Based in {job.employer.state}</div>}
               <Separator />
-              <p className="text-xs text-muted-foreground">Employer identity is verified through phone OTP before jobs can be posted.</p>
+              <p className="text-xs text-muted-foreground">Review the employer profile and job details before applying.</p>
             </CardContent>
           </Card>
         </div>

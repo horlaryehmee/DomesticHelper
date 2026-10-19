@@ -24,7 +24,6 @@ interface UserRow {
   phone: string | null
   user_type: string
   status: string
-  phone_verified: boolean
   helper_profile: { verification_status: string | null; city: string | null } | null
   employer_profile: { profile_type: string | null } | null
   created_at: string
@@ -159,7 +158,7 @@ export function AdminUsersPage() {
                         {u.helper_profile?.verification_status ?? 'unverified'}
                       </Badge>
                     ) : (
-                      <Badge variant={u.phone_verified ? 'success' : 'outline'}>{u.phone_verified ? 'phone verified' : 'unverified'}</Badge>
+                      <Badge variant={u.status === 'active' ? 'success' : 'outline'}>{u.status}</Badge>
                     )}
                   </TableCell>
                   <TableCell className="text-sm text-muted-foreground">{formatDate(u.created_at)}</TableCell>

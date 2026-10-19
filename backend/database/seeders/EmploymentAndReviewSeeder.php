@@ -23,7 +23,7 @@ class EmploymentAndReviewSeeder extends Seeder
     {
         $employers = UserSeeder::$employerUsers;
         $helpers = UserSeeder::$helperUsers;
-        $admin = User::where('email', 'admin@domestichelper.test')->first();
+        $admin = User::whereHas('roles', fn ($query) => $query->where('slug', 'super-admin'))->first();
 
         $feedbacks = [
             'Extremely reliable and trustworthy. Worked with our family for over a year without any issues. Highly recommended.',

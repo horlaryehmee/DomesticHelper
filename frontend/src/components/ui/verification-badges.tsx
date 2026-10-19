@@ -1,8 +1,7 @@
-import { BadgeCheck, Mail, Phone, Camera, Fingerprint, MapPin, Briefcase, UserCheck, FileCheck } from 'lucide-react'
+import { BadgeCheck, Mail, Camera, Fingerprint, MapPin, Briefcase, UserCheck, FileCheck } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 export type VerificationBadgeKey =
-  | 'phone_verified'
   | 'email_verified'
   | 'identity_verified'
   | 'photo_verified'
@@ -13,7 +12,6 @@ export type VerificationBadgeKey =
   | 'profile_verified'
 
 export const BADGE_META: Record<VerificationBadgeKey, { label: string; icon: React.ComponentType<{ className?: string }> }> = {
-  phone_verified: { label: 'Phone Verified', icon: Phone },
   email_verified: { label: 'Email Verified', icon: Mail },
   identity_verified: { label: 'Identity Verified', icon: BadgeCheck },
   photo_verified: { label: 'Photo Verified', icon: Camera },

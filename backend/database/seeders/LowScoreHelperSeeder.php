@@ -33,7 +33,7 @@ class LowScoreHelperSeeder extends Seeder
     public function run(ReportService $reports, TrustScoreService $trustScore): void
     {
         $employers = UserSeeder::$employerUsers;
-        $admin = User::where('email', 'admin@domestichelper.test')->first();
+        $admin = User::whereHas('roles', fn ($query) => $query->where('slug', 'super-admin'))->first();
         $verifier = User::where('email', 'verifier@domestichelper.test')->first();
         $skills = Skill::where('category', 'helper')->get()->keyBy('name');
 

@@ -58,6 +58,7 @@ class AuthTest extends TestCase
     public function test_helper_can_register_and_nin_is_encrypted_at_rest(): void
     {
         Storage::fake('private');
+        Storage::fake('public');
         $skill = $this->seedSkill('Nanny');
 
         $response = $this->post('/api/auth/register/helper', [
@@ -81,6 +82,8 @@ class AuthTest extends TestCase
             'guarantor_phone' => '08120000002',
             'guarantor_relationship' => 'Former employer',
             'address_proof' => UploadedFile::fake()->create('utility-bill.pdf', 100, 'application/pdf'),
+            'photo' => UploadedFile::fake()->create('profile.jpg', 100, 'image/jpeg'),
+            'intro_video' => UploadedFile::fake()->create('introduction.webm', 512, 'video/webm'),
         ], ['Accept' => 'application/json']);
 
         $response->assertCreated();
@@ -95,6 +98,8 @@ class AuthTest extends TestCase
         $details = \Illuminate\Support\Facades\DB::table('registration_verification_details')->where('user_id', $user->id)->first();
         $this->assertEquals('Tunde Guarantor', Crypt::decryptString($details->guarantor_name_encrypted));
         Storage::disk('private')->assertExists($details->address_proof_path);
+        Storage::disk('public')->assertExists($profile->photo_path);
+        Storage::disk('public')->assertExists($profile->intro_video_path);
     }
 
     public function test_employer_cannot_register_without_identity_guarantor_and_address_proof(): void
@@ -159,6 +164,20 @@ class AuthTest extends TestCase
 
         $this->postJson('/api/auth/login', ['login' => $user->email, 'password' => 'wrong-password'])
             ->assertStatus(422);
+    }
+
+    public function test_phone_verification_codes_are_disabled(): void
+    {
+        $this->postJson('/api/auth/otp/send', [
+            'recipient' => '08030000001',
+            'purpose' => 'verify_phone',
+        ])->assertUnprocessable()->assertJsonValidationErrors('purpose');
+
+        $this->postJson('/api/auth/otp/verify', [
+            'recipient' => '08030000001',
+            'purpose' => 'register_phone',
+            'code' => '123456',
+        ])->assertUnprocessable()->assertJsonValidationErrors('purpose');
     }
 
     public function test_suspended_user_cannot_login(): void

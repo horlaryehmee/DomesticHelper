@@ -18,6 +18,7 @@ class HelperProfileOwnResource extends JsonResource
             'address_line' => $this->address_line, // owner-only endpoint
             'nin_last4' => $this->nin_last4,
             'photo_url' => $this->photo_path ? asset('storage/'.$this->photo_path) : null,
+            'intro_video_url' => $this->intro_video_path ? asset('storage/'.$this->intro_video_path) : null,
             'bio' => $this->bio,
             'years_experience' => $this->years_experience,
             'availability' => $this->availability?->value,

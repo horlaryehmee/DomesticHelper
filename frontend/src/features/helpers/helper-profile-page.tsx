@@ -123,6 +123,17 @@ export function HelperProfilePage() {
             </div>
           </Card>
 
+          {helper.intro_video_url && (
+            <Card className="gap-4">
+              <CardHeader><CardTitle className="text-lg">Meet {helper.name}</CardTitle></CardHeader>
+              <CardContent>
+                <video controls preload="metadata" className="w-full max-w-xl rounded-lg bg-black" src={helper.intro_video_url}>
+                  Your browser does not support video playback.
+                </video>
+              </CardContent>
+            </Card>
+          )}
+
           {/* Skills */}
           <Card className="gap-4">
             <CardHeader>

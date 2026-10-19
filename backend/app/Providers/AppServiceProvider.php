@@ -26,10 +26,12 @@ use App\Policies\UserPolicy;
 use App\Policies\VerificationReportPolicy;
 use App\Services\Search\HelperSearchEngine;
 use App\Services\Search\MySqlHelperSearchEngine;
+use App\Services\SmtpConfiguration;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -56,6 +58,13 @@ class AppServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        try {
+            if (Schema::hasTable('settings')) {
+                $this->app->make(SmtpConfiguration::class)->apply();
+            }
+        } catch (\Throwable) {
+            // Fresh installs and temporary database outages use .env mail settings.
+        }
         foreach ($this->policies as $model => $policy) {
             Gate::policy($model, $policy);
         }

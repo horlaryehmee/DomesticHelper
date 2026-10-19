@@ -25,6 +25,7 @@ export interface HelperSummary {
   uuid: string
   name: string
   photo_url: string | null
+  intro_video_url?: string | null
   city: string | null
   state: string | null
   gender?: string
