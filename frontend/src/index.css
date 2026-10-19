@@ -20,6 +20,16 @@
 @keyframes dr-fade-in { to { opacity: 1; } }
 @media (prefers-reduced-motion: reduce) { .dr-root { animation: none; opacity: 1; } }
 
+.home-scroll-reveal {
+  opacity: 0;
+  transform: translateY(34px);
+  transition: opacity 700ms ease, transform 700ms cubic-bezier(.2, .7, .2, 1);
+}
+.home-scroll-reveal-visible { opacity: 1; transform: translateY(0); }
+@media (prefers-reduced-motion: reduce) {
+  .home-scroll-reveal { opacity: 1; transform: none; transition: none; }
+}
+
 @custom-variant dark (&:is(.dark *));
 
 :root {

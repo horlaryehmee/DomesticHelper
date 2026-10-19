@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useLayoutEffect, useRef, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 import {
@@ -140,6 +140,34 @@ function SectionLabel({ children, light = false }: { children: React.ReactNode; 
 }
 
 export function LandingPage() {
+  const pageRef = useRef<HTMLDivElement>(null)
+  useLayoutEffect(() => {
+    const page = pageRef.current
+    if (!page || !('IntersectionObserver' in window) || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
+
+    const targets = Array.from(page.querySelectorAll('section')).slice(1).flatMap((section) =>
+      Array.from(section.children).filter((child): child is HTMLDivElement =>
+        child instanceof HTMLDivElement && !child.classList.contains('absolute') && !child.classList.contains('dr-root'),
+      ),
+    )
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (!entry.isIntersecting) return
+        entry.target.classList.add('home-scroll-reveal-visible')
+        observer.unobserve(entry.target)
+      })
+    }, { threshold: 0.08, rootMargin: '0px 0px -35px 0px' })
+
+    targets.forEach((target) => {
+      target.classList.add('home-scroll-reveal')
+      observer.observe(target)
+    })
+
+    return () => {
+      observer.disconnect()
+      targets.forEach((target) => target.classList.remove('home-scroll-reveal', 'home-scroll-reveal-visible'))
+    }
+  }, [])
   const { user } = useAuth()
   const [selectedHelperId, setSelectedHelperId] = useState<string | null>(null)
   const [selectedScoreEvents, setSelectedScoreEvents] = useState<string[]>(['job-completed', 'positive-review', 'identity-verified'])
@@ -187,7 +215,7 @@ export function LandingPage() {
   }
 
   return (
-    <div>
+    <div ref={pageRef}>
       {/* ============ HERO ============ */}
       <section className="relative isolate overflow-hidden border-b bg-[#140e1d] text-white">
         <HeroBackground />
