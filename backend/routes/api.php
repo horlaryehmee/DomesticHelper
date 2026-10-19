@@ -56,6 +56,7 @@ Route::prefix('auth')->middleware('throttle:auth')->group(function () {
 
 // Meta (skills, locations, enum options)
 Route::get('/meta', [MetaController::class, 'index']);
+Route::get('/demo/accounts', [AdminDemoController::class, 'accounts']);
 
 // Helper discovery
 Route::get('/helpers', [HelperController::class, 'index']);

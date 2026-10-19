@@ -6,6 +6,7 @@ use App\Models\Role;
 use App\Models\Skill;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Hash;
 use Tests\TestCase;
 
 class AdminDemoTest extends TestCase
@@ -22,10 +23,13 @@ class AdminDemoTest extends TestCase
 
         $this->actingAs($master, 'sanctum')->postJson('/api/admin/demo/fill')
             ->assertOk()->assertJsonPath('data.users', 4)->assertJsonPath('data.jobs', 1);
+        $this->getJson('/api/demo/accounts')->assertOk()->assertJsonCount(4, 'data')->assertDontSee($master->email);
+        $this->assertTrue(Hash::check('DemoOnly!2026', User::where('email', 'employer@demo.hiresafe.invalid')->firstOrFail()->password));
         $this->postJson('/api/admin/demo/fill')->assertOk()->assertJsonPath('data.users', 4);
         $this->postJson('/api/admin/demo/clear', ['confirmation' => 'wrong'])->assertUnprocessable();
         $this->postJson('/api/admin/demo/clear', ['confirmation' => 'CLEAR DEMO'])
             ->assertOk()->assertJsonPath('data.users', 0)->assertJsonPath('data.jobs', 0);
+        $this->getJson('/api/demo/accounts')->assertOk()->assertJsonCount(0, 'data');
 
         $this->assertDatabaseHas('users', ['id' => $real->id]);
         $this->assertDatabaseHas('users', ['id' => $master->id]);
@@ -44,12 +48,19 @@ class AdminDemoTest extends TestCase
         $master = User::factory()->create(['user_type' => 'admin', 'email' => 'info@hiresafe.ng']);
         $master->roles()->attach($role);
         User::factory()->create(['user_type' => 'helper', 'email' => 'helper1@domestichelper.test']);
+        User::factory()->create(['user_type' => 'admin', 'email' => 'admin@domestichelper.test']);
         User::factory()->create(['user_type' => 'helper', 'email' => 'real@example.com']);
 
-        $this->actingAs($master, 'sanctum')->getJson('/api/admin/demo')->assertJsonPath('data.users', 1);
+        $this->getJson('/api/demo/accounts')->assertOk()
+            ->assertJsonCount(1, 'data')
+            ->assertJsonPath('data.0.email', 'helper1@domestichelper.test')
+            ->assertJsonPath('data.0.password', 'password')
+            ->assertDontSee('admin@domestichelper.test');
+        $this->actingAs($master, 'sanctum')->getJson('/api/admin/demo')->assertJsonPath('data.users', 2);
         $this->postJson('/api/admin/demo/clear', ['confirmation' => 'CLEAR DEMO'])->assertOk();
 
         $this->assertDatabaseMissing('users', ['email' => 'helper1@domestichelper.test']);
+        $this->assertDatabaseMissing('users', ['email' => 'admin@domestichelper.test']);
         $this->assertDatabaseHas('users', ['email' => 'real@example.com']);
         $this->assertDatabaseHas('users', ['email' => 'info@hiresafe.ng']);
     }

@@ -10,6 +10,11 @@ use Illuminate\Http\Request;
 
 class AdminDemoController extends Controller
 {
+    public function accounts(DemoDataService $demo): JsonResponse
+    {
+        return response()->json(['data' => $demo->loginAccounts()]);
+    }
+
     public function status(Request $request, DemoDataService $demo): JsonResponse
     {
         abort_unless($request->user()->isSuperAdmin(), 403);
@@ -32,7 +37,7 @@ class AdminDemoController extends Controller
         abort_unless($request->user()->isSuperAdmin(), 403);
         $request->validate(['confirmation' => ['required', 'in:CLEAR DEMO']]);
 
-        $status = $demo->clear();
+        $status = $demo->clear($request->user()->id);
         AuditLogService::log('demo.cleared', $request->user(), null, $status);
 
         return response()->json(['data' => $status]);

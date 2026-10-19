@@ -7,12 +7,33 @@ use App\Models\Skill;
 use App\Models\User;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
 class DemoDataService
 {
+    public function loginAccounts(): array
+    {
+        $markedIds = DB::table('demo_users')->pluck('user_id');
+
+        return User::query()
+            ->whereIn('id', $this->demoIds())
+            ->whereIn('user_type', ['employer', 'helper'])
+            ->orderBy('email')
+            ->get(['id', 'email', 'first_name', 'last_name', 'user_type', 'password'])
+            ->map(fn ($user) => [
+                'email' => $user->email,
+                'label' => trim($user->first_name.' '.$user->last_name),
+                'type' => $user->user_type->value,
+                'password' => $markedIds->contains($user->id) ? 'DemoOnly!2026' : 'password',
+                'valid' => Hash::check($markedIds->contains($user->id) ? 'DemoOnly!2026' : 'password', $user->password),
+            ])
+            ->filter(fn ($account) => $account['valid'])
+            ->map(fn ($account) => collect($account)->except('valid')->all())
+            ->values()->all();
+    }
+
     public function status(): array
     {
         $ids = $this->demoIds();
@@ -36,7 +57,7 @@ class DemoDataService
                 'first_name' => 'Demo', 'last_name' => 'Employer',
                 'email' => 'employer@demo.hiresafe.invalid',
                 'phone' => '08030009991',
-                'password' => Str::password(32),
+                'password' => 'DemoOnly!2026',
                 'user_type' => 'employer',
             ]);
             $employer->employerProfile()->create([
@@ -55,7 +76,7 @@ class DemoDataService
                     'first_name' => $first, 'last_name' => $last,
                     'email' => 'helper'.($index + 1).'@demo.hiresafe.invalid',
                     'phone' => '0803000999'.($index + 2),
-                    'password' => Str::password(32),
+                    'password' => 'DemoOnly!2026',
                     'user_type' => 'helper',
                 ]);
                 $profile = $helper->helperProfile()->create([
@@ -94,10 +115,13 @@ class DemoDataService
         return $this->status();
     }
 
-    public function clear(): array
+    public function clear(?int $actingUserId = null): array
     {
-        $mediaPaths = DB::transaction(function () {
+        $mediaPaths = DB::transaction(function () use ($actingUserId) {
             $ids = $this->demoIds();
+            if ($actingUserId && $ids->contains($actingUserId)) {
+                throw ValidationException::withMessages(['demo' => 'You cannot clear the account you are signed in with. Sign in as the live master admin first.']);
+            }
             $demoJobIds = Job::whereIn('employer_id', $ids)->pluck('id');
             if (
                 DB::table('job_applications')->whereIn('job_id', $demoJobIds)->whereNotIn('helper_id', $ids)->exists()
@@ -143,7 +167,7 @@ class DemoDataService
         $marked = DB::table('demo_users')->pluck('user_id');
         $legacy = User::withTrashed()->where('email', 'like', '%@domestichelper.test')
             ->get(['id', 'email'])
-            ->filter(fn ($user) => preg_match('/^(helper\d+|employer\d+|verifier|moderator)@domestichelper\.test$/', $user->email))
+            ->filter(fn ($user) => preg_match('/^(helper\d+|employer\d+|admin|verifier|moderator)@domestichelper\.test$/', $user->email))
             ->pluck('id');
 
         return $marked->concat($legacy)->unique()->values();
