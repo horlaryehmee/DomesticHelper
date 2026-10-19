@@ -29,9 +29,10 @@ interface SmtpSettings {
   from_name: string
 }
 
+interface DemoStatus { users: number; helpers: number; employers: number; jobs: number }
+
 export function AdminSettingsPage() {
   const { user } = useAuth()
-  const isSuperAdmin = user?.roles?.includes('super-admin') ?? false
   const queryClient = useQueryClient()
   const { data, isLoading } = useQuery({
     queryKey: ['settings'],
@@ -42,12 +43,28 @@ export function AdminSettingsPage() {
   const [smtpDraft, setSmtpDraft] = useState<SmtpSettings | null>(null)
   const [smtpPassword, setSmtpPassword] = useState('')
   const [testRecipient, setTestRecipient] = useState('')
-  const { data: smtpData } = useQuery({
+  const [clearConfirmation, setClearConfirmation] = useState('')
+  const { data: smtpData, isLoading: smtpLoading, isError: smtpError } = useQuery({
     queryKey: ['smtp-settings'],
     queryFn: () => api.get<{ data: SmtpSettings }>('/admin/settings/smtp'),
-    enabled: isSuperAdmin,
+    enabled: user?.user_type === 'admin',
   })
   const smtp = smtpDraft ?? smtpData?.data
+  const { data: demoData, isError: demoError } = useQuery({
+    queryKey: ['demo-status'],
+    queryFn: () => api.get<{ data: DemoStatus }>('/admin/demo'),
+    enabled: user?.user_type === 'admin',
+  })
+  const fillDemo = useMutation({
+    mutationFn: () => api.post('/admin/demo/fill'),
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['demo-status'] }); toast.success('Demo data added') },
+    onError: (e) => toast.error(e instanceof ApiError ? e.message : 'Could not add demo data'),
+  })
+  const clearDemo = useMutation({
+    mutationFn: () => api.post('/admin/demo/clear', { confirmation: clearConfirmation }),
+    onSuccess: () => { setClearConfirmation(''); queryClient.invalidateQueries({ queryKey: ['demo-status'] }); toast.success('Demo data removed') },
+    onError: (e) => toast.error(e instanceof ApiError ? e.message : 'Could not clear demo data'),
+  })
 
   const saveSmtp = useMutation({
     mutationFn: () => api.put<{ data: SmtpSettings }>('/admin/settings/smtp', { ...smtp, password: smtpPassword || undefined }),
@@ -88,39 +105,21 @@ export function AdminSettingsPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Settings</h1>
-          <p className="mt-1 text-sm text-muted-foreground">Platform configuration: fees, trust score base, security options.</p>
+          <p className="mt-1 text-sm text-muted-foreground">Platform settings, SMTP email and demo data.</p>
         </div>
         <Button onClick={() => save.mutate()} disabled={save.isPending}>
           <SettingsIcon /> Save all settings
         </Button>
       </div>
 
-      {Object.entries(groups).map(([group, settings]) => (
-        <Card key={group} className="gap-4">
-          <CardHeader>
-            <CardTitle className="text-base capitalize">{group}</CardTitle>
-          </CardHeader>
-          <CardContent className="grid gap-4 sm:grid-cols-2">
-            {settings?.map((s) => (
-              <div key={s.id} className="space-y-1.5">
-                <Label>{s.label ?? s.key}</Label>
-                <Input
-                  defaultValue={s.value ?? ''}
-                  onChange={(e) => setDrafts((d) => ({ ...d, [s.key]: e.target.value }))}
-                />
-                <p className="text-xs text-muted-foreground">{s.key}</p>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
-      ))}
-
-      {isSuperAdmin && smtp && <Card className="gap-4">
+      <Card className="gap-4">
         <CardHeader>
           <CardTitle className="text-base">SMTP email</CardTitle>
           <p className="text-sm text-muted-foreground">Configure outgoing email for notifications and password resets. Only the master admin can change these settings.</p>
         </CardHeader>
-        <CardContent className="space-y-4">
+        {smtpLoading && <CardContent><p className="text-sm text-muted-foreground">Loading SMTP settings…</p></CardContent>}
+        {smtpError && <CardContent><p className="text-sm text-destructive">SMTP settings are available only to an account with the super-admin role. Log out and back in if your access was just updated.</p></CardContent>}
+        {smtp && <CardContent className="space-y-4">
           <label className="flex items-center gap-2 text-sm font-medium">
             <input type="checkbox" checked={smtp.enabled} onChange={(event) => setSmtpDraft({ ...smtp, enabled: event.target.checked })} /> Enable SMTP
           </label>
@@ -138,8 +137,41 @@ export function AdminSettingsPage() {
             <Input type="email" aria-label="Test email recipient" placeholder={user?.email ?? 'Test recipient email'} value={testRecipient} onChange={(event) => setTestRecipient(event.target.value)} />
             <Button variant="outline" onClick={() => testSmtp.mutate()} disabled={!smtp.enabled || testSmtp.isPending}>Send test email</Button>
           </div>
+        </CardContent>}
+      </Card>
+
+      {!demoError && demoData && <Card className="gap-4">
+        <CardHeader>
+          <CardTitle className="text-base">Demo data</CardTitle>
+          <p className="text-sm text-muted-foreground">Add sample helpers, an employer and a job to preview the site. Clear demo removes tagged samples and the older seeded demo accounts. Real users and platform settings stay in place.</p>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <p className="text-sm">Current demo data: {demoData.data.users} users, {demoData.data.helpers} helpers, {demoData.data.employers} employers, {demoData.data.jobs} jobs.</p>
+          <Button variant="outline" onClick={() => fillDemo.mutate()} disabled={fillDemo.isPending || demoData.data.users > 0}>Fill demo</Button>
+          <div className="space-y-2 border-t pt-4">
+            <Label htmlFor="clear-demo">Type CLEAR DEMO to remove demo accounts and their content</Label>
+            <div className="flex flex-col gap-3 sm:flex-row">
+              <Input id="clear-demo" value={clearConfirmation} onChange={(event) => setClearConfirmation(event.target.value)} placeholder="CLEAR DEMO" />
+              <Button variant="destructive" onClick={() => clearDemo.mutate()} disabled={clearDemo.isPending || clearConfirmation !== 'CLEAR DEMO' || demoData.data.users === 0}>Clear all demo</Button>
+            </div>
+          </div>
         </CardContent>
       </Card>}
+
+      {Object.entries(groups).map(([group, settings]) => (
+        <Card key={group} className="gap-4">
+          <CardHeader><CardTitle className="text-base capitalize">{group}</CardTitle></CardHeader>
+          <CardContent className="grid gap-4 sm:grid-cols-2">
+            {settings?.map((s) => (
+              <div key={s.id} className="space-y-1.5">
+                <Label>{s.label ?? s.key}</Label>
+                <Input defaultValue={s.value ?? ''} onChange={(e) => setDrafts((d) => ({ ...d, [s.key]: e.target.value }))} />
+                <p className="text-xs text-muted-foreground">{s.key}</p>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+      ))}
     </div>
   )
 }

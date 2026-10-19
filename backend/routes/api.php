@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\Admin\AdminPaymentController;
 use App\Http\Controllers\Api\Admin\AdminReportController;
 use App\Http\Controllers\Api\Admin\AdminReviewController;
 use App\Http\Controllers\Api\Admin\AdminSettingController;
+use App\Http\Controllers\Api\Admin\AdminDemoController;
 use App\Http\Controllers\Api\Admin\AdminTrustScoreController;
 use App\Http\Controllers\Api\Admin\AdminUserController;
 use App\Http\Controllers\Api\Admin\AdminVerificationController;
@@ -279,5 +280,8 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/settings/smtp', [AdminSettingController::class, 'smtp']);
         Route::put('/settings/smtp', [AdminSettingController::class, 'updateSmtp']);
         Route::post('/settings/smtp/test', [AdminSettingController::class, 'testSmtp']);
+        Route::get('/demo', [AdminDemoController::class, 'status']);
+        Route::post('/demo/fill', [AdminDemoController::class, 'fill']);
+        Route::post('/demo/clear', [AdminDemoController::class, 'clear']);
     });
 });
