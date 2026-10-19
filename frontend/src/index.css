@@ -3,6 +3,23 @@
 /* Self-hosted so the app never waits on a third-party font CDN at runtime. */
 @import "@fontsource-variable/bricolage-grotesque";
 
+.dr-root {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  background: radial-gradient(circle at 55% 30%, #21143c 0%, #10091f 70%);
+  opacity: 0;
+  animation: dr-fade-in 900ms ease-out forwards;
+}
+.dr-root--contained { position: absolute; }
+.dr-main, .dr-bloom, .dr-vignette, .dr-grain { position: absolute; inset: 0; width: 100%; height: 100%; }
+.dr-bloom { filter: blur(10px); opacity: .6; }
+.dr-vignette { background: radial-gradient(ellipse at center, transparent 30%, rgba(7, 4, 18, .68) 100%); }
+.dr-grain { opacity: .025; background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.25'/%3E%3C/svg%3E"); }
+@keyframes dr-fade-in { to { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .dr-root { animation: none; opacity: 1; } }
+
 @custom-variant dark (&:is(.dark *));
 
 :root {

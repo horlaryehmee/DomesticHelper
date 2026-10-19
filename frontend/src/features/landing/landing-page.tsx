@@ -18,6 +18,7 @@ import type { HelperSummary, PaginationMeta } from '@/lib/types'
 import { useAuth } from '@/lib/auth'
 import { HeroAnimation } from './hero-animation'
 import { HeroBackground } from '@/components/ui/hero-background'
+import DataRain from '@/components/ui/data-rain'
 import { CommunityStoryDialog } from '@/features/community/community-story-dialog'
 import './landing-marquee.css'
 
@@ -395,12 +396,14 @@ export function LandingPage() {
       </section>
 
       {/* ============ TRUST SCORE ============ */}
-      <section className="border-y bg-muted/30">
-        <div className="mx-auto max-w-7xl px-4 py-20 sm:px-6">
+      <section className="relative isolate overflow-hidden border-y border-white/10 bg-[#10091f]">
+        <DataRain fullscreen={false} count={900} flowSpeed={0.65} obstacleRadius={70} palette={{ calm: '#b79cff', mid: '#8754d5', hot: '#f48046' }} />
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-[#10091f]/55 via-[#10091f]/30 to-[#10091f]/80" aria-hidden="true" />
+        <div className="relative z-10 mx-auto max-w-7xl px-4 py-20 sm:px-6">
           <div className="max-w-2xl">
-            <SectionLabel>Understanding trust scores</SectionLabel>
-            <h2 className="mt-4 text-3xl font-bold tracking-tight sm:text-4xl">See what moves a trust score</h2>
-            <p className="mt-3 text-muted-foreground">
+            <SectionLabel light>Understanding trust scores</SectionLabel>
+            <h2 className="mt-4 text-3xl font-bold tracking-tight text-white sm:text-4xl">See what moves a trust score</h2>
+            <p className="mt-3 text-white/75">
               Every helper starts at 50. Select the verified events below to see how an example score changes.
             </p>
           </div>
