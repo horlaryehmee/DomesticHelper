@@ -3,6 +3,40 @@
 /* Self-hosted so the app never waits on a third-party font CDN at runtime. */
 @import "@fontsource-variable/bricolage-grotesque";
 
+/* Directory motion stays short and responds to the user's motion preference. */
+.helper-result { animation: helper-enter 320ms ease-out both; }
+.helper-profile-card { transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease; }
+.helper-profile-card:hover, .helper-profile-card:focus-within {
+  transform: translateY(-2px);
+  border-color: #c4b8d2;
+  box-shadow: 0 8px 22px -14px rgba(38, 24, 54, .35);
+}
+.helper-directory button { transition: background-color 160ms ease, color 160ms ease, border-color 160ms ease, transform 160ms ease; }
+.helper-directory button:active { transform: scale(.98); }
+.helper-detail-toggle { transition: transform 200ms ease; }
+.helper-details[open] .helper-detail-toggle { transform: rotate(45deg); }
+.helper-details[open] > div { animation: helper-enter 200ms ease-out; }
+@supports (interpolate-size: allow-keywords) {
+  .helper-details { interpolate-size: allow-keywords; }
+  .helper-details::details-content {
+    block-size: 0;
+    overflow: hidden;
+    transition: block-size 220ms ease, content-visibility 220ms allow-discrete;
+  }
+  .helper-details[open]::details-content { block-size: auto; }
+}
+@keyframes helper-enter {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .helper-directory *, .helper-directory *::before, .helper-directory *::after, .helper-details::details-content {
+    animation: none !important;
+    transition: none !important;
+  }
+  .helper-directory button:active, .helper-profile-card:hover, .helper-profile-card:focus-within { transform: none; }
+}
+
 .dr-root {
   position: fixed;
   inset: 0;

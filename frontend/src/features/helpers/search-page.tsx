@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Search, SlidersHorizontal, X } from 'lucide-react'
+import { Search, X } from 'lucide-react'
+import { cn } from '@/lib/utils'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
@@ -28,6 +29,7 @@ interface Meta {
 export function SearchPage() {
   const [params, setParams] = useSearchParams()
   const [drawerOpen, setDrawerOpen] = useState(false)
+  const [view, setView] = useState<'grid' | 'list'>('grid')
   const { user } = useAuth()
   const queryClient = useQueryClient()
 
@@ -94,11 +96,16 @@ export function SearchPage() {
   const clearAll = () => setParams(new URLSearchParams())
 
   const hasActiveFilters = filters.state || filters.gender || filters.availability || filters.verification || filters.skills.length > 0 || filters.min_experience || filters.trust_min || filters.salary_min || filters.salary_max
+  const activeFilterCount = [filters.state, filters.gender, filters.availability, filters.verification, filters.min_experience, filters.trust_min, filters.salary_min, filters.salary_max].filter(Boolean).length + filters.skills.length
+  const activeChips = Array.from(params.entries()).filter(([key]) => !['page', 'sort'].includes(key)).map(([key, value]) => ({
+    key, value,
+    label: key === 'skill' ? meta?.skills.find((skill) => skill.id === Number(value))?.name ?? 'Skill' : `${({ q: 'Search', state: 'Location', gender: 'Gender', availability: 'Availability', verification: 'Verification', min_experience: 'Experience ≥', trust_min: 'Trust ≥', salary_min: 'Salary ≥', salary_max: 'Salary ≤' } as Record<string, string>)[key] ?? key}: ${value.replace(/_/g, ' ')}`,
+  }))
 
   const filtersPanel = (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Filters</h2>
+        <h2 className="flex items-center gap-2 text-base font-bold">Refine search</h2>
         {hasActiveFilters && (
           <button onClick={clearAll} className="cursor-pointer text-xs font-medium text-primary hover:underline">
             Clear all
@@ -210,15 +217,18 @@ export function SearchPage() {
   )
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6">
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold tracking-tight">Find a helper</h1>
-        <p className="mt-1 text-muted-foreground">Search verified domestic staff by skill, location, experience and trust.</p>
-      </div>
+    <div className="helper-directory min-h-screen bg-slate-50 pb-12">
+      <div className="mx-auto max-w-7xl px-4 pt-6 sm:px-6 sm:pt-7">
+        <div className="relative border-b border-slate-200 pb-6">
+          <div className="relative flex items-start justify-between gap-6">
+            <div><h1 className="text-3xl font-bold tracking-tight">Find a helper</h1>
+            <p className="mt-2 max-w-xl text-sm text-muted-foreground">Browse profiles and compare skills, experience, and verification.</p></div>
+
+          </div>
 
       {/* Search bar */}
       <form
-        className="flex flex-col gap-3 sm:flex-row"
+        className="relative mt-6 flex max-w-3xl gap-2 rounded-lg border border-slate-200 bg-white p-1.5 text-foreground shadow-sm transition-shadow focus-within:ring-2 focus-within:ring-primary/20"
         onSubmit={(e) => {
           e.preventDefault()
           const form = new FormData(e.currentTarget)
@@ -226,24 +236,34 @@ export function SearchPage() {
         }}
       >
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-          <Input name="q" defaultValue={q} placeholder='Try "nanny in Lekki" or "driver with 5 years experience"' className="h-11 pl-9" />
+          <Input key={q} name="q" defaultValue={q} aria-label="Search helpers" placeholder="Search by role, skill, or location" className="h-11 border-0 bg-transparent pl-3 shadow-none focus-visible:ring-0" />
         </div>
         <div className="flex gap-2">
-          <Button type="submit" className="h-11">Search</Button>
-          <Button type="button" variant="outline" className="h-11 lg:hidden" onClick={() => setDrawerOpen(true)}>
-            <SlidersHorizontal /> Filters
-          </Button>
+          <Button type="submit" className="h-10 rounded-lg px-5 font-semibold sm:px-7">Search</Button>
         </div>
       </form>
+      <div className="relative mt-4 flex flex-wrap items-center gap-2">
+        <span className="mr-1 text-xs font-medium text-muted-foreground">Explore</span>
+        {meta?.skills.slice(0, 6).map((skill) => <button key={skill.id} onClick={() => setSkill(skill.id, !filters.skills.includes(skill.id))} aria-pressed={filters.skills.includes(skill.id)} className={cn('rounded-full border px-3 py-1.5 text-xs font-medium transition-colors focus-visible:outline-2 focus-visible:outline-primary', filters.skills.includes(skill.id) ? 'border-primary bg-primary text-white' : 'border-slate-200 bg-white text-muted-foreground hover:border-primary/40 hover:text-primary')}>{skill.name}</button>)}
+      </div>
+        </div>
+      </div>
+      <div className="mx-auto max-w-7xl px-4 sm:px-6">
 
       {/* Sort row */}
-      <div className="mt-4 flex items-center justify-between">
-        <p className="text-sm text-muted-foreground">
+      <div className="flex flex-wrap items-center justify-between gap-4 py-5">
+        <div><h2 className="text-sm font-semibold">
           {data ? `${data.meta.total} helper${data.meta.total === 1 ? '' : 's'} found` : 'Searching…'}
-        </p>
+        </h2></div>
+        <div className="flex items-center gap-2">
+        <div className="hidden items-center rounded-sm border bg-white p-1 sm:flex" aria-label="Result layout">
+          <button type="button" aria-label="Grid view" aria-pressed={view === 'grid'} onClick={() => setView('grid')} className={cn('rounded-sm px-3 py-1.5 text-xs font-medium transition-colors', view === 'grid' ? 'bg-primary text-white' : 'text-muted-foreground hover:bg-accent')}>Grid</button>
+          <button type="button" aria-label="List view" aria-pressed={view === 'list'} onClick={() => setView('list')} className={cn('rounded-sm px-3 py-1.5 text-xs font-medium transition-colors', view === 'list' ? 'bg-primary text-white' : 'text-muted-foreground hover:bg-accent')}>List</button>
+        </div>
+        <Button type="button" variant="outline" className="h-10 rounded-xl bg-white lg:hidden" onClick={() => setDrawerOpen(true)}>Filters{activeFilterCount > 0 && ` (${activeFilterCount})`}</Button>
+        <span className="hidden text-sm text-muted-foreground sm:inline">Sort by</span>
         <Select value={sort} onValueChange={(v) => setParam('sort', v)}>
-          <SelectTrigger size="sm" className="w-44"><SelectValue /></SelectTrigger>
+          <SelectTrigger size="sm" aria-label="Sort helpers" className="h-10 w-40 rounded-xl bg-white"><SelectValue /></SelectTrigger>
           <SelectContent>
             <SelectItem value="relevance">Relevance</SelectItem>
             <SelectItem value="trust_score">Trust score</SelectItem>
@@ -252,12 +272,14 @@ export function SearchPage() {
             <SelectItem value="recently_active">Recently active</SelectItem>
           </SelectContent>
         </Select>
+        </div>
       </div>
 
-      <div className="mt-6 grid gap-8 lg:grid-cols-[280px_1fr]">
+      {activeChips.length > 0 && <div className="mb-5 flex flex-wrap items-center gap-2" aria-label="Active filters">{activeChips.map((chip) => <button key={`${chip.key}-${chip.value}`} onClick={() => chip.key === 'skill' ? setSkill(Number(chip.value), false) : setParam(chip.key, null)} className="inline-flex items-center gap-2 rounded-lg border border-primary/15 bg-white px-3 py-1.5 text-xs font-medium text-primary hover:bg-accent" aria-label={`Remove ${chip.label}`}>{chip.label}<X className="size-3" /></button>)}<button onClick={clearAll} className="px-2 text-xs font-semibold text-muted-foreground hover:text-primary">Reset all</button></div>}
+      <div className="grid items-start gap-6 lg:grid-cols-[220px_minmax(0,1fr)]">
         {/* Desktop sidebar */}
         <aside className="hidden lg:block">
-          <div className="sticky top-24 rounded-lg border bg-card p-5">{filtersPanel}</div>
+          <div className="sticky top-24 rounded-xl border border-slate-200 bg-white p-4">{filtersPanel}</div>
         </aside>
 
         {/* Mobile drawer */}
@@ -278,28 +300,33 @@ export function SearchPage() {
         )}
 
         {/* Results */}
-        <div className="space-y-5">
-          {isLoading && [1, 2, 3, 4].map((i) => <Skeleton key={i} className="h-44 w-full" />)}
-          {isError && <ErrorState retry={() => refetch()} />}
+        <div className="min-w-0">
+          <div className={cn('helper-results grid items-stretch gap-3', view === 'grid' && 'sm:grid-cols-2 xl:grid-cols-3')}>
+          {isLoading && [1, 2, 3, 4].map((i) => <Skeleton key={i} className="h-48 w-full rounded-2xl" />)}
+          {isError && <div className="col-span-full"><ErrorState retry={() => refetch()} /></div>}
           {data && data.data.length === 0 && (
-            <EmptyState
+            <div className="col-span-full"><EmptyState
               icon={Search}
               title="No helpers match your search"
               description="Try different keywords, a wider location, or clear some filters."
               action={<Button variant="outline" onClick={clearAll}>Clear all filters</Button>}
-            />
+            /></div>
           )}
-          {data?.data.map((helper) => (
+          {data?.data.map((helper, index) => (
+            <div key={helper.uuid} className="helper-result" style={{ animationDelay: `${Math.min(index, 5) * 45}ms` }}>
             <HelperCard
-              key={helper.uuid}
               helper={helper}
+              variant={view}
               onSave={user?.user_type === 'employer' ? () => saveMutation.mutate(helper.uuid) : undefined}
             />
+            </div>
           ))}
+          </div>
           {data && data.meta.last_page > 1 && (
-            <Pagination meta={data.meta} onChange={setPage} />
+            <div className="mt-8"><Pagination meta={data.meta} onChange={setPage} /></div>
           )}
         </div>
+      </div>
       </div>
     </div>
   )

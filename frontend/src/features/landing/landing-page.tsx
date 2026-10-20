@@ -17,8 +17,8 @@ import { Skeleton } from '@/components/ui/skeleton'
 import type { HelperSummary, PaginationMeta } from '@/lib/types'
 import { useAuth } from '@/lib/auth'
 import { HeroAnimation } from './hero-animation'
-import { HeroBackground } from '@/components/ui/hero-background'
-import DataRain from '@/components/ui/data-rain'
+import { ShaderBackground } from '@/components/ui/shader-b3e94fd7'
+import KineticGrid from '@/components/ui/kinetic-grid'
 import { CommunityStoryDialog } from '@/features/community/community-story-dialog'
 import './landing-marquee.css'
 
@@ -218,7 +218,8 @@ export function LandingPage() {
     <div ref={pageRef}>
       {/* ============ HERO ============ */}
       <section className="relative isolate overflow-hidden border-b bg-[#140e1d] text-white">
-        <HeroBackground />
+        <ShaderBackground className="pointer-events-none absolute inset-0" />
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-[#100d1b]/80 via-[#100d1b]/55 to-[#100d1b]/35" aria-hidden="true" />
         <div className="relative mx-auto grid max-w-7xl gap-10 px-4 py-20 sm:px-6 lg:grid-cols-2 lg:items-center lg:py-28">
           <div>
             <div className="mb-5">
@@ -425,8 +426,8 @@ export function LandingPage() {
 
       {/* ============ TRUST SCORE ============ */}
       <section className="relative isolate overflow-hidden border-y border-white/10 bg-[#10091f]">
-        <DataRain fullscreen={false} count={900} flowSpeed={0.65} obstacleRadius={70} palette={{ calm: '#b79cff', mid: '#8754d5', hot: '#f48046' }} />
-        <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-[#10091f]/55 via-[#10091f]/30 to-[#10091f]/80" aria-hidden="true" />
+        <KineticGrid />
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-[#10091f]/25 via-transparent to-[#10091f]/45" aria-hidden="true" />
         <div className="relative z-10 mx-auto max-w-7xl px-4 py-20 sm:px-6">
           <div className="max-w-2xl">
             <SectionLabel light>Understanding trust scores</SectionLabel>
