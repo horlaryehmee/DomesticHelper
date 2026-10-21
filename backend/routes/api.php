@@ -12,6 +12,7 @@ use App\Http\Controllers\Api\Admin\AdminTrustScoreController;
 use App\Http\Controllers\Api\Admin\AdminUserController;
 use App\Http\Controllers\Api\Admin\AdminVerificationController;
 use App\Http\Controllers\Api\Admin\AdminCommunityExperienceController;
+use App\Http\Controllers\Api\Admin\AdminComingSoonController;
 use App\Http\Controllers\Api\Auth\AuthController;
 use App\Http\Controllers\Api\Auth\OtpController;
 use App\Http\Controllers\Api\Auth\PasswordResetController;
@@ -36,6 +37,8 @@ use App\Http\Controllers\Api\VerificationReportController;
 use App\Http\Controllers\Api\CommunityExperienceController;
 use App\Http\Controllers\Api\ContactInquiryController;
 use App\Http\Controllers\Api\AccountVerificationController;
+use App\Http\Controllers\Api\SiteStatusController;
+use App\Http\Controllers\Api\WaitlistController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -46,8 +49,8 @@ use Illuminate\Support\Facades\Route;
 
 // Auth
 Route::prefix('auth')->middleware('throttle:auth')->group(function () {
-    Route::post('/register/employer', [AuthController::class, 'registerEmployer']);
-    Route::post('/register/helper', [AuthController::class, 'registerHelper']);
+    Route::post('/register/employer', [AuthController::class, 'registerEmployer'])->middleware('site_preview');
+    Route::post('/register/helper', [AuthController::class, 'registerHelper'])->middleware('site_preview');
     Route::post('/login', [AuthController::class, 'login']);
     Route::post('/otp/send', [OtpController::class, 'send']);
     Route::post('/otp/verify', [OtpController::class, 'verify']);
@@ -56,23 +59,25 @@ Route::prefix('auth')->middleware('throttle:auth')->group(function () {
 });
 
 // Meta (skills, locations, enum options)
-Route::get('/meta', [MetaController::class, 'index']);
-Route::get('/demo/accounts', [AdminDemoController::class, 'accounts']);
+Route::get('/site-status', SiteStatusController::class);
+Route::post('/waitlist', [WaitlistController::class, 'store'])->middleware('throttle:5,60');
+Route::get('/meta', [MetaController::class, 'index'])->middleware('site_preview');
+Route::get('/demo/accounts', [AdminDemoController::class, 'accounts'])->middleware('site_preview');
 Route::post('/contact', [ContactInquiryController::class, 'store'])->middleware('throttle:5,60');
 
 // Helper discovery
-Route::get('/helpers', [HelperController::class, 'index']);
-Route::get('/helpers/{helper}', [HelperController::class, 'show'])->whereUuid('helper');
-Route::get('/helpers/{helper}/reviews', [HelperController::class, 'reviews'])->whereUuid('helper');
-Route::get('/helpers/{helper}/employment', [HelperController::class, 'employment'])->whereUuid('helper');
+Route::get('/helpers', [HelperController::class, 'index'])->middleware('site_preview');
+Route::get('/helpers/{helper}', [HelperController::class, 'show'])->whereUuid('helper')->middleware('site_preview');
+Route::get('/helpers/{helper}/reviews', [HelperController::class, 'reviews'])->whereUuid('helper')->middleware('site_preview');
+Route::get('/helpers/{helper}/employment', [HelperController::class, 'employment'])->whereUuid('helper')->middleware('site_preview');
 
 // Jobs
-Route::get('/jobs', [App\Http\Controllers\Api\JobController::class, 'index']);
-Route::get('/jobs/{job}', [App\Http\Controllers\Api\JobController::class, 'show'])->whereUuid('job');
+Route::get('/jobs', [App\Http\Controllers\Api\JobController::class, 'index'])->middleware('site_preview');
+Route::get('/jobs/{job}', [App\Http\Controllers\Api\JobController::class, 'show'])->whereUuid('job')->middleware('site_preview');
 
 // Moderated stories and sourced safety videos from the wider community.
-Route::get('/community-experiences', [CommunityExperienceController::class, 'index']);
-Route::post('/community-experiences', [CommunityExperienceController::class, 'store'])->middleware('throttle:5,60');
+Route::get('/community-experiences', [CommunityExperienceController::class, 'index'])->middleware('site_preview');
+Route::post('/community-experiences', [CommunityExperienceController::class, 'store'])->middleware(['site_preview', 'throttle:5,60']);
 
 // Evidence downloads — authenticated + authorized, private disk
 Route::get('/evidence/{evidence}/download', [App\Http\Controllers\Api\EvidenceController::class, 'download'])
@@ -282,6 +287,9 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::patch('/contact-inquiries/{inquiry}', [ContactInquiryController::class, 'update']);
         Route::get('/settings', [AdminSettingController::class, 'index']);
         Route::put('/settings', [AdminSettingController::class, 'update']);
+        Route::get('/coming-soon', [AdminComingSoonController::class, 'show']);
+        Route::put('/coming-soon', [AdminComingSoonController::class, 'update']);
+        Route::post('/coming-soon/rotate-preview-link', [AdminComingSoonController::class, 'rotate']);
         Route::get('/settings/smtp', [AdminSettingController::class, 'smtp']);
         Route::put('/settings/smtp', [AdminSettingController::class, 'updateSmtp']);
         Route::post('/settings/smtp/test', [AdminSettingController::class, 'testSmtp']);

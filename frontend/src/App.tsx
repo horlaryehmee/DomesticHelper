@@ -2,6 +2,7 @@ import { Routes, Route, Navigate } from 'react-router-dom'
 import type { ReactNode } from 'react'
 import { useAuth } from './lib/auth'
 import { PageLoader } from './components/ui/spinner'
+import { SiteGate } from './components/site-gate'
 
 import { PublicLayout } from './components/layout/public-layout'
 import { DashboardLayout } from './components/layout/dashboard-layout'
@@ -67,6 +68,7 @@ function Protected({ children, types }: { children: ReactNode; types?: string[] 
 
 export default function App() {
   return (
+    <SiteGate>
     <Routes>
       <Route element={<PublicLayout />}>
         <Route path="/" element={<LandingPage />} />
@@ -161,5 +163,6 @@ export default function App() {
         <Route path="/admin/contact-inquiries" element={<AdminContactInquiriesPage />} />
       </Route>
     </Routes>
+    </SiteGate>
   )
 }

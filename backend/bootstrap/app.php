@@ -3,6 +3,7 @@
 use App\Http\Middleware\EnsureAdmin;
 use App\Http\Middleware\EnsureRole;
 use App\Http\Middleware\EnsureUserType;
+use App\Http\Middleware\EnsureSitePreview;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -22,6 +23,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'admin' => EnsureAdmin::class,
             'role' => EnsureRole::class,
             'user_type' => EnsureUserType::class,
+            'site_preview' => EnsureSitePreview::class,
         ]);
 
         $middleware->api(prepend: [

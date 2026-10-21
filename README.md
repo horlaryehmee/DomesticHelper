@@ -156,6 +156,10 @@ npm run build        # outputs frontend/dist — this IS committed to git
 
 ## Environment variables
 
+### Coming soon mode
+
+In **Admin → Settings**, enable **Coming soon page** to show the launch screen to visitors. The same card provides a full-site preview link that can be copied and shared. The link grants access to the site in that browser tab, including public content APIs. Regenerating it invalidates previous preview links. Admins can still sign in at `/login` and manage the setting while the page is enabled.
+
 Key variables in `backend/.env`:
 
 | Variable | Purpose |

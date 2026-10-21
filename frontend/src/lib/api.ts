@@ -1,5 +1,15 @@
 const API_BASE = '/api'
 const TOKEN_KEY = 'dh_access_token'
+const PREVIEW_TOKEN_KEY = 'dh_site_preview_token'
+
+export function getPreviewToken(): string | null {
+  return sessionStorage.getItem(PREVIEW_TOKEN_KEY)
+}
+
+export function setPreviewToken(token: string | null): void {
+  if (token) sessionStorage.setItem(PREVIEW_TOKEN_KEY, token)
+  else sessionStorage.removeItem(PREVIEW_TOKEN_KEY)
+}
 
 export function getToken(): string | null {
   return localStorage.getItem(TOKEN_KEY)
@@ -41,6 +51,8 @@ async function request<T>(method: string, path: string, body?: unknown, isForm =
   const headers: Record<string, string> = { Accept: 'application/json' }
   const token = getToken()
   if (token) headers.Authorization = `Bearer ${token}`
+  const previewToken = getPreviewToken()
+  if (previewToken) headers['X-Site-Preview-Token'] = previewToken
 
   let payload: BodyInit | undefined
   if (body !== undefined) {

@@ -15,14 +15,14 @@ class AdminSettingController extends Controller
 {
     public function index(): JsonResponse
     {
-        return response()->json(['data' => Setting::query()->where('group', '!=', 'mail')->where('key', 'not like', 'mail_smtp_%')->orderBy('group')->orderBy('key')->get()]);
+        return response()->json(['data' => Setting::query()->where('group', '!=', 'mail')->where('key', 'not like', 'mail_smtp_%')->where('key', 'not like', 'coming_soon_%')->orderBy('group')->orderBy('key')->get()]);
     }
 
     public function update(Request $request): JsonResponse
     {
         $data = $request->validate([
             'settings' => ['required', 'array'],
-            'settings.*.key' => ['required', 'string', 'max:100', 'not_regex:/^mail_smtp_/'],
+            'settings.*.key' => ['required', 'string', 'max:100', 'not_regex:/^(mail_smtp_|coming_soon_)/'],
             'settings.*.value' => ['nullable', 'string'],
             'settings.*.group' => ['nullable', 'string', 'max:50'],
             'settings.*.label' => ['nullable', 'string', 'max:120'],

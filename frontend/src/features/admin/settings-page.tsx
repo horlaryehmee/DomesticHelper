@@ -1,12 +1,13 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
-import { Settings as SettingsIcon } from 'lucide-react'
+import { Copy, ExternalLink, RotateCw, Settings as SettingsIcon } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Skeleton } from '@/components/ui/skeleton'
+import { Switch } from '@/components/ui/switch'
 import { api, ApiError } from '@/lib/api'
 import { useAuth } from '@/lib/auth'
 
@@ -30,6 +31,7 @@ interface SmtpSettings {
 }
 
 interface DemoStatus { users: number; helpers: number; employers: number; jobs: number }
+interface ComingSoonSettings { enabled: boolean; preview_token: string }
 
 export function AdminSettingsPage() {
   const { user } = useAuth()
@@ -37,6 +39,27 @@ export function AdminSettingsPage() {
   const { data, isLoading } = useQuery({
     queryKey: ['settings'],
     queryFn: () => api.get<{ data: Setting[] }>('/admin/settings'),
+  })
+  const { data: comingSoonData, isLoading: comingSoonLoading, isError: comingSoonError } = useQuery({
+    queryKey: ['coming-soon-settings'],
+    queryFn: () => api.get<{ data: ComingSoonSettings }>('/admin/coming-soon'),
+  })
+  const updateComingSoon = useMutation({
+    mutationFn: (enabled: boolean) => api.put<{ data: ComingSoonSettings }>('/admin/coming-soon', { enabled }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['coming-soon-settings'] })
+      queryClient.invalidateQueries({ queryKey: ['site-status'] })
+      toast.success('Coming soon setting saved')
+    },
+    onError: (error) => toast.error(error instanceof ApiError ? error.message : 'Could not update coming soon'),
+  })
+  const rotatePreviewLink = useMutation({
+    mutationFn: () => api.post('/admin/coming-soon/rotate-preview-link'),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['coming-soon-settings'] })
+      toast.success('Preview link regenerated')
+    },
+    onError: (error) => toast.error(error instanceof ApiError ? error.message : 'Could not regenerate preview link'),
   })
 
   const [drafts, setDrafts] = useState<Record<string, string>>({})
@@ -99,18 +122,48 @@ export function AdminSettingsPage() {
     ;(acc[s.group] ??= []).push(s)
     return acc
   }, {})
+  const previewUrl = comingSoonData?.data.preview_token
+    ? `${window.location.origin}/#preview=${comingSoonData.data.preview_token}`
+    : ''
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Settings</h1>
-          <p className="mt-1 text-sm text-muted-foreground">Platform settings, SMTP email and demo data.</p>
+          <p className="mt-1 text-sm text-muted-foreground">Site visibility, platform settings, SMTP email and demo data.</p>
         </div>
         <Button onClick={() => save.mutate()} disabled={save.isPending}>
           <SettingsIcon /> Save all settings
         </Button>
       </div>
+
+      <Card className="gap-4">
+        <CardHeader>
+          <CardTitle className="text-base">Coming soon page</CardTitle>
+          <p className="text-sm text-muted-foreground">Show visitors a launch page while you prepare the site. Admin accounts and anyone with the preview link can still view the full site.</p>
+        </CardHeader>
+        <CardContent className="space-y-5">
+          {comingSoonLoading && <Skeleton className="h-12 w-full" />}
+          {comingSoonError && <p className="text-sm text-destructive">Could not load the coming soon setting.</p>}
+          {comingSoonData && <>
+            <div className="flex items-center justify-between gap-4 rounded-xl border bg-muted/30 p-4">
+              <div><Label htmlFor="coming-soon-toggle" className="text-sm font-semibold">Enable coming soon page</Label><p className="mt-1 text-xs text-muted-foreground">{comingSoonData.data.enabled ? 'Visitors currently see the coming soon page.' : 'Visitors currently see the full site.'}</p></div>
+              <Switch id="coming-soon-toggle" checked={comingSoonData.data.enabled} disabled={updateComingSoon.isPending} onCheckedChange={(enabled) => updateComingSoon.mutate(enabled)} />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="coming-soon-preview-link">Full-site preview link</Label>
+              <div className="flex flex-col gap-2 sm:flex-row">
+                <Input id="coming-soon-preview-link" value={previewUrl} readOnly onFocus={(event) => event.currentTarget.select()} className="font-mono text-xs" />
+                <Button type="button" variant="outline" onClick={async () => { try { await navigator.clipboard.writeText(previewUrl); toast.success('Preview link copied') } catch { toast.error('Copy failed; select the link in the field') } }}><Copy /> Copy link</Button>
+                <Button type="button" variant="outline" asChild><a href={previewUrl} target="_blank" rel="noopener noreferrer"><ExternalLink /> Open</a></Button>
+              </div>
+              <p className="text-xs text-muted-foreground">Share this link only with people you want to preview the site. Regenerating it disables the old link.</p>
+            </div>
+            <Button type="button" variant="outline" disabled={rotatePreviewLink.isPending} onClick={() => rotatePreviewLink.mutate()}><RotateCw /> Regenerate preview link</Button>
+          </>}
+        </CardContent>
+      </Card>
 
       <Card className="gap-4">
         <CardHeader>
