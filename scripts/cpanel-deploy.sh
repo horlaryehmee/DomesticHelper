@@ -31,9 +31,8 @@ fi
 # 1. Install the SPA into the Laravel public dir.
 #    - assets/ is cleared first so stale hashed bundles don't linger.
 #    - Laravel's own files (index.php, robots.txt) are never touched.
-#    - public/.htaccess IS refreshed: the stock Laravel stub has no
-#      proxy/TLS detection and no myapp.request_uri normalisation, and it is
-#      gitignored, so a fresh clone would ship a broken one.
+#    - public/.htaccess IS refreshed from the matching committed template so
+#      the checkout stays clean after deployment.
 echo ">> Installing SPA build into backend/public"
 rm -rf "$PUBLIC/assets" "$PUBLIC/index.html"
 cp -R "$DIST/." "$PUBLIC/"

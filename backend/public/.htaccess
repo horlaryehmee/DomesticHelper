@@ -50,6 +50,10 @@
     RewriteRule .* - [E=HTTP_X_XSRF_TOKEN:%{HTTP:X-XSRF-Token}]
 
     # Redirect Trailing Slashes If Not A Folder...
+    # Skipped for the front controller: the public_html router rewrites "/" to
+    # "index.php/", and without this guard the rule answers with a PUBLIC 301 to
+    # /backend/public/index.php, exposing the internal path in the address bar.
+    RewriteCond %{ENV:REDIRECT_STATUS} ^$
     RewriteCond %{REQUEST_FILENAME} !-d
     RewriteCond %{REQUEST_URI} (.+)/$
     RewriteRule ^ %1 [L,R=301]
