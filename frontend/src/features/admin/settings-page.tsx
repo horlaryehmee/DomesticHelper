@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
-import { Copy, ExternalLink, RotateCw, Settings as SettingsIcon } from 'lucide-react'
+import { Copy, ExternalLink, RotateCw, Settings as SettingsIcon, Download } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -32,6 +32,16 @@ interface SmtpSettings {
 
 interface DemoStatus { users: number; helpers: number; employers: number; jobs: number }
 interface ComingSoonSettings { enabled: boolean; preview_token: string }
+interface Deployment {
+  id: number
+  status: 'queued' | 'running' | 'succeeded' | 'failed'
+  step: string | null
+  from_commit: string | null
+  to_commit: string | null
+  output: string | null
+  created_at: string
+  finished_at: string | null
+}
 
 export function AdminSettingsPage() {
   const { user } = useAuth()
@@ -77,6 +87,21 @@ export function AdminSettingsPage() {
     queryKey: ['demo-status'],
     queryFn: () => api.get<{ data: DemoStatus }>('/admin/demo'),
     enabled: user?.user_type === 'admin',
+  })
+  const { data: deploymentData, isError: deploymentError } = useQuery({
+    queryKey: ['deployment'],
+    queryFn: () => api.get<{ data: Deployment | null }>('/admin/deployment'),
+    enabled: user?.user_type === 'admin',
+    refetchInterval: (query) => ['queued', 'running'].includes(query.state.data?.data?.status ?? '') ? 3000 : false,
+  })
+  const deployment = deploymentData?.data
+  const runDeployment = useMutation({
+    mutationFn: () => api.post<{ data: Deployment }>('/admin/deployment'),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['deployment'] })
+      toast.success('Update queued')
+    },
+    onError: (error) => toast.error(error instanceof ApiError ? error.message : 'Could not start update'),
   })
   const fillDemo = useMutation({
     mutationFn: () => api.post('/admin/demo/fill'),
@@ -164,6 +189,24 @@ export function AdminSettingsPage() {
           </>}
         </CardContent>
       </Card>
+
+      {!deploymentError && deploymentData && <Card className="gap-4">
+        <CardHeader>
+          <CardTitle className="text-base">Update site</CardTitle>
+          <p className="text-sm text-muted-foreground">Pull the latest main branch, install PHP dependencies, run migrations, and publish the committed frontend build. The queue worker must be running on the server.</p>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <Button type="button" onClick={() => runDeployment.mutate()} disabled={runDeployment.isPending || deployment?.status === 'queued' || deployment?.status === 'running'}>
+            <Download /> {runDeployment.isPending ? 'Starting…' : 'Update from Git'}
+          </Button>
+          {deployment && <div className="space-y-2 rounded-xl border bg-muted/30 p-4 text-sm">
+            <p><span className="font-semibold capitalize">{deployment.status}</span>{deployment.step ? ` · ${deployment.step}` : ''}</p>
+            {deployment.to_commit && <p className="text-muted-foreground">Version: <code>{deployment.to_commit.slice(0, 12)}</code></p>}
+            {deployment.status === 'queued' && <p className="text-muted-foreground">Waiting for the server queue worker. This usually starts within a minute.</p>}
+            {deployment.output && <details><summary className="cursor-pointer font-medium">View update log</summary><pre className="mt-2 max-h-64 overflow-auto whitespace-pre-wrap rounded-lg bg-background p-3 text-xs">{deployment.output}</pre></details>}
+          </div>}
+        </CardContent>
+      </Card>}
 
       <Card className="gap-4">
         <CardHeader>

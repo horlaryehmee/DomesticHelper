@@ -13,6 +13,7 @@ use App\Http\Controllers\Api\Admin\AdminUserController;
 use App\Http\Controllers\Api\Admin\AdminVerificationController;
 use App\Http\Controllers\Api\Admin\AdminCommunityExperienceController;
 use App\Http\Controllers\Api\Admin\AdminComingSoonController;
+use App\Http\Controllers\Api\Admin\AdminDeploymentController;
 use App\Http\Controllers\Api\Auth\AuthController;
 use App\Http\Controllers\Api\Auth\OtpController;
 use App\Http\Controllers\Api\Auth\PasswordResetController;
@@ -290,6 +291,8 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/coming-soon', [AdminComingSoonController::class, 'show']);
         Route::put('/coming-soon', [AdminComingSoonController::class, 'update']);
         Route::post('/coming-soon/rotate-preview-link', [AdminComingSoonController::class, 'rotate']);
+        Route::get('/deployment', [AdminDeploymentController::class, 'show']);
+        Route::post('/deployment', [AdminDeploymentController::class, 'store']);
         Route::get('/settings/smtp', [AdminSettingController::class, 'smtp']);
         Route::put('/settings/smtp', [AdminSettingController::class, 'updateSmtp']);
         Route::post('/settings/smtp/test', [AdminSettingController::class, 'testSmtp']);

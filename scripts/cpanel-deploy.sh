@@ -86,4 +86,7 @@ if [ "$APP_ENV_VALUE" = "production" ]; then
   php "$ROOT/backend/artisan" view:cache
 fi
 
+# Let any long-lived workers reload the new application code.
+php "$ROOT/backend/artisan" queue:restart
+
 echo ">> Deploy finished. SPA live at $PUBLIC/index.html"
