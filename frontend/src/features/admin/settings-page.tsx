@@ -92,16 +92,18 @@ export function AdminSettingsPage() {
     queryKey: ['deployment'],
     queryFn: () => api.get<{ data: Deployment | null }>('/admin/deployment'),
     enabled: user?.user_type === 'admin',
-    refetchInterval: (query) => ['queued', 'running'].includes(query.state.data?.data?.status ?? '') ? 3000 : false,
   })
   const deployment = deploymentData?.data
   const runDeployment = useMutation({
     mutationFn: () => api.post<{ data: Deployment }>('/admin/deployment'),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['deployment'] })
-      toast.success('Update queued')
+      toast.success('Site updated')
     },
-    onError: (error) => toast.error(error instanceof ApiError ? error.message : 'Could not start update'),
+    onError: (error) => {
+      queryClient.invalidateQueries({ queryKey: ['deployment'] })
+      toast.error(error instanceof ApiError ? error.message : 'Could not update site')
+    },
   })
   const fillDemo = useMutation({
     mutationFn: () => api.post('/admin/demo/fill'),
@@ -193,18 +195,21 @@ export function AdminSettingsPage() {
       {!deploymentError && deploymentData && <Card className="gap-4">
         <CardHeader>
           <CardTitle className="text-base">Update site</CardTitle>
-          <p className="text-sm text-muted-foreground">Pull the latest main branch, install PHP dependencies, run migrations, and publish the committed frontend build. The queue worker must be running on the server.</p>
+          <p className="text-sm text-muted-foreground">Pull the latest main branch, install PHP dependencies, run migrations, and publish the committed frontend build. Keep this tab open until the update completes.</p>
         </CardHeader>
         <CardContent className="space-y-4">
-          <Button type="button" onClick={() => runDeployment.mutate()} disabled={runDeployment.isPending || deployment?.status === 'queued' || deployment?.status === 'running'}>
-            <Download /> {runDeployment.isPending ? 'Starting…' : 'Update from Git'}
+          <Button type="button" onClick={() => runDeployment.mutate()} disabled={runDeployment.isPending || deployment?.status === 'running'}>
+            <Download /> {runDeployment.isPending ? 'Updating site…' : 'Update from Git'}
           </Button>
-          {deployment && <div className="space-y-2 rounded-xl border bg-muted/30 p-4 text-sm">
-            <p><span className="font-semibold capitalize">{deployment.status}</span>{deployment.step ? ` · ${deployment.step}` : ''}</p>
-            {deployment.to_commit && <p className="text-muted-foreground">Version: <code>{deployment.to_commit.slice(0, 12)}</code></p>}
-            {deployment.status === 'queued' && <p className="text-muted-foreground">Waiting for the server queue worker. This usually starts within a minute.</p>}
-            {deployment.output && <details><summary className="cursor-pointer font-medium">View update log</summary><pre className="mt-2 max-h-64 overflow-auto whitespace-pre-wrap rounded-lg bg-background p-3 text-xs">{deployment.output}</pre></details>}
-          </div>}
+          {runDeployment.isPending && <p role="status" className="text-sm text-muted-foreground">The update is running. This may take a few minutes.</p>}
+          {deployment && <details className="rounded-xl border bg-muted/30 p-4 text-sm">
+            <summary className="cursor-pointer font-medium">Last update attempt: <span className="capitalize">{deployment.status}</span>{deployment.finished_at ? ` · ${new Date(deployment.finished_at).toLocaleString()}` : ''}</summary>
+            <div className="mt-3 space-y-2">
+              {deployment.step && <p>{deployment.step}</p>}
+              {deployment.to_commit && <p className="text-muted-foreground">Version: <code>{deployment.to_commit.slice(0, 12)}</code></p>}
+              {deployment.output && <pre className="max-h-64 overflow-auto whitespace-pre-wrap rounded-lg bg-background p-3 text-xs">{deployment.output}</pre>}
+            </div>
+          </details>}
         </CardContent>
       </Card>}
 

@@ -3,8 +3,8 @@
 namespace App\Http\Controllers\Api\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Jobs\RunDeployment;
 use App\Services\AuditLogService;
+use App\Services\DeploymentRunner;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
@@ -21,12 +21,11 @@ class AdminDeploymentController extends Controller
             ->header('Cache-Control', 'no-store');
     }
 
-    public function store(Request $request): JsonResponse
+    public function store(Request $request, DeploymentRunner $runner): JsonResponse
     {
         abort_unless($request->user()->isSuperAdmin(), 403);
-        abort_unless(config('queue.default') === 'database', 503, 'Deployment requires the database queue.');
 
-        $lock = Cache::lock('admin-deployment-submit', 10);
+        $lock = Cache::lock('admin-deployment-submit', 1200);
         abort_unless($lock->get(), 409, 'An update request is already in progress.');
 
         try {
@@ -37,24 +36,19 @@ class AdminDeploymentController extends Controller
             $id = DB::table('deployments')->insertGetId([
                 'requested_by' => $request->user()->id,
                 'status' => 'queued',
-                'step' => 'Waiting for queue worker',
+                'step' => 'Starting update',
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);
 
-            try {
-                RunDeployment::dispatch($id);
-            } catch (\Throwable $error) {
-                DB::table('deployments')->where('id', $id)->update([
-                    'status' => 'failed', 'step' => 'Could not queue update',
-                    'finished_at' => now(), 'updated_at' => now(),
-                ]);
-                throw $error;
-            }
-
             AuditLogService::log('deployment.requested', $request->user(), null, ['deployment_id' => $id]);
+            $runner->run($id);
+            $result = DB::table('deployments')->find($id);
 
-            return response()->json(['data' => DB::table('deployments')->find($id)], 202)
+            return response()->json([
+                'message' => $result->status === 'succeeded' ? 'Site updated successfully.' : $result->step,
+                'data' => $result,
+            ], $result->status === 'succeeded' ? 200 : 422)
                 ->header('Cache-Control', 'no-store');
         } finally {
             $lock->release();
@@ -64,8 +58,8 @@ class AdminDeploymentController extends Controller
     private function expireStalledUpdate(): void
     {
         DB::table('deployments')->where('status', 'queued')
-            ->where('created_at', '<', now()->subMinutes(15))
-            ->update(['status' => 'failed', 'step' => 'Queue worker did not start the update.', 'finished_at' => now(), 'updated_at' => now()]);
+            ->where('created_at', '<', now()->subMinute())
+            ->update(['status' => 'failed', 'step' => 'Previous background update was not started.', 'finished_at' => now(), 'updated_at' => now()]);
         DB::table('deployments')->where('status', 'running')
             ->where('started_at', '<', now()->subMinutes(25))
             ->update(['status' => 'failed', 'step' => 'Update timed out. Check the server log.', 'finished_at' => now(), 'updated_at' => now()]);

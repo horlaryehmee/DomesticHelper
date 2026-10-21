@@ -495,7 +495,7 @@ their real names) and installed by `scripts/install-public-html.sh`, which
 
 ### Later updates
 
-After this version has been deployed once, a super-admin can use **Admin → Settings → Update site → Update from Git**. The button fetches `origin/main`, fast-forwards the checkout, installs PHP dependencies, refreshes the site router, runs pending migrations, publishes the committed `frontend/dist` build, and refreshes Laravel caches. Settings shows progress and the update log. The database queue cron job below must be running; the button does not build frontend assets on cPanel. Commit and push a fresh `frontend/dist` build with each frontend change. Updates stop if tracked files on the server were edited locally, so those changes cannot be overwritten silently.
+After this version has been deployed once, a super-admin can use **Admin → Settings → Update site → Update from Git**. Clicking the button runs the deployment directly and waits for its result. It fetches `origin/main`, fast-forwards the checkout, installs PHP dependencies, refreshes the site router, runs pending migrations, publishes the committed `frontend/dist` build, and refreshes Laravel caches. The previous attempt and its log are available in Settings. The button does not build frontend assets on cPanel. Commit and push a fresh `frontend/dist` build with each frontend change. Updates stop if tracked files on the server were edited locally, so those changes cannot be overwritten silently.
 
 Deploy this feature once using the manual steps below so its database table and button exist on the server. The web server user must be able to run `git`, `composer`, `bash`, and `php`, and write to the checkout and Laravel cache directories. The button is available only to the super-admin role.
 

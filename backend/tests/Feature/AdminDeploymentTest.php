@@ -2,22 +2,19 @@
 
 namespace Tests\Feature;
 
-use App\Jobs\RunDeployment;
 use App\Models\Role;
 use App\Models\User;
+use App\Services\DeploymentRunner;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Queue;
 use Tests\TestCase;
 
 class AdminDeploymentTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_only_super_admin_can_request_an_update_and_duplicate_requests_are_blocked(): void
+    public function test_only_super_admin_can_run_update_and_status_read_does_not_start_it(): void
     {
-        Queue::fake();
-        config(['queue.default' => 'database']);
         $this->getJson('/api/admin/deployment')->assertUnauthorized();
 
         $admin = User::factory()->create(['user_type' => 'admin']);
@@ -29,9 +26,20 @@ class AdminDeploymentTest extends TestCase
         $admin->roles()->attach($role);
 
         $this->getJson('/api/admin/deployment')->assertOk()->assertJsonPath('data', null);
-        $this->postJson('/api/admin/deployment')->assertAccepted()
-            ->assertJsonPath('data.status', 'queued');
-        Queue::assertPushed(RunDeployment::class, 1);
+        $this->mock(DeploymentRunner::class)
+            ->shouldReceive('run')->once()
+            ->andReturnUsing(function (int $id) {
+                DB::table('deployments')->where('id', $id)->update([
+                    'status' => 'succeeded', 'step' => 'Site is up to date', 'finished_at' => now(),
+                ]);
+            });
+
+        $this->postJson('/api/admin/deployment')->assertOk()
+            ->assertJsonPath('data.status', 'succeeded');
+        $this->getJson('/api/admin/deployment')->assertOk()
+            ->assertJsonPath('data.status', 'succeeded');
+
+        DB::table('deployments')->where('id', 1)->update(['status' => 'running']);
         $this->postJson('/api/admin/deployment')->assertStatus(409);
         $this->assertSame(1, DB::table('deployments')->count());
     }
