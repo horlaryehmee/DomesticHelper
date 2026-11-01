@@ -6,11 +6,12 @@ use App\Models\User;
 use App\Services\ComingSoon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use Tests\MakesUsers;
 use Tests\TestCase;
 
 class ComingSoonTest extends TestCase
 {
-    use RefreshDatabase;
+    use MakesUsers, RefreshDatabase;
 
     public function test_visitor_can_join_waitlist_while_site_is_coming_soon(): void
     {
@@ -76,11 +77,37 @@ class ComingSoonTest extends TestCase
         $this->getJson('/api/meta')->assertStatus(503);
         $this->getJson('/api/helpers')->assertStatus(503);
         $this->getJson('/api/jobs')->assertStatus(503);
-        $this->postJson('/api/auth/register/employer', [])->assertStatus(503);
+        $this->postJson('/api/auth/register/employer', [])->assertUnauthorized();
         $this->withHeader('X-Site-Preview-Token', $token)->getJson('/api/meta')->assertOk();
 
         $admin = User::factory()->create(['user_type' => 'admin']);
         $this->withHeader('X-Site-Preview-Token', '')->actingAs($admin, 'sanctum')
             ->getJson('/api/meta')->assertOk();
+    }
+
+    public function test_admin_bearer_token_can_load_public_data_while_coming_soon_is_enabled(): void
+    {
+        app(ComingSoon::class)->setEnabled(true);
+        $admin = User::factory()->create(['user_type' => 'admin']);
+        $helper = $this->makeHelper();
+        $token = $admin->createToken('browser')->plainTextToken;
+        $this->withToken($token)->getJson('/api/meta')->assertOk()->assertJsonStructure(['skills', 'states']);
+        $this->getJson('/api/helpers')->assertOk()->assertJsonPath('data.0.uuid', $helper->uuid);
+        $this->getJson('/api/jobs')->assertOk()->assertJsonStructure(['data']);
+        $this->getJson('/api/community-experiences')->assertOk()->assertJsonStructure(['data']);
+    }
+
+    public function test_non_admin_bearer_token_cannot_bypass_coming_soon(): void
+    {
+        app(ComingSoon::class)->setEnabled(true);
+        $user = User::factory()->create(['user_type' => 'employer']);
+        $this->withToken($user->createToken('browser')->plainTextToken)->getJson('/api/meta')->assertStatus(503);
+    }
+
+    public function test_suspended_admin_bearer_token_cannot_bypass_coming_soon(): void
+    {
+        app(ComingSoon::class)->setEnabled(true);
+        $admin = User::factory()->create(['user_type' => 'admin', 'status' => 'suspended']);
+        $this->withToken($admin->createToken('browser')->plainTextToken)->getJson('/api/meta')->assertStatus(503);
     }
 }
