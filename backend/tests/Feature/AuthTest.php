@@ -5,9 +5,10 @@ namespace Tests\Feature;
 use App\Enums\UserStatus;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\Crypt;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Crypt;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Tests\MakesUsers;
 use Tests\TestCase;
 
@@ -17,6 +18,9 @@ class AuthTest extends TestCase
 
     public function test_employer_can_register(): void
     {
+
+        $account = User::factory()->create(['email' => 'boss@example.com', 'phone' => '08030000001', 'user_type' => 'employer', 'email_verified_at' => now(), 'details_confirmed_at' => now(), 'approval_status' => 'draft']);
+        $this->actingAs($account, 'sanctum');
         Storage::fake('private');
         $response = $this->post('/api/auth/register/employer', [
             'first_name' => 'Test',
@@ -39,7 +43,7 @@ class AuthTest extends TestCase
         $response->assertCreated()->assertJsonStructure(['token', 'user']);
         $this->assertDatabaseHas('users', ['email' => 'boss@example.com', 'user_type' => 'employer']);
         $this->assertDatabaseHas('employer_profiles', ['user_id' => User::where('email', 'boss@example.com')->first()->id]);
-        $details = \Illuminate\Support\Facades\DB::table('registration_verification_details')->where('user_id', User::where('email', 'boss@example.com')->first()->id)->first();
+        $details = DB::table('registration_verification_details')->where('user_id', User::where('email', 'boss@example.com')->first()->id)->first();
         $this->assertEquals('12345678902', Crypt::decryptString($details->nin_encrypted));
         $this->assertEquals('Ada Guarantor', Crypt::decryptString($details->guarantor_name_encrypted));
         Storage::disk('private')->assertExists($details->address_proof_path);
@@ -57,6 +61,9 @@ class AuthTest extends TestCase
 
     public function test_helper_can_register_and_nin_is_encrypted_at_rest(): void
     {
+
+        $account = User::factory()->create(['email' => 'helper@example.com', 'phone' => '08120000001', 'user_type' => 'helper', 'email_verified_at' => now(), 'details_confirmed_at' => now(), 'approval_status' => 'draft']);
+        $this->actingAs($account, 'sanctum');
         Storage::fake('private');
         Storage::fake('public');
         $skill = $this->seedSkill('Nanny');
@@ -95,7 +102,7 @@ class AuthTest extends TestCase
         $this->assertNotEquals('12345678901', $profile->nin_encrypted);
         $this->assertEquals('12345678901', Crypt::decryptString($profile->nin_encrypted));
         $this->assertEquals(hash('sha256', '12345678901'), $profile->nin_hash);
-        $details = \Illuminate\Support\Facades\DB::table('registration_verification_details')->where('user_id', $user->id)->first();
+        $details = DB::table('registration_verification_details')->where('user_id', $user->id)->first();
         $this->assertEquals('Tunde Guarantor', Crypt::decryptString($details->guarantor_name_encrypted));
         Storage::disk('private')->assertExists($details->address_proof_path);
         Storage::disk('public')->assertExists($profile->photo_path);
@@ -104,6 +111,9 @@ class AuthTest extends TestCase
 
     public function test_employer_cannot_register_without_identity_guarantor_and_address_proof(): void
     {
+
+        $account = User::factory()->create(['email' => 'missing@example.com', 'phone' => '08030000009', 'user_type' => 'employer', 'email_verified_at' => now(), 'details_confirmed_at' => now(), 'approval_status' => 'draft']);
+        $this->actingAs($account, 'sanctum');
         $this->postJson('/api/auth/register/employer', [
             'first_name' => 'Test',
             'last_name' => 'Employer',
@@ -122,6 +132,9 @@ class AuthTest extends TestCase
 
     public function test_duplicate_nin_is_rejected(): void
     {
+
+        $account = User::factory()->create(['email' => 'another@example.com', 'phone' => '08120000002', 'user_type' => 'helper', 'email_verified_at' => now(), 'details_confirmed_at' => now(), 'approval_status' => 'draft']);
+        $this->actingAs($account, 'sanctum');
         $this->makeHelper(['nin' => '11111111111']);
 
         $response = $this->postJson('/api/auth/register/helper', [

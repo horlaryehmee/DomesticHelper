@@ -1,10 +1,10 @@
 import { useEffect, useRef, useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Navigate, useNavigate } from 'react-router-dom'
 import { useForm, type UseFormRegisterReturn } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { toast } from 'sonner'
-import { Briefcase, UserRound, ArrowLeft, ShieldCheck, Camera, Video } from 'lucide-react'
+import { Camera, Video } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -15,7 +15,7 @@ import {
 } from '@/components/ui/select'
 import { Spinner } from '@/components/ui/spinner'
 import { api, ApiError, setToken } from '@/lib/api'
-import { useAuth } from '@/lib/auth'
+import { useAuth, dashboardPath, type AuthUser } from '@/lib/auth'
 import { useQuery } from '@tanstack/react-query'
 import { cn } from '@/lib/utils'
 
@@ -27,12 +27,6 @@ interface Meta {
 }
 
 const employerSchema = z.object({
-  first_name: z.string().min(1, 'Required'),
-  last_name: z.string().min(1, 'Required'),
-  email: z.string().email('Invalid email'),
-  phone: z.string().regex(/^\+?[0-9]{10,15}$/, 'Enter a valid phone number'),
-  password: z.string().min(8, 'At least 8 characters'),
-  password_confirmation: z.string(),
   profile_type: z.enum(['individual', 'agency']),
   agency_name: z.string().optional(),
   nin: z.string().regex(/^\d{11}$/, 'NIN must be 11 digits'),
@@ -42,15 +36,9 @@ const employerSchema = z.object({
   guarantor_relationship: z.string().min(1, 'Required'),
   city: z.string().min(1, 'Required'),
   state: z.string().min(1, 'Required'),
-}).refine((d) => d.password === d.password_confirmation, { message: 'Passwords do not match', path: ['password_confirmation'] })
+})
 
 const helperSchema = z.object({
-  first_name: z.string().min(1, 'Required'),
-  last_name: z.string().min(1, 'Required'),
-  email: z.string().email('Invalid email'),
-  phone: z.string().regex(/^\+?[0-9]{10,15}$/, 'Enter a valid phone number'),
-  password: z.string().min(8, 'At least 8 characters'),
-  password_confirmation: z.string(),
   date_of_birth: z.string().min(1, 'Required'),
   gender: z.enum(['male', 'female', 'other']),
   state: z.string().min(1, 'Required'),
@@ -66,72 +54,30 @@ const helperSchema = z.object({
   employment_type: z.string().optional(),
   expected_salary_min: z.coerce.number().min(0, 'Enter a salary'),
   bio: z.string().optional(),
-}).refine((d) => d.password === d.password_confirmation, { message: 'Passwords do not match', path: ['password_confirmation'] })
+})
 
-export function RegisterPage() {
-  const [role, setRole] = useState<'employer' | 'helper' | null>(null)
-  const { setUser } = useAuth()
+export function OnboardingPage() {
+  const { user, setUser } = useAuth()
   const navigate = useNavigate()
-
-  const { data: meta } = useQuery({
-    queryKey: ['meta'],
-    queryFn: () => api.get<Meta>('/meta'),
-  })
-
-  if (!role) {
-    return (
-      <div className="mx-auto max-w-3xl px-4 py-20">
-        <div className="text-center">
-          <span className="mx-auto flex size-12 items-center justify-center rounded-xl bg-primary/10">
-            <ShieldCheck className="size-6 text-primary" />
-          </span>
-          <h1 className="mt-4 text-3xl font-bold tracking-tight">Create your account</h1>
-          <p className="mt-2 text-muted-foreground">What best describes you? You can change this later.</p>
-        </div>
-        <div className="mt-10 grid gap-4 sm:grid-cols-2">
-          {[
-            { key: 'employer' as const, icon: Briefcase, title: 'I want to hire', text: 'Find and hire verified domestic staff: housekeepers, nannies, drivers and more.' },
-            { key: 'helper' as const, icon: UserRound, title: 'I am a domestic helper', text: 'Build your verified reputation and get hired by families who value good work.' },
-          ].map((c) => (
-            <button
-              key={c.key}
-              onClick={() => setRole(c.key)}
-              className="group cursor-pointer rounded-xl border bg-card p-8 text-left shadow-sm transition-all hover:-translate-y-0.5 hover:border-primary hover:shadow-md"
-            >
-              <span className="flex size-12 items-center justify-center rounded-xl bg-primary/10 group-hover:bg-primary/20">
-                <c.icon className="size-6 text-primary" />
-              </span>
-              <h2 className="mt-4 text-lg font-semibold">{c.title}</h2>
-              <p className="mt-2 text-sm text-muted-foreground">{c.text}</p>
-            </button>
-          ))}
-        </div>
-        <p className="mt-8 text-center text-sm text-muted-foreground">
-          Already have an account?{' '}
-          <Link to="/login" className="font-medium text-primary hover:underline">Log in</Link>
-        </p>
-      </div>
-    )
-  }
-
-  return (
-    <div className="mx-auto max-w-2xl px-4 py-14">
-      <button onClick={() => setRole(null)} className="mb-6 inline-flex cursor-pointer items-center gap-1 text-sm font-medium text-muted-foreground hover:text-foreground">
-        <ArrowLeft className="size-4" /> Choose a different account type
-      </button>
-      {role === 'employer' ? (
-        <EmployerForm meta={meta} onDone={(user) => { setUser(user); navigate('/employer') }} />
-      ) : (
-        <HelperForm meta={meta} onDone={(user) => { setUser(user); navigate('/helper') }} />
-      )}
-    </div>
-  )
+  const { data: meta } = useQuery({ queryKey: ['meta'], queryFn: () => api.get<Meta>('/meta') })
+  if (!user) return <Navigate to="/register" replace />
+  if (user.approval_status === 'approved') return <Navigate to={dashboardPath(user.user_type)} replace />
+  if (!user.email_verified) return <Navigate to="/verify-email" replace />
+  if (!user.details_confirmed) return <Navigate to="/confirm-details" replace />
+  if (user.approval_status === 'pending') return <Navigate to="/approval-pending" replace />
+  if (!user.phone) return <GoogleContactStep />
+  return <div className="mx-auto max-w-2xl px-4 py-14">
+    <h1 className="mb-2 text-3xl font-bold">Complete your onboarding</h1>
+    <p className="mb-6 text-muted-foreground">Add your profile and verification details. An administrator will review your submission before dashboard access is granted.</p>
+    {user.approval_notes && <p className="mb-4 rounded-lg border p-4">Review feedback: {user.approval_notes}</p>}
+    {user.user_type === 'employer' ? <EmployerForm meta={meta} onDone={(u) => { setUser(u); navigate('/approval-pending') }} /> : <HelperForm meta={meta} onDone={(u) => { setUser(u); navigate('/approval-pending') }} />}
+  </div>
 }
 
 function EmployerForm({ meta, onDone }: { meta?: Meta; onDone: (u: never) => void }) {
   const [submitting, setSubmitting] = useState(false)
   const [addressProof, setAddressProof] = useState<File | null>(null)
-  const [step, setStep] = useState(0)
+  const [step, setStep] = useState(1)
   const { register, handleSubmit, watch, setValue, trigger, formState: { errors } } = useForm({
     resolver: zodResolver(employerSchema),
     defaultValues: { profile_type: 'individual', state: '' },
@@ -140,7 +86,7 @@ function EmployerForm({ meta, onDone }: { meta?: Meta; onDone: (u: never) => voi
 
   const nextStep = async () => {
     const fields = step === 0
-      ? ['first_name', 'last_name', 'email', 'phone', 'password', 'password_confirmation']
+      ? []
       : ['profile_type', 'agency_name', 'state', 'city']
     if (await trigger(fields as never)) setStep(step + 1)
   }
@@ -155,9 +101,9 @@ function EmployerForm({ meta, onDone }: { meta?: Meta; onDone: (u: never) => voi
         agency_name: data.profile_type === 'agency' ? data.agency_name : undefined,
       }).forEach(([key, value]) => { if (value !== undefined) form.append(key, String(value)) })
       form.append('address_proof', addressProof)
-      const res = await api.upload<{ token: string; user: never }>('/auth/register/employer', form)
+      const res = await api.upload<{ token: string; user: never }>('/onboarding/employer', form)
       setToken(res.token)
-      toast.success('Account created!')
+      toast.success('Submitted for admin review')
       onDone(res.user)
     } catch (e) {
       toast.error(e instanceof ApiError ? e.message : 'Registration failed')
@@ -169,38 +115,12 @@ function EmployerForm({ meta, onDone }: { meta?: Meta; onDone: (u: never) => voi
   return (
     <Card className="gap-5">
       <CardHeader>
-        <CardTitle className="text-2xl">Employer registration</CardTitle>
+        <CardTitle className="text-2xl">Employer onboarding</CardTitle>
         <CardDescription>Provide your identity, guarantor, and address details to create a secure account.</CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          <StepProgress steps={['Account', 'Profile', 'Verification']} current={step} />
-          {step === 0 && <div className="space-y-4">
-          <div className="grid gap-4 sm:grid-cols-2">
-            <Field label="First name" error={errors.first_name?.message}>
-              <Input {...register('first_name')} />
-            </Field>
-            <Field label="Last name" error={errors.last_name?.message}>
-              <Input {...register('last_name')} />
-            </Field>
-          </div>
-          <div className="grid gap-4 sm:grid-cols-2">
-            <Field label="Email" error={errors.email?.message}>
-              <Input type="email" {...register('email')} />
-            </Field>
-            <Field label="Phone number" error={errors.phone?.message}>
-              <Input placeholder="0803 000 0000" {...register('phone')} />
-            </Field>
-          </div>
-          <div className="grid gap-4 sm:grid-cols-2">
-            <Field label="Password" error={errors.password?.message}>
-              <Input type="password" {...register('password')} />
-            </Field>
-            <Field label="Confirm password" error={errors.password_confirmation?.message}>
-              <Input type="password" {...register('password_confirmation')} />
-            </Field>
-          </div>
-          </div>}
+          <StepProgress steps={['Profile', 'Verification']} current={step - 1} />
           {step === 1 && <div className="space-y-4">
           <Field label="Profile type">
             <div className="flex gap-2">
@@ -240,10 +160,10 @@ function EmployerForm({ meta, onDone }: { meta?: Meta; onDone: (u: never) => voi
           </div>}
           {step === 2 && <RegistrationVerificationFields registerField={(name) => register(name)} errors={errors} addressProof={addressProof} onProofChange={setAddressProof} />}
           <div className="flex gap-3 pt-2">
-            {step > 0 && <Button type="button" variant="outline" onClick={() => setStep(step - 1)} disabled={submitting}>Back</Button>}
+            {step > 1 && <Button type="button" variant="outline" onClick={() => setStep(step - 1)} disabled={submitting}>Back</Button>}
             {step < 2 ? <Button type="button" className="flex-1" onClick={nextStep}>Continue</Button> :
               <Button type="submit" className="flex-1" disabled={submitting}>
-                {submitting ? <Spinner label="Creating account…" /> : 'Create account'}
+                {submitting ? <Spinner label="Creating account…" /> : 'Submit for review'}
               </Button>}
           </div>
         </form>
@@ -270,7 +190,7 @@ function HelperForm({ meta, onDone }: { meta?: Meta; onDone: (u: never) => void 
 
   const nextStep = async () => {
     const fields = [
-      ['first_name', 'last_name', 'email', 'phone', 'password', 'password_confirmation', 'date_of_birth', 'gender'],
+      ['date_of_birth', 'gender'],
       ['years_experience', 'expected_salary_min', 'state', 'city', 'availability', 'skills'],
       ['nin', 'address_line', 'guarantor_name', 'guarantor_phone', 'guarantor_relationship'],
     ] as const
@@ -292,9 +212,9 @@ function HelperForm({ meta, onDone }: { meta?: Meta; onDone: (u: never) => void 
       form.append('address_proof', addressProof)
       if (photo) form.append('photo', photo)
       if (introVideo) form.append('intro_video', introVideo)
-      const res = await api.upload<{ token: string; user: never }>('/auth/register/helper', form)
+      const res = await api.upload<{ token: string; user: never }>('/onboarding/helper', form)
       setToken(res.token)
-      toast.success('Account created! Welcome to the network.')
+      toast.success('Submitted for admin review Welcome to the network.')
       onDone(res.user)
     } catch (e) {
       toast.error(e instanceof ApiError ? e.message : 'Registration failed')
@@ -306,37 +226,13 @@ function HelperForm({ meta, onDone }: { meta?: Meta; onDone: (u: never) => void 
   return (
     <Card className="gap-5">
       <CardHeader>
-        <CardTitle className="text-2xl">Helper registration</CardTitle>
+        <CardTitle className="text-2xl">Helper onboarding</CardTitle>
         <CardDescription>Build your profile in four steps. Your identity and guarantor details stay private.</CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          <StepProgress steps={['Account', 'Your work', 'Verification', 'Photo & video']} current={step} />
+          <StepProgress steps={['Personal details', 'Your work', 'Verification', 'Photo & video']} current={step} />
           {step === 0 && <div className="space-y-4">
-          <div className="grid gap-4 sm:grid-cols-2">
-            <Field label="First name" error={errors.first_name?.message}>
-              <Input {...register('first_name')} />
-            </Field>
-            <Field label="Last name" error={errors.last_name?.message}>
-              <Input {...register('last_name')} />
-            </Field>
-          </div>
-          <div className="grid gap-4 sm:grid-cols-2">
-            <Field label="Email" error={errors.email?.message}>
-              <Input type="email" {...register('email')} />
-            </Field>
-            <Field label="Phone number" error={errors.phone?.message}>
-              <Input placeholder="0812 000 0000" {...register('phone')} />
-            </Field>
-          </div>
-          <div className="grid gap-4 sm:grid-cols-2">
-            <Field label="Password" error={errors.password?.message}>
-              <Input type="password" {...register('password')} />
-            </Field>
-            <Field label="Confirm password" error={errors.password_confirmation?.message}>
-              <Input type="password" {...register('password_confirmation')} />
-            </Field>
-          </div>
           <div className="grid gap-4 sm:grid-cols-3">
             <Field label="Date of birth" error={errors.date_of_birth?.message}>
               <Input type="date" {...register('date_of_birth')} />
@@ -422,7 +318,7 @@ function HelperForm({ meta, onDone }: { meta?: Meta; onDone: (u: never) => void 
             {step > 0 && <Button type="button" variant="outline" onClick={() => setStep(step - 1)} disabled={submitting}>Back</Button>}
             {step < 3 ? <Button type="button" className="flex-1" onClick={nextStep}>Continue</Button> :
               <Button type="submit" className="flex-1" disabled={submitting}>
-                {submitting ? <Spinner label="Creating account…" /> : 'Create my profile'}
+                {submitting ? <Spinner label="Creating account…" /> : 'Submit for review'}
               </Button>}
           </div>
         </form>
@@ -569,4 +465,14 @@ function Field({ label, error, children }: { label: string; error?: string; chil
       {error && <p className="text-xs text-destructive">{error}</p>}
     </div>
   )
+}
+
+function GoogleContactStep() {
+ const {user,setUser}=useAuth()
+ const [firstName,setFirstName]=useState(user?.first_name ?? '')
+ const [lastName,setLastName]=useState(user?.last_name ?? '')
+ const [phone,setPhone]=useState('')
+ const [busy,setBusy]=useState(false)
+ const [error,setError]=useState('')
+ return <div className="mx-auto my-16 max-w-lg rounded-xl border bg-card p-8"><h1 className="text-2xl font-bold">Complete your contact details</h1><p className="mt-3 text-sm leading-6 text-muted-foreground">Your Google account is connected. Add your phone number to continue with your profile and verification details.</p><form className="mt-6 space-y-4" onSubmit={async e=>{e.preventDefault();setBusy(true);setError('');try{const result=await api.post<{user:AuthUser}>('/onboarding/contact',{phone,first_name:firstName,last_name:lastName});setUser(result.user)}catch(failure){setError(failure instanceof ApiError?failure.message:'Could not save your phone number.')}finally{setBusy(false)}}}><div className="grid gap-4 sm:grid-cols-2"><div className="space-y-2"><Label htmlFor="google-first-name">First name</Label><Input id="google-first-name" required maxLength={60} autoComplete="given-name" value={firstName} onChange={e=>setFirstName(e.target.value)}/></div><div className="space-y-2"><Label htmlFor="google-last-name">Last name</Label><Input id="google-last-name" required maxLength={60} autoComplete="family-name" value={lastName} onChange={e=>setLastName(e.target.value)}/></div></div><Label htmlFor="onboarding-phone">Phone number</Label><Input id="onboarding-phone" type="tel" autoComplete="tel" pattern="[+]?[0-9]{10,15}" required value={phone} onChange={e=>setPhone(e.target.value)}/>{error && <p role="alert" className="text-sm text-destructive">{error}</p>}<Button disabled={busy}>{busy?'Saving...':'Continue to onboarding'}</Button></form></div>
 }

@@ -49,9 +49,12 @@ use Illuminate\Support\Facades\Route;
 */
 
 // Auth
+Route::get('/auth/google/status', [\App\Http\Controllers\Api\Auth\GoogleAuthController::class, 'status']);
+Route::post('/auth/google/exchange', [\App\Http\Controllers\Api\Auth\GoogleAuthController::class, 'exchange'])->middleware('throttle:auth');
+Route::post('/auth/signup', [\App\Http\Controllers\Api\OnboardingController::class, 'signup'])->middleware(['throttle:auth', 'site_preview']);
 Route::prefix('auth')->middleware('throttle:auth')->group(function () {
-    Route::post('/register/employer', [AuthController::class, 'registerEmployer'])->middleware('site_preview');
-    Route::post('/register/helper', [AuthController::class, 'registerHelper'])->middleware('site_preview');
+    Route::post('/register/employer', [AuthController::class, 'registerEmployer'])->middleware(['site_preview', 'auth:sanctum']);
+    Route::post('/register/helper', [AuthController::class, 'registerHelper'])->middleware(['site_preview', 'auth:sanctum']);
     Route::post('/login', [AuthController::class, 'login']);
     Route::post('/otp/send', [OtpController::class, 'send']);
     Route::post('/otp/verify', [OtpController::class, 'verify']);
@@ -98,7 +101,13 @@ Route::post('/payments/webhook/{provider}', [PaymentController::class, 'webhook'
 | Authenticated
 |--------------------------------------------------------------------------
 */
-Route::middleware('auth:sanctum')->group(function () {
+Route::middleware(['auth:sanctum', \App\Http\Middleware\EnsureAccountApproved::class])->group(function () {
+    Route::post('/auth/email/send', [\App\Http\Controllers\Api\Auth\EmailVerificationController::class, 'send'])->middleware('throttle:6,1');
+    Route::post('/auth/email/verify', [\App\Http\Controllers\Api\Auth\EmailVerificationController::class, 'verify'])->middleware('throttle:10,1');
+    Route::post('/onboarding/contact', [\App\Http\Controllers\Api\Auth\GoogleAuthController::class, 'contact']);
+    Route::post('/onboarding/confirm', [\App\Http\Controllers\Api\OnboardingController::class, 'confirm']);
+    Route::post('/onboarding/employer', [AuthController::class, 'registerEmployer']);
+    Route::post('/onboarding/helper', [AuthController::class, 'registerHelper']);
     Route::get('/auth/me', [AuthController::class, 'me']);
     Route::post('/auth/logout', [AuthController::class, 'logout']);
     Route::post('/auth/password/change', [PasswordResetController::class, 'change']);
@@ -179,6 +188,8 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/reference-checks', [ReferenceCheckController::class, 'index']);
         Route::post('/reference-checks', [ReferenceCheckController::class, 'store']);
 
+        Route::get('/account-verifications', [\App\Http\Controllers\Api\OnboardingController::class, 'accounts']);
+        Route::post('/account-verifications/{user}/decide', [\App\Http\Controllers\Api\OnboardingController::class, 'decide'])->whereUuid('user');
         // Verification reports (paid)
         Route::get('/verification-reports', [VerificationReportController::class, 'index']);
         Route::post('/verification-reports', [VerificationReportController::class, 'purchase']);
@@ -243,6 +254,8 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/users/{user}/roles', [AdminUserController::class, 'assignRole'])->whereUuid('user');
         Route::get('/roles', [AdminUserController::class, 'roles']);
 
+        Route::get('/account-verifications', [\App\Http\Controllers\Api\OnboardingController::class, 'accounts']);
+        Route::post('/account-verifications/{user}/decide', [\App\Http\Controllers\Api\OnboardingController::class, 'decide'])->whereUuid('user');
         // Verification
         Route::get('/verifications', [AdminVerificationController::class, 'identityIndex']);
         Route::post('/verifications/{verification}/decide', [AdminVerificationController::class, 'identityDecide'])->whereUuid('verification');
@@ -293,6 +306,8 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/coming-soon/rotate-preview-link', [AdminComingSoonController::class, 'rotate']);
         Route::get('/deployment', [AdminDeploymentController::class, 'show']);
         Route::post('/deployment', [AdminDeploymentController::class, 'store']);
+        Route::get('/settings/google', [AdminSettingController::class, 'google']);
+        Route::put('/settings/google', [AdminSettingController::class, 'updateGoogle']);
         Route::get('/settings/smtp', [AdminSettingController::class, 'smtp']);
         Route::put('/settings/smtp', [AdminSettingController::class, 'updateSmtp']);
         Route::post('/settings/smtp/test', [AdminSettingController::class, 'testSmtp']);

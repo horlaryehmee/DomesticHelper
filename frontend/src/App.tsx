@@ -13,15 +13,17 @@ import { SearchPage } from './features/helpers/search-page'
 import { HelperProfilePage } from './features/helpers/helper-profile-page'
 import { JobsPage } from './features/jobs/jobs-page'
 import { JobDetailPage } from './features/jobs/job-detail-page'
+import { GoogleCallbackPage } from './features/auth/google-sign-in'
 import { LoginPage } from './features/auth/login-page'
-import { RegisterPage } from './features/auth/register-page'
+import { OnboardingPage } from './features/auth/register-page'
 import { ForgotPasswordPage } from './features/auth/forgot-password-page'
 import { NotFoundPage } from './features/misc/not-found-page'
 import { VerifyEmploymentPage } from './features/misc/verify-employment-page'
 import { PaymentCallbackPage } from './features/payments/payment-callback-page'
 import { CommunityExperiencesPage } from './features/community/community-experiences-page'
 import { ContactPage } from './features/info/contact-page'
-import { AboutPage, HowItWorksPage, SafetyPage, FaqPage, PrivacyPage, TermsPage, CookiesPage } from './features/info/information-pages'
+import { AboutPage } from './features/info/about-page'
+import { HowItWorksPage, SafetyPage, FaqPage, PrivacyPage, TermsPage, CookiesPage } from './features/info/information-pages'
 import { AdminContactInquiriesPage } from './features/admin/contact-inquiries-page'
 
 import { EmployerDashboardPage } from './features/employer/dashboard-page'
@@ -58,10 +60,13 @@ import { AdminAuditLogsPage } from './features/admin/audit-logs-page'
 import { AdminSettingsPage } from './features/admin/settings-page'
 import { AdminCommunityExperiencesPage } from './features/admin/community-experiences-page'
 
+import { RegisterPage, ConfirmDetailsPage, ApprovalPendingPage, VerifyEmailPage } from './features/auth/signup-page'
+
 function Protected({ children, types }: { children: ReactNode; types?: string[] }) {
   const { user, loading } = useAuth()
   if (loading) return <PageLoader />
   if (!user) return <Navigate to="/login" replace />
+  if (user.user_type !== 'admin' && user.approval_status !== 'approved') return <Navigate to={!user.email_verified ? '/verify-email' : !user.details_confirmed ? '/confirm-details' : user.approval_status === 'pending' ? '/approval-pending' : '/onboarding'} replace />
   if (types && !types.includes(user.user_type)) return <Navigate to="/" replace />
   return <>{children}</>
 }
@@ -70,6 +75,11 @@ export default function App() {
   return (
     <SiteGate>
     <Routes>
+      <Route path="/auth/google/callback" element={<GoogleCallbackPage />} />
+      <Route path="/verify-email" element={<VerifyEmailPage />} />
+      <Route path="/login" element={<LoginPage />} />
+      <Route path="/register" element={<RegisterPage />} />
+      <Route path="/verification" element={<RegisterPage />} />
       <Route element={<PublicLayout />}>
         <Route path="/" element={<LandingPage />} />
         <Route path="/search" element={<SearchPage />} />
@@ -85,8 +95,9 @@ export default function App() {
         <Route path="/privacy" element={<PrivacyPage />} />
         <Route path="/terms" element={<TermsPage />} />
         <Route path="/cookies" element={<CookiesPage />} />
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/register" element={<RegisterPage />} />
+        <Route path="/confirm-details" element={<ConfirmDetailsPage />} />
+        <Route path="/onboarding" element={<OnboardingPage />} />
+        <Route path="/approval-pending" element={<ApprovalPendingPage />} />
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
         <Route path="/verify-employment/:token" element={<VerifyEmploymentPage />} />
         <Route path="/payments/callback" element={<PaymentCallbackPage />} />

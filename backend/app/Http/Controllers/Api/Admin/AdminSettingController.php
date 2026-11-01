@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Setting;
 use App\Services\AuditLogService;
+use App\Services\GoogleOAuthConfiguration;
 use App\Services\SmtpConfiguration;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -15,14 +16,14 @@ class AdminSettingController extends Controller
 {
     public function index(): JsonResponse
     {
-        return response()->json(['data' => Setting::query()->where('group', '!=', 'mail')->where('key', 'not like', 'mail_smtp_%')->where('key', 'not like', 'coming_soon_%')->orderBy('group')->orderBy('key')->get()]);
+        return response()->json(['data' => Setting::query()->where('group', '!=', 'mail')->where('key', 'not like', 'mail_smtp_%')->where('key', 'not like', 'coming_soon_%')->where('key', 'not like', 'google_oauth_%')->orderBy('group')->orderBy('key')->get()]);
     }
 
     public function update(Request $request): JsonResponse
     {
         $data = $request->validate([
             'settings' => ['required', 'array'],
-            'settings.*.key' => ['required', 'string', 'max:100', 'not_regex:/^(mail_smtp_|coming_soon_)/'],
+            'settings.*.key' => ['required', 'string', 'max:100', 'not_regex:/^(mail_smtp_|coming_soon_|google_oauth_)/'],
             'settings.*.value' => ['nullable', 'string'],
             'settings.*.group' => ['nullable', 'string', 'max:50'],
             'settings.*.label' => ['nullable', 'string', 'max:120'],
@@ -35,6 +36,28 @@ class AdminSettingController extends Controller
         AuditLogService::log('settings.updated', null, null, ['keys' => collect($data['settings'])->pluck('key')]);
 
         return $this->index();
+    }
+
+    public function google(Request $request, GoogleOAuthConfiguration $google): JsonResponse
+    {
+        abort_unless($request->user()->isSuperAdmin(), 403);
+
+        return response()->json(['data' => $google->settings()]);
+    }
+
+    public function updateGoogle(Request $request, GoogleOAuthConfiguration $google): JsonResponse
+    {
+        abort_unless($request->user()->isSuperAdmin(), 403);
+        $data = $request->validate(['enabled' => 'required|boolean', 'client_id' => ['nullable', 'string', 'max:255', 'regex:/^[a-zA-Z0-9._-]+\.apps\.googleusercontent\.com$/'], 'client_secret' => 'nullable|string|max:2048', 'clear_secret' => 'sometimes|boolean', 'frontend_url' => 'nullable|url:http,https|max:255']);
+        if (! empty($data['frontend_url'])) {
+            $parts = parse_url($data['frontend_url']);
+            abort_if(isset($parts['user']) || isset($parts['pass']) || isset($parts['query']) || isset($parts['fragment']) || ! in_array($parts['path'] ?? '', ['', '/'], true), 422, 'Use the website origin without a path, query or credentials.');
+            abort_if(($parts['scheme'] ?? '') !== 'https' && ! in_array($parts['host'] ?? '', ['localhost', '127.0.0.1'], true), 422, 'Use HTTPS for a live website.');
+        }
+        $google->save($data);
+        AuditLogService::log('settings.google_oauth_updated', $request->user(), null, ['enabled' => $data['enabled']]);
+
+        return response()->json(['data' => $google->settings()]);
     }
 
     public function smtp(Request $request, SmtpConfiguration $smtp): JsonResponse

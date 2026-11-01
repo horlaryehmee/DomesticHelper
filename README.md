@@ -548,3 +548,19 @@ regenerates it.
 - SMS/WhatsApp notifications (Termii/Twilio) for OTPs and alerts
 - Agency dashboards (multi-employer management)
 - End-to-end browser test suite (Playwright)
+
+### Signup and account approval
+
+New employers and helpers start at `/register` (also `/verification`), verify their email with a 6-digit code, then complete `/onboarding`. NIN, guarantor details, and proof of address are collected in the private verification step. Submitted accounts remain on `/approval-pending`; dashboard routes and authenticated business APIs require admin approval.
+
+Admins review submissions in **Verifications > Account approvals**, inspect private details and documents, and approve or request changes with feedback. Rejected users can resubmit. New helper profiles remain private until account approval. Existing accounts retain access. Coming soon mode continues to require the site's preview link for signup.
+
+Email verification codes expire after 10 minutes, allow five attempts, and can be requested up to three times per 15 minutes per account. The verification endpoints bind codes to the authenticated account and its email. Configure `MAIL_MAILER` and provider credentials for inbox delivery; with `MAIL_MAILER=log`, Laravel writes the email to `backend/storage/logs/laravel.log`. Codes are never returned by the email verification API.
+
+### Google registration and sign-in
+
+A super-admin can configure **Admin > Settings > Google registration & sign-in**. Create a Google OAuth client of type **Web application**, configure its consent screen/audience, then enter the client ID and client secret. Set Website URL to the actual public website origin (locally `http://127.0.0.1:5174`) and copy the displayed Authorized redirect URI into Google Cloud, exactly, including its scheme, hostname and port. Locally this is `http://127.0.0.1:5174/api/auth/google/callback`. Use HTTPS for production. Add test users in Google Cloud while the OAuth app is in testing. Enable and save the settings to show the Google buttons.
+
+The callback uses the same website origin and `/api` routing as the SPA. Keep Laravel session cookies enabled, use the same hostname throughout the flow, and ensure HTTPS/proxy settings are correct in production. Socialite validates OAuth state and uses PKCE. The SPA receives a short-lived, single-use handoff bound to its browser verifier; application tokens are returned only from the exchange API. Google tokens are not stored. The client secret is encrypted and excluded from generic settings APIs; a blank secret preserves the saved value, and removing it requires disabling Google sign-in.
+
+New Google registrations select employer/helper, accept terms, and complete contact details before onboarding. A Gmail or Google Workspace email verified by Google satisfies email confirmation. Other Google-associated email addresses must complete the app email-code flow. Dashboard access still requires admin approval. Existing verified accounts can be matched to an authoritative Google-hosted email without changing their role; unverified or non-Google-hosted matches must use the existing password. Suspended/deleted accounts remain blocked. New users must register before Google login can succeed. Real Google consent and delivery require credentials supplied by your Google Cloud project.

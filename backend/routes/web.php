@@ -10,6 +10,9 @@ use Illuminate\Support\Facades\Route;
 | All non-API routes fall through to the SPA so client-side routing works.
 */
 
+Route::get('/api/auth/google/redirect', [\App\Http\Controllers\Api\Auth\GoogleAuthController::class, 'redirect'])->middleware('throttle:auth');
+Route::get('/api/auth/google/callback', [\App\Http\Controllers\Api\Auth\GoogleAuthController::class, 'callback'])->middleware('throttle:auth');
+
 Route::get('/{any?}', function () {
     $build = public_path('build/index.html');
     $root = public_path('index.html');

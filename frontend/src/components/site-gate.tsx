@@ -25,7 +25,7 @@ export function SiteGate({ children }: { children: ReactNode }) {
     window.history.replaceState(window.history.state, '', window.location.pathname + window.location.search)
   }, [previewToken])
 
-  const allowedAuthPage = location.pathname === '/login' || location.pathname === '/forgot-password'
+  const allowedAuthPage = location.pathname === '/login' || location.pathname === '/forgot-password' || location.pathname === '/verify-email' || location.pathname === '/auth/google/callback'
   const isAdmin = user?.user_type === 'admin'
   const { data, isPending, isError, refetch } = useQuery({
     queryKey: ['site-status', previewToken],

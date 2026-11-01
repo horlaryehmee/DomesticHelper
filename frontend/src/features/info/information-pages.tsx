@@ -8,16 +8,6 @@ function InfoPage({ eyebrow, title, children }: { eyebrow: string; title: string
   </article>
 }
 
-export function AboutPage() {
-  return <InfoPage eyebrow="About us" title="A safer way to find and offer domestic work">
-    <p>Hire Safe connects households and employers with domestic workers in Nigeria. Helpers can present their experience and apply for jobs; employers can discover profiles and manage hiring conversations in one place.</p>
-    <h2>Our approach</h2><p>Profiles, employment history, reviews and verification information can help people make more informed decisions. A badge or score reflects the information available at the time; it is not a guarantee of someone’s identity, conduct, suitability or future performance.</p>
-    <h2>For employers</h2><p>Search helper profiles, post jobs, review applications and arrange interviews. Always conduct your own interviews, reference checks and due diligence before hiring.</p>
-    <h2>For helpers</h2><p>Create a profile, describe your skills and experience, and explore opportunities. You remain in control of the information you provide through your account.</p>
-    <p>Have a question? <Link to="/contact">Contact the Hire Safe team</Link>.</p>
-  </InfoPage>
-}
-
 export function HowItWorksPage() {
   return <InfoPage eyebrow="Getting started" title="How Hire Safe works">
     <h2>1. Create a profile</h2><p>Choose whether you are hiring or looking for work. Complete the guided registration and add the details relevant to your role.</p>

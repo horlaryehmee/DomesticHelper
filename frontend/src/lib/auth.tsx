@@ -2,6 +2,10 @@ import { createContext, useCallback, useContext, useEffect, useState, type React
 import { api, getToken, setToken } from './api'
 
 export interface AuthUser {
+  approval_status: 'draft' | 'pending' | 'approved' | 'rejected'
+  details_confirmed: boolean
+  onboarding_submitted: boolean
+  approval_notes: string | null
   id: number
   uuid: string
   name: string
@@ -48,6 +52,13 @@ export function dashboardPath(userType: AuthUser['user_type']): string {
   if (userType === 'admin') return '/admin'
   if (userType === 'employer') return '/employer'
   return '/helper'
+}
+
+export function accountPath(user: AuthUser): string {
+  if (user.user_type === 'admin' || user.approval_status === 'approved') return dashboardPath(user.user_type)
+  if (!user.email_verified) return '/verify-email'
+  if (!user.details_confirmed) return '/confirm-details'
+  return user.approval_status === 'pending' ? '/approval-pending' : '/onboarding'
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {

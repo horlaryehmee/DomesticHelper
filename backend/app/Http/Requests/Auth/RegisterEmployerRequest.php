@@ -3,12 +3,20 @@
 namespace App\Http\Requests\Auth;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class RegisterEmployerRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return true;
+        return ! $this->user() || ($this->user()->user_type->value === 'employer' && $this->user()->email_verified_at && $this->user()->details_confirmed_at && in_array($this->user()->approval_status, ['draft', 'rejected']));
+    }
+
+    protected function prepareForValidation(): void
+    {
+        if ($user = $this->user()) {
+            $this->merge($user->only(['first_name', 'last_name', 'email', 'phone']));
+        }
     }
 
     public function rules(): array
@@ -16,9 +24,9 @@ class RegisterEmployerRequest extends FormRequest
         return [
             'first_name' => ['required', 'string', 'max:60'],
             'last_name' => ['required', 'string', 'max:60'],
-            'email' => ['required', 'email', 'max:120', 'unique:users,email'],
-            'phone' => ['required', 'string', 'max:20', 'regex:/^\+?[0-9]{10,15}$/', 'unique:users,phone'],
-            'password' => ['required', 'string', 'min:8', 'confirmed'],
+            'email' => ['required', 'email', 'max:120', Rule::unique('users', 'email')->ignore($this->user()?->id)],
+            'phone' => ['required', 'string', 'max:20', 'regex:/^\+?[0-9]{10,15}$/', Rule::unique('users', 'phone')->ignore($this->user()?->id)],
+            'password' => [$this->user() ? 'nullable' : 'required', 'string', 'min:8', 'confirmed'],
             'address_line' => ['required', 'string', 'max:255'],
             'nin' => ['required', 'digits:11'],
             'guarantor_name' => ['required', 'string', 'max:120'],

@@ -20,6 +20,7 @@ const links = [
   { to: '/search', label: 'Find Helpers' },
   { to: '/jobs', label: 'Jobs' },
   { to: '/community', label: 'Community Stories' },
+  { to: '/about', label: 'About us' },
   { to: '/contact', label: 'Contact' },
 ]
 
@@ -38,7 +39,7 @@ export function PublicLayout() {
             <LogoLockup className="h-9" />
           </Link>
 
-          <nav className="hidden items-center gap-1 md:flex">
+          <nav aria-label="Main navigation" className="hidden items-center gap-1 xl:flex">
             {links.map((l) => (
               <NavLink
                 key={l.to}
@@ -53,7 +54,7 @@ export function PublicLayout() {
             ))}
           </nav>
 
-          <div className="hidden items-center gap-2 md:flex">
+          <div className="hidden items-center gap-2 xl:flex">
             {user ? (
               <>
                 <Button variant="ghost" size="sm" onClick={() => navigate(dashboardPath)}>
@@ -96,13 +97,13 @@ export function PublicLayout() {
             )}
           </div>
 
-          <button className="cursor-pointer rounded-md p-2 md:hidden" onClick={() => setMobileOpen(!mobileOpen)} aria-label="Menu">
+          <button className="cursor-pointer rounded-md p-2 xl:hidden" onClick={() => setMobileOpen(!mobileOpen)} aria-label="Menu" aria-expanded={mobileOpen} aria-controls="mobile-navigation">
             {mobileOpen ? <X className="size-5" /> : <Menu className="size-5" />}
           </button>
         </div>
 
         {mobileOpen && (
-          <div className="border-t px-4 py-3 md:hidden">
+          <nav id="mobile-navigation" aria-label="Mobile navigation" className="border-t px-4 py-3 xl:hidden">
             <div className="flex flex-col gap-1">
               {links.map((l) => (
                 <NavLink key={l.to} to={l.to} end={l.to === '/'} onClick={() => setMobileOpen(false)} className={({ isActive }) => cn('rounded-md px-3 py-2 text-sm font-medium', isActive ? 'bg-accent text-accent-foreground' : 'hover:bg-accent')}>
@@ -132,7 +133,7 @@ export function PublicLayout() {
                 </div>
               )}
             </div>
-          </div>
+          </nav>
         )}
       </header>
 

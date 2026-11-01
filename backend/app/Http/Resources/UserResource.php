@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources;
 
+use App\Services\VerificationService;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -15,6 +16,10 @@ class UserResource extends JsonResource
 
         return [
             'uuid' => $this->uuid,
+            'approval_status' => $this->approval_status,
+            'details_confirmed' => (bool) $this->details_confirmed_at,
+            'onboarding_submitted' => (bool) $this->onboarding_submitted_at,
+            'approval_notes' => $this->approval_notes,
             'first_name' => $this->first_name,
             'last_name' => $this->last_name,
             'name' => $this->full_name,
@@ -29,7 +34,7 @@ class UserResource extends JsonResource
             'roles' => $this->when($isAdmin, fn () => $this->roles->pluck('slug')),
             'employer_profile' => $this->whenLoaded('employerProfile', fn () => new EmployerProfileResource($this->employerProfile)),
             'helper_profile' => $this->whenLoaded('helperProfile', fn () => new HelperProfileOwnResource($this->helperProfile)),
-            'profile_completion' => $this->when($isSelf || $isAdmin, fn () => app(\App\Services\VerificationService::class)->completionPercent($this->resource)),
+            'profile_completion' => $this->when($isSelf || $isAdmin, fn () => app(VerificationService::class)->completionPercent($this->resource)),
             'created_at' => $this->created_at?->toIso8601String(),
         ];
     }

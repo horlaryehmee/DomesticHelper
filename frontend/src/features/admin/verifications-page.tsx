@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Skeleton } from '@/components/ui/skeleton'
-import { api, ApiError } from '@/lib/api'
+import { api, ApiError, getToken } from '@/lib/api'
 import { formatDateTime } from '@/lib/format'
 
 interface IdentityVerification {
@@ -33,7 +33,7 @@ interface ReferenceCheck {
 
 export function AdminVerificationsPage() {
   const queryClient = useQueryClient()
-  const [tab, setTab] = useState('identity')
+  const [tab, setTab] = useState('accounts')
   const [statusFilter, setStatusFilter] = useState('pending')
 
   const { data: identity, isLoading: identityLoading } = useQuery({
@@ -75,12 +75,13 @@ export function AdminVerificationsPage() {
 
       <Tabs value={tab} onValueChange={setTab}>
         <TabsList>
+          <TabsTrigger value="accounts">Account approvals</TabsTrigger>
           <TabsTrigger value="identity">Identity</TabsTrigger>
           <TabsTrigger value="references">Reference checks</TabsTrigger>
         </TabsList>
       </Tabs>
 
-      {tab === 'identity' ? (
+      {tab === 'accounts' ? <AccountApprovals /> : tab === 'identity' ? (
         <div className="space-y-4">
           <div className="flex gap-2">
             {['pending', 'approved', 'rejected'].map((s) => (
@@ -157,4 +158,21 @@ export function AdminVerificationsPage() {
       )}
     </div>
   )
+}
+
+interface ApprovalAccount { uuid: string; name: string; email: string; user_type: string; approval_status: string }
+function AccountApprovals() {
+ const client=useQueryClient()
+ const [status,setStatus]=useState('pending')
+ const [page,setPage]=useState(1)
+ const [selected,setSelected]=useState<string|null>(null)
+ const [notes,setNotes]=useState('')
+ const {data,isLoading,error}=useQuery({queryKey:['account-approvals',status,page],queryFn:()=>api.get<{data:ApprovalAccount[];meta:{last_page:number}}>('/admin/account-verifications',{status,page})})
+ const {data:details,isLoading:detailsLoading,error:detailsError}=useQuery({queryKey:['registration-review',selected],queryFn:()=>api.get<{data:{nin_last4:string;guarantor_name:string;guarantor_phone:string;guarantor_relationship:string;address_line:string}}>(`/admin/users/${selected}/registration-details`),enabled:!!selected})
+ const decision=useMutation({mutationFn:({uuid,status}:{uuid:string;status:string})=>api.post(`/admin/account-verifications/${uuid}/decide`,{status,notes}),onSuccess:()=>{client.invalidateQueries({queryKey:['account-approvals']});setSelected(null);setNotes('');toast.success('Account decision recorded')},onError:(e)=>toast.error(e instanceof ApiError?e.message:'Could not record decision')})
+ const download=async(uuid:string)=>{try { const response=await fetch(`/api/admin/users/${uuid}/address-proof`,{headers:{Authorization:`Bearer ${getToken()}`}});if(!response.ok)throw new Error();const blob=await response.blob();const url=URL.createObjectURL(blob);const link=document.createElement('a');link.href=url;link.download='address-proof';link.click();setTimeout(()=>URL.revokeObjectURL(url),1000) }catch {toast.error('Could not download address proof')} }
+ return <div className="space-y-4"><p className="text-sm text-muted-foreground">Review onboarding and private verification details before granting dashboard access.</p><div className="flex gap-2">{['pending','approved','rejected'].map(value=><Button key={value} variant={status===value?'default':'outline'} onClick={()=>{setStatus(value);setPage(1);setSelected(null)}}>{value}</Button>)}</div>
+ {error && <p role="alert">Could not load account submissions.</p>}{isLoading ? <Skeleton className="h-24"/> : data?.data.length===0 ? <p className="rounded-lg border p-8 text-center">No {status} accounts.</p> : data?.data.map(account=><Card key={account.uuid}><CardContent className="space-y-4"><div className="flex flex-wrap items-center justify-between gap-3"><div><p className="font-semibold">{account.name}</p><p className="text-sm text-muted-foreground">{account.email} ? {account.user_type}</p></div><Button variant="outline" onClick={()=>{setSelected(selected===account.uuid?null:account.uuid);setNotes('')}}>Review verification details</Button></div>
+ {selected===account.uuid && <div className="space-y-4 border-t pt-4">{detailsLoading ? <p>Loading private details?</p> : detailsError ? <p role="alert">Could not load verification details.</p> : details && <><dl className="grid gap-2 text-sm"><dt>NIN (last four digits)</dt><dd>{details.data.nin_last4}</dd><dt>Residential address</dt><dd>{details.data.address_line}</dd><dt>Guarantor</dt><dd>{details.data.guarantor_name} ? {details.data.guarantor_phone} ? {details.data.guarantor_relationship}</dd></dl><Button variant="outline" onClick={()=>download(account.uuid)}>Download proof of address</Button>{account.approval_status==='pending' && <><label htmlFor="review-notes" className="block text-sm font-medium">Review notes / changes required</label><textarea id="review-notes" className="w-full rounded-md border p-3" value={notes} maxLength={2000} onChange={e=>setNotes(e.target.value)}/><div className="flex gap-3"><Button disabled={decision.isPending} onClick={()=>decision.mutate({uuid:account.uuid,status:'approved'})}>Approve account</Button><Button variant="outline" disabled={decision.isPending} onClick={()=>decision.mutate({uuid:account.uuid,status:'rejected'})}>Request changes</Button></div></>}</>}</div>}
+ </CardContent></Card>)}<div className="flex items-center gap-3"><Button variant="outline" disabled={page===1} onClick={()=>setPage(page-1)}>Previous</Button><span>Page {page}</span><Button variant="outline" disabled={!data || page>=data.meta.last_page} onClick={()=>setPage(page+1)}>Next</Button></div></div>
 }

@@ -8,19 +8,17 @@ use App\Http\Requests\Auth\LoginRequest;
 use App\Http\Requests\Auth\RegisterEmployerRequest;
 use App\Http\Requests\Auth\RegisterHelperRequest;
 use App\Http\Resources\UserResource;
-use App\Models\EmployerProfile;
 use App\Models\HelperProfile;
 use App\Models\User;
+use App\Notifications\PlatformNotification;
 use App\Services\AuditLogService;
 use App\Services\NotificationService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
-use App\Notifications\PlatformNotification;
 
 class AuthController extends Controller
 {
@@ -28,33 +26,31 @@ class AuthController extends Controller
     {
         $data = $request->validated();
         $ninHash = hash('sha256', $data['nin']);
-        abort_if(DB::table('registration_verification_details')->where('nin_hash', $ninHash)->exists()
-            || HelperProfile::query()->where('nin_hash', $ninHash)->exists(), 422, 'An account with this NIN already exists.');
+        abort_if(DB::table('registration_verification_details')->where('nin_hash', $ninHash)->when(request()->user(), fn ($q, $u) => $q->where('user_id', '!=', $u->id))->exists()
+            || HelperProfile::query()->where('nin_hash', $ninHash)->when(request()->user(), fn ($q, $u) => $q->where('user_id', '!=', $u->id))->exists(), 422, 'An account with this NIN already exists.');
         $proofPath = $request->file('address_proof')->store('registration/address-proof', 'private');
         abort_unless($proofPath, 500, 'Could not save the address document.');
 
         try {
             $user = DB::transaction(function () use ($data, $proofPath, $ninHash) {
-            $user = User::create([
-                'first_name' => $data['first_name'],
-                'last_name' => $data['last_name'],
-                'email' => strtolower($data['email']),
-                'phone' => $data['phone'],
-                'password' => $data['password'],
-                'user_type' => UserType::Employer,
-            ]);
+                $user = request()->user() ?? User::create([
+                    'first_name' => $data['first_name'], 'last_name' => $data['last_name'],
+                    'email' => strtolower($data['email']), 'phone' => $data['phone'],
+                    'password' => $data['password'], 'user_type' => UserType::Employer,
+                ]);
+                $user->forceFill(['approval_status' => 'pending', 'onboarding_submitted_at' => now()])->save();
 
-            $user->employerProfile()->create([
-                'profile_type' => $data['profile_type'],
-                'agency_name' => $data['agency_name'] ?? null,
-                'address_line' => $data['address_line'],
-                'city' => $data['city'],
-                'state' => $data['state'],
-            ]);
+                $user->employerProfile()->updateOrCreate([], [
+                    'profile_type' => $data['profile_type'],
+                    'agency_name' => $data['agency_name'] ?? null,
+                    'address_line' => $data['address_line'],
+                    'city' => $data['city'],
+                    'state' => $data['state'],
+                ]);
 
-            $this->saveRegistrationDetails($user, $data, $ninHash, $proofPath);
+                $this->saveRegistrationDetails($user, $data, $ninHash, $proofPath);
 
-            return $user;
+                return $user;
             });
         } catch (\Throwable $e) {
             Storage::disk('private')->delete($proofPath);
@@ -66,7 +62,7 @@ class AuthController extends Controller
         $notifications->send($user, new PlatformNotification(
             type: 'welcome',
             title: 'Welcome to Hire Safe',
-            body: 'Your employer account has been created. You can now start hiring.',
+            body: 'Your employer account has been created. Your account is awaiting admin approval.',
         ));
 
         $token = $user->createToken('auth')->plainTextToken;
@@ -86,8 +82,8 @@ class AuthController extends Controller
         $ninHash = hash('sha256', $nin);
 
         abort_if(
-            HelperProfile::query()->where('nin_hash', $ninHash)->exists()
-                || DB::table('registration_verification_details')->where('nin_hash', $ninHash)->exists(),
+            HelperProfile::query()->where('nin_hash', $ninHash)->when(request()->user(), fn ($q, $u) => $q->where('user_id', '!=', $u->id))->exists()
+                || DB::table('registration_verification_details')->where('nin_hash', $ninHash)->when(request()->user(), fn ($q, $u) => $q->where('user_id', '!=', $u->id))->exists(),
             422,
             'A helper profile with this NIN already exists.',
         );
@@ -100,44 +96,46 @@ class AuthController extends Controller
 
         try {
             $user = DB::transaction(function () use ($data, $nin, $ninHash, $proofPath, $photoPath, $videoPath) {
-            $user = User::create([
-                'first_name' => $data['first_name'],
-                'last_name' => $data['last_name'],
-                'email' => strtolower($data['email']),
-                'phone' => $data['phone'],
-                'password' => $data['password'],
-                'user_type' => UserType::Helper,
-            ]);
+                $user = request()->user() ?? User::create([
+                    'first_name' => $data['first_name'], 'last_name' => $data['last_name'],
+                    'email' => strtolower($data['email']), 'phone' => $data['phone'],
+                    'password' => $data['password'], 'user_type' => UserType::Helper,
+                ]);
+                $user->forceFill(['approval_status' => 'pending', 'onboarding_submitted_at' => now()])->save();
 
-            $profile = $user->helperProfile()->create([
-                'date_of_birth' => $data['date_of_birth'],
-                'gender' => $data['gender'],
-                'state' => $data['state'],
-                'city' => $data['city'],
-                'address_line' => $data['address_line'],
-                'nin_encrypted' => Crypt::encryptString($nin), // encrypted at rest
-                'nin_hash' => $ninHash,
-                'nin_last4' => substr($nin, -4),
-                'years_experience' => $data['years_experience'],
-                'availability' => $data['availability'],
-                'employment_type' => $data['employment_type'] ?? 'any',
-                'expected_salary_min' => $data['expected_salary_min'],
-                'expected_salary_max' => $data['expected_salary_max'] ?? null,
-                'bio' => $data['bio'] ?? null,
-                'photo_path' => $photoPath,
-                'intro_video_path' => $videoPath,
-                'is_public' => true,
-            ]);
+                $profile = $user->helperProfile()->updateOrCreate([], [
+                    'date_of_birth' => $data['date_of_birth'],
+                    'gender' => $data['gender'],
+                    'state' => $data['state'],
+                    'city' => $data['city'],
+                    'address_line' => $data['address_line'],
+                    'nin_encrypted' => Crypt::encryptString($nin), // encrypted at rest
+                    'nin_hash' => $ninHash,
+                    'nin_last4' => substr($nin, -4),
+                    'years_experience' => $data['years_experience'],
+                    'availability' => $data['availability'],
+                    'employment_type' => $data['employment_type'] ?? 'any',
+                    'expected_salary_min' => $data['expected_salary_min'],
+                    'expected_salary_max' => $data['expected_salary_max'] ?? null,
+                    'bio' => $data['bio'] ?? null,
+                    'photo_path' => $photoPath,
+                    'intro_video_path' => $videoPath,
+                    'is_public' => false,
+                ]);
 
-            $profile->skills()->sync($data['skills']);
-            $this->saveRegistrationDetails($user, $data, $ninHash, $proofPath);
+                $profile->skills()->sync($data['skills']);
+                $this->saveRegistrationDetails($user, $data, $ninHash, $proofPath);
 
-            return $user;
+                return $user;
             });
         } catch (\Throwable $e) {
             Storage::disk('private')->delete($proofPath);
-            if ($photoPath) Storage::disk('public')->delete($photoPath);
-            if ($videoPath) Storage::disk('public')->delete($videoPath);
+            if ($photoPath) {
+                Storage::disk('public')->delete($photoPath);
+            }
+            if ($videoPath) {
+                Storage::disk('public')->delete($videoPath);
+            }
             throw $e;
         }
 
@@ -160,7 +158,7 @@ class AuthController extends Controller
 
     private function saveRegistrationDetails(User $user, array $data, string $ninHash, string $proofPath): void
     {
-        DB::table('registration_verification_details')->insert([
+        DB::table('registration_verification_details')->updateOrInsert(['user_id' => $user->id], [
             'user_id' => $user->id,
             'nin_encrypted' => Crypt::encryptString($data['nin']),
             'nin_hash' => $ninHash,
