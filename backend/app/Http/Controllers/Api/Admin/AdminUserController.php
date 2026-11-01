@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers\Api\Admin;
 
-use App\Enums\UserStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\UserResource;
 use App\Models\Role;
@@ -58,6 +57,9 @@ class AdminUserController extends Controller
             'guarantor_name' => Crypt::decryptString($details->guarantor_name_encrypted),
             'guarantor_phone' => Crypt::decryptString($details->guarantor_phone_encrypted),
             'guarantor_relationship' => Crypt::decryptString($details->guarantor_relationship_encrypted),
+            'guarantor_2_name' => $details->guarantor_2_name_encrypted ? Crypt::decryptString($details->guarantor_2_name_encrypted) : null,
+            'guarantor_2_phone' => $details->guarantor_2_phone_encrypted ? Crypt::decryptString($details->guarantor_2_phone_encrypted) : null,
+            'guarantor_2_relationship' => $details->guarantor_2_relationship_encrypted ? Crypt::decryptString($details->guarantor_2_relationship_encrypted) : null,
             'address_line' => $user->helperProfile?->address_line ?? $user->employerProfile?->address_line,
             'has_address_proof' => true,
         ]]);

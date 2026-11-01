@@ -34,6 +34,9 @@ interface RegistrationDetails {
   guarantor_name: string
   guarantor_phone: string
   guarantor_relationship: string
+  guarantor_2_name: string | null
+  guarantor_2_phone: string | null
+  guarantor_2_relationship: string | null
   address_line: string | null
   has_address_proof: boolean
 }
@@ -188,9 +191,10 @@ export function AdminUsersPage() {
           {detailsLoading ? <Skeleton className="h-32" /> : detailsError ? <p className="text-sm text-muted-foreground">No registration documents are available for this account.</p> : registration && <div className="space-y-3 text-sm">
             <p><strong>NIN:</strong> ending in {registration.data.nin_last4}</p>
             <p><strong>Address:</strong> {registration.data.address_line ?? 'Not provided'}</p>
-            <p><strong>Guarantor:</strong> {registration.data.guarantor_name}</p>
+            <p><strong>Guarantor 1:</strong> {registration.data.guarantor_name}</p>
             <p><strong>Relationship:</strong> {registration.data.guarantor_relationship}</p>
-            <p><strong>Guarantor phone:</strong> {registration.data.guarantor_phone}</p>
+            <p><strong>Guarantor 1 phone:</strong> {registration.data.guarantor_phone}</p>
+            <div className="rounded-lg border p-3"><p><strong>Guarantor 2:</strong> {registration.data.guarantor_2_name ?? 'Not provided (older submission)'}</p>{registration.data.guarantor_2_name && <><p><strong>Relationship:</strong> {registration.data.guarantor_2_relationship}</p><p><strong>Phone:</strong> {registration.data.guarantor_2_phone}</p></>}</div>
             {registration.data.has_address_proof && <Button variant="outline" onClick={downloadProof}>Download proof of address</Button>}
           </div>}
         </DialogContent>

@@ -62,6 +62,10 @@ class OnboardingController extends Controller
         DB::transaction(function () use ($data, $user) {
             $user = User::whereKey($user->id)->lockForUpdate()->firstOrFail();
             abort_unless(! $user->isAdmin() && $user->email_verified_at && $user->onboarding_submitted_at && $user->approval_status === 'pending', 422, 'Only submitted pending accounts can be reviewed.');
+            if ($data['status'] === 'approved') {
+                $details = DB::table('registration_verification_details')->where('user_id', $user->id)->first();
+                abort_unless($details?->guarantor_2_name_encrypted && $details?->guarantor_2_phone_encrypted && $details?->guarantor_2_relationship_encrypted, 422, 'Two guarantors are required. Request an updated onboarding submission before approving.');
+            }
             $user->forceFill(['approval_status' => $data['status'], 'approval_notes' => $data['notes'] ?? null])->save();
             if ($user->helperProfile) {
                 $user->helperProfile->update(['is_public' => $data['status'] === 'approved']);

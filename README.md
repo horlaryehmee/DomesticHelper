@@ -570,3 +570,7 @@ New Google registrations select employer/helper, accept terms, and complete cont
 Web workers may not define `HOME` or `COMPOSER_HOME`. The updater supplies `COMPOSER_HOME`, defaulting to `backend/storage/app/private/composer`, and creates it privately with write access for the application user. Existing `COMPOSER_HOME` configuration is preserved. Ensure that directory is writable by the PHP worker. Every update reconciles dependencies with `composer.lock`, even when Git has no new commits, so a failed install can be retried safely. Composer failures stop publication and remain in the last update output.
 
 When upgrading from the earlier updater after a Composer failure, run **Update from Git** once to fetch the updater fix, then run it again to reinstall dependencies using the corrected environment.
+
+### Onboarding and two guarantors
+
+Employer and helper onboarding uses separate profile, identity, guarantor and final review steps; helpers can also add a photo and introduction video. Both account types must provide two guarantors, each with a full name, phone number and relationship. The second phone must differ from the first. Both guarantors are encrypted at rest and visible only in authorised admin registration reviews. Existing records remain readable after the additive migration. Older pending submissions with only one guarantor must be returned for changes before approval; existing approved accounts keep access.

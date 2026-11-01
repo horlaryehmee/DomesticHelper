@@ -36,7 +36,7 @@ class AuthTest extends TestCase
             'nin' => '12345678902',
             'guarantor_name' => 'Ada Guarantor',
             'guarantor_phone' => '08030000002',
-            'guarantor_relationship' => 'Sibling',
+            'guarantor_relationship' => 'Sibling', 'guarantor_2_name' => 'Second Guarantor', 'guarantor_2_phone' => '08039999999', 'guarantor_2_relationship' => 'Former employer',
             'address_proof' => UploadedFile::fake()->create('utility-bill.pdf', 100, 'application/pdf'),
         ], ['Accept' => 'application/json']);
 
@@ -87,7 +87,7 @@ class AuthTest extends TestCase
             'address_line' => '4 Example Road',
             'guarantor_name' => 'Tunde Guarantor',
             'guarantor_phone' => '08120000002',
-            'guarantor_relationship' => 'Former employer',
+            'guarantor_relationship' => 'Former employer', 'guarantor_2_name' => 'Second Guarantor', 'guarantor_2_phone' => '08039999999', 'guarantor_2_relationship' => 'Former employer',
             'address_proof' => UploadedFile::fake()->create('utility-bill.pdf', 100, 'application/pdf'),
             'photo' => UploadedFile::fake()->create('profile.jpg', 100, 'image/jpeg'),
             'intro_video' => UploadedFile::fake()->create('introduction.webm', 512, 'video/webm'),
