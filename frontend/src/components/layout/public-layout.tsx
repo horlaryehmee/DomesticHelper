@@ -1,5 +1,7 @@
+import { useFeatures } from '@/lib/features'
 import { useState } from 'react'
-import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom'
+import { FeatureLink as Link } from '@/components/feature-link'
+import { NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { Menu, X, LogOut, LayoutDashboard, Briefcase } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
@@ -25,6 +27,7 @@ const links = [
 ]
 
 export function PublicLayout() {
+  const { canVisit } = useFeatures()
   const { user, logout } = useAuth()
   const [mobileOpen, setMobileOpen] = useState(false)
   const navigate = useNavigate()
@@ -40,7 +43,7 @@ export function PublicLayout() {
           </Link>
 
           <nav aria-label="Main navigation" className="hidden items-center gap-1 xl:flex">
-            {links.map((l) => (
+            {links.filter(l => canVisit(l.to)).map((l) => (
               <NavLink
                 key={l.to}
                 to={l.to}
@@ -76,8 +79,8 @@ export function PublicLayout() {
                     </DropdownMenuLabel>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem onClick={() => navigate(dashboardPath)}>Dashboard</DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => navigate(user.user_type === 'helper' ? '/helper/profile' : '/employer/profile')}>Profile</DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => navigate(dashboardPath + '/messages')}>Messages</DropdownMenuItem>
+                    <DropdownMenuItem hidden={!canVisit(user.user_type === 'helper' ? '/helper/profile' : '/employer/profile')} onClick={() => navigate(user.user_type === 'helper' ? '/helper/profile' : '/employer/profile')}>Profile</DropdownMenuItem>
+                    {canVisit(dashboardPath + '/messages') && <DropdownMenuItem onClick={() => navigate(dashboardPath + '/messages')}>Messages</DropdownMenuItem>}
                     <DropdownMenuSeparator />
                     <DropdownMenuItem variant="destructive" onClick={() => logout().then(() => navigate('/'))}>
                       <LogOut /> Log out
@@ -105,7 +108,7 @@ export function PublicLayout() {
         {mobileOpen && (
           <nav id="mobile-navigation" aria-label="Mobile navigation" className="border-t px-4 py-3 xl:hidden">
             <div className="flex flex-col gap-1">
-              {links.map((l) => (
+              {links.filter(l => canVisit(l.to)).map((l) => (
                 <NavLink key={l.to} to={l.to} end={l.to === '/'} onClick={() => setMobileOpen(false)} className={({ isActive }) => cn('rounded-md px-3 py-2 text-sm font-medium', isActive ? 'bg-accent text-accent-foreground' : 'hover:bg-accent')}>
                   {l.label}
                 </NavLink>
@@ -146,31 +149,31 @@ export function PublicLayout() {
           <div className="md:col-span-2">
             <LogoLockup className="h-12" />
             <p className="mt-3 max-w-sm text-sm text-muted-foreground">
-              A verified trust network for domestic staff hiring in Nigeria. Safer hiring for families, fair reputation for good workers.
+              A clearer foundation for domestic work in Nigeria. Private verification details, two guarantors and a considered account review.
             </p>
           </div>
           <div>
             <h4 className="text-sm font-semibold">Platform</h4>
             <ul className="mt-3 space-y-2 text-sm text-muted-foreground">
-              <li><Link to="/" className="hover:text-foreground">Home</Link></li>
-              <li><Link to="/search" className="hover:text-foreground">Find Helpers</Link></li>
-              <li><Link to="/jobs" className="hover:text-foreground">Browse Jobs</Link></li>
-              <li><Link to="/community" className="hover:text-foreground">Community Stories</Link></li>
-              <li><Link to="/register" className="hover:text-foreground">Create Profile</Link></li>
-              <li><Link to="/login" className="hover:text-foreground">Log in</Link></li>
-              <li><Link to="/about" className="hover:text-foreground">About us</Link></li>
-              <li><Link to="/how-it-works" className="hover:text-foreground">How it works</Link></li>
-              <li><Link to="/contact" className="hover:text-foreground">Contact</Link></li>
+              {canVisit('/') && <li><Link to="/" className="hover:text-foreground">Home</Link></li>}
+              {canVisit('/search') && <li><Link to="/search" className="hover:text-foreground">Find Helpers</Link></li>}
+              {canVisit('/jobs') && <li><Link to="/jobs" className="hover:text-foreground">Browse Jobs</Link></li>}
+              {canVisit('/community') && <li><Link to="/community" className="hover:text-foreground">Community Stories</Link></li>}
+              {canVisit('/register') && <li><Link to="/register" className="hover:text-foreground">Create Profile</Link></li>}
+              {canVisit('/login') && <li><Link to="/login" className="hover:text-foreground">Log in</Link></li>}
+              {canVisit('/about') && <li><Link to="/about" className="hover:text-foreground">About us</Link></li>}
+              {canVisit('/how-it-works') && <li><Link to="/how-it-works" className="hover:text-foreground">How it works</Link></li>}
+              {canVisit('/contact') && <li><Link to="/contact" className="hover:text-foreground">Contact</Link></li>}
             </ul>
           </div>
           <div>
             <h4 className="text-sm font-semibold">Trust &amp; Safety</h4>
             <ul className="mt-3 space-y-2 text-sm text-muted-foreground">
-              <li><Link to="/safety" className="hover:text-foreground">Safety</Link></li>
-              <li><Link to="/faq" className="hover:text-foreground">FAQs</Link></li>
-              <li><Link to="/privacy" className="hover:text-foreground">Privacy Policy</Link></li>
-              <li><Link to="/terms" className="hover:text-foreground">Terms and Conditions</Link></li>
-              <li><Link to="/cookies" className="hover:text-foreground">Cookie Notice</Link></li>
+              {canVisit('/safety') && <li><Link to="/safety" className="hover:text-foreground">Safety</Link></li>}
+              {canVisit('/faq') && <li><Link to="/faq" className="hover:text-foreground">FAQs</Link></li>}
+              {canVisit('/privacy') && <li><Link to="/privacy" className="hover:text-foreground">Privacy Policy</Link></li>}
+              {canVisit('/terms') && <li><Link to="/terms" className="hover:text-foreground">Terms and Conditions</Link></li>}
+              {canVisit('/cookies') && <li><Link to="/cookies" className="hover:text-foreground">Cookie Notice</Link></li>}
             </ul>
           </div>
         </div>

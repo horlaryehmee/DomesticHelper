@@ -34,6 +34,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Spinner } from "@/components/ui/spinner";
 import { api, ApiError, setToken } from "@/lib/api";
 import { useAuth, dashboardPath, type AuthUser } from "@/lib/auth";
+import { useFeatures } from "@/lib/features";
 import { useQuery } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
 
@@ -579,7 +580,11 @@ function HelperForm({
   meta: Meta;
   onDone: (u: AuthUser) => void;
 }) {
-  const [step, setStep] = useState(0);
+  const { enabled } = useFeatures();
+  const directory = enabled.helper_directory;
+  const steps = directory ? helperSteps : [helperSteps[0], { label: "Location", title: "Where do you live?", detail: "Add your state and city to support your address verification." }, helperSteps[2], helperSteps[3], helperSteps[5]];
+  const [rawStep, setStep] = useState(0);
+  const step = Math.min(rawStep, steps.length - 1);
   const [proof, setProof] = useState<File | null>(null);
   const [photo, setPhoto] = useState<File | null>(null);
   const [video, setVideo] = useState<File | null>(null);
@@ -594,13 +599,15 @@ function HelperForm({
     setError: fieldError,
     formState: { errors },
   } = useForm({
-    resolver: zodResolver(helperSchema),
+    resolver: zodResolver(directory ? helperSchema : helperSchema.safeExtend({ skills: z.array(z.number()) })),
     defaultValues: {
       skills: [],
       gender: "female",
       employment_type: "any",
       state: "",
-      availability: "",
+      availability: directory ? "" : "negotiable",
+      years_experience: 0,
+      expected_salary_min: 0,
     },
   });
   const values = watch();
@@ -621,7 +628,8 @@ function HelperForm({
       [...guarantorFields],
       [],
     ][step];
-    if (!(await trigger(fields as never))) return;
+    const activeFields = !directory && step === 1 ? ["state", "city"] : fields;
+    if (!(await trigger(activeFields as never))) return;
     if (step === 2 && !proof) {
       setError("Upload a proof of address to continue.");
       return;
@@ -640,6 +648,7 @@ function HelperForm({
     try {
       const form = new FormData();
       Object.entries(data).forEach(([key, value]) => {
+        if (!directory && ["skills", "years_experience", "expected_salary_min", "availability", "employment_type", "bio"].includes(key)) return;
         if (value === undefined) return;
         if (key === "skills")
           (value as number[]).forEach((id) =>
@@ -648,8 +657,8 @@ function HelperForm({
         else form.append(key, String(value));
       });
       form.append("address_proof", proof);
-      if (photo) form.append("photo", photo);
-      if (video) form.append("intro_video", video);
+      if (directory && photo) form.append("photo", photo);
+      if (directory && video) form.append("intro_video", video);
       const result = await api.upload<{ token: string; user: AuthUser }>(
         "/onboarding/helper",
         form,
@@ -683,10 +692,10 @@ function HelperForm({
     }
   };
   return (
-    <OnboardingFrame steps={helperSteps} current={step} error={error}>
+    <OnboardingFrame steps={steps} current={step} error={error}>
       <form
         onSubmit={(event) => {
-          if (step < helperSteps.length - 1) {
+          if (step < steps.length - 1) {
             event.preventDefault();
             void next();
             return;
@@ -729,7 +738,7 @@ function HelperForm({
             </p>
           </div>
         )}
-        {step === 1 && (
+        {step === 1 && directory && (
           <div className="space-y-6">
             <div className="grid gap-5 sm:grid-cols-2">
               <Field label="State" error={errors.state?.message}>
@@ -841,6 +850,7 @@ function HelperForm({
             </Field>
           </div>
         )}
+        {step === 1 && !directory && <div className="grid gap-5 sm:grid-cols-2"><Field label="State" error={errors.state?.message}><NativeSelect {...register('state')}><option value="">Choose your state</option>{meta.states.map(state=><option key={state}>{state}</option>)}</NativeSelect></Field><Field label="City / area" error={errors.city?.message}><Input {...register('city')} autoComplete="address-level2"/></Field></div>}
         {step === 2 && (
           <IdentityFields
             registerField={(name) => register(name)}
@@ -855,7 +865,7 @@ function HelperForm({
             errors={errors}
           />
         )}
-        {step === 4 && (
+        {step === 4 && directory && (
           <ProfileMediaFields
             photo={photo}
             onPhotoChange={setPhoto}
@@ -863,15 +873,16 @@ function HelperForm({
             onVideoChange={setVideo}
           />
         )}
-        {step === 5 && (
+        {step === (directory ? 5 : 4) && (
           <>
             <ReviewDetails
               values={{
                 ...values,
-                skills: meta.skills
+                ...(!directory ? { skills: undefined, years_experience: undefined, expected_salary_min: undefined } : {}),
+                skills: directory ? meta.skills
                   .filter((skill) => values.skills.includes(skill.id))
                   .map((skill) => skill.name)
-                  .join(", "),
+                  .join(", ") : undefined,
               }}
               proof={proof}
               onEdit={setStep}
@@ -879,7 +890,7 @@ function HelperForm({
               guarantorStep={3}
               profileStep={1}
             />
-            <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[#e7e0da] p-4 text-sm">
+            {directory && <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[#e7e0da] p-4 text-sm">
               <span>
                 Introduction: {photo ? "Photo added" : "No photo"} /{" "}
                 {video ? "Video added" : "No video"}
@@ -891,12 +902,12 @@ function HelperForm({
               >
                 Edit introduction
               </button>
-            </div>
+            </div>}
           </>
         )}
         <WizardActions
           current={step}
-          total={helperSteps.length}
+          total={steps.length}
           busy={busy}
           onBack={() => {
             setError("");

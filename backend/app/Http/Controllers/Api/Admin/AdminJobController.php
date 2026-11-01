@@ -4,8 +4,10 @@ namespace App\Http\Controllers\Api\Admin;
 
 use App\Enums\JobStatus;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\StoreJobRequest;
 use App\Http\Resources\JobResource;
 use App\Models\Job;
+use App\Models\User;
 use App\Services\AuditLogService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -31,6 +33,16 @@ class AdminJobController extends Controller
                 'total' => $jobs->total(),
             ],
         ]);
+    }
+
+    public function store(Request $request): JsonResponse
+    {
+        $data = $request->validate([...(new StoreJobRequest)->rules(), 'employer_uuid' => ['required', 'uuid']]);
+        $employer = User::where('uuid', $data['employer_uuid'])->where('user_type', 'employer')->where('status', 'active')->where('approval_status', 'approved')->firstOrFail();
+        $job = Job::create([...collect($data)->except(['employer_uuid', 'status'])->all(), 'employer_id' => $employer->id, 'status' => $data['status'] ?? 'draft', 'expires_at' => now()->addDays(45)]);
+        AuditLogService::log('job.admin_created', $job);
+
+        return response()->json(['data' => new JobResource($job->load('employer.employerProfile'))], 201);
     }
 
     /** Moderate a reported job. */

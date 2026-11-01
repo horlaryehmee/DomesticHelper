@@ -13,6 +13,7 @@ use App\Models\User;
 use App\Notifications\PlatformNotification;
 use App\Services\AuditLogService;
 use App\Services\NotificationService;
+use App\Services\PlatformFeatures;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\DB;
@@ -112,18 +113,22 @@ class AuthController extends Controller
                     'nin_encrypted' => Crypt::encryptString($nin), // encrypted at rest
                     'nin_hash' => $ninHash,
                     'nin_last4' => substr($nin, -4),
-                    'years_experience' => $data['years_experience'],
-                    'availability' => $data['availability'],
-                    'employment_type' => $data['employment_type'] ?? 'any',
-                    'expected_salary_min' => $data['expected_salary_min'],
-                    'expected_salary_max' => $data['expected_salary_max'] ?? null,
-                    'bio' => $data['bio'] ?? null,
-                    'photo_path' => $photoPath,
-                    'intro_video_path' => $videoPath,
+                    ...((app(PlatformFeatures::class)->enabled('helper_directory') || ! $user->helperProfile) ? [
+                        'years_experience' => $data['years_experience'] ?? 0,
+                        'availability' => $data['availability'] ?? 'negotiable',
+                        'employment_type' => $data['employment_type'] ?? 'any',
+                        'expected_salary_min' => $data['expected_salary_min'] ?? 0,
+                        'expected_salary_max' => $data['expected_salary_max'] ?? null,
+                        'bio' => $data['bio'] ?? null,
+                        'photo_path' => $photoPath,
+                        'intro_video_path' => $videoPath,
+                    ] : []),
                     'is_public' => false,
                 ]);
 
-                $profile->skills()->sync($data['skills']);
+                if (app(PlatformFeatures::class)->enabled('helper_directory')) {
+                    $profile->skills()->sync($data['skills']);
+                }
                 $this->saveRegistrationDetails($user, $data, $ninHash, $proofPath);
 
                 return $user;

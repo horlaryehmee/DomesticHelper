@@ -48,6 +48,8 @@ use Illuminate\Support\Facades\Route;
 |--------------------------------------------------------------------------
 */
 
+Route::get('/features', [\App\Http\Controllers\Api\FeatureController::class, 'index']);
+
 // Auth
 Route::get('/auth/google/status', [\App\Http\Controllers\Api\Auth\GoogleAuthController::class, 'status']);
 Route::post('/auth/google/exchange', [\App\Http\Controllers\Api\Auth\GoogleAuthController::class, 'exchange'])->middleware('throttle:auth');
@@ -278,6 +280,7 @@ Route::middleware(['auth:sanctum', \App\Http\Middleware\EnsureAccountApproved::c
 
         // Jobs
         Route::get('/jobs', [AdminJobController::class, 'index']);
+        Route::post('/jobs', [AdminJobController::class, 'store']);
         Route::post('/jobs/{job}/moderate', [AdminJobController::class, 'moderate'])->whereUuid('job');
 
         // Payments
@@ -306,6 +309,8 @@ Route::middleware(['auth:sanctum', \App\Http\Middleware\EnsureAccountApproved::c
         Route::post('/coming-soon/rotate-preview-link', [AdminComingSoonController::class, 'rotate']);
         Route::get('/deployment', [AdminDeploymentController::class, 'show']);
         Route::post('/deployment', [AdminDeploymentController::class, 'store']);
+        Route::get('/settings/features', [\App\Http\Controllers\Api\FeatureController::class, 'show']);
+        Route::put('/settings/features', [\App\Http\Controllers\Api\FeatureController::class, 'update']);
         Route::get('/settings/google', [AdminSettingController::class, 'google']);
         Route::put('/settings/google', [AdminSettingController::class, 'updateGoogle']);
         Route::get('/settings/smtp', [AdminSettingController::class, 'smtp']);

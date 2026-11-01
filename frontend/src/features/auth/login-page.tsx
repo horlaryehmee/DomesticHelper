@@ -1,7 +1,9 @@
+import { useFeatures } from '@/lib/features'
 import { GoogleSignInButton } from './google-sign-in'
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { Link, useNavigate, useLocation, Navigate } from 'react-router-dom'
+import { FeatureLink as Link } from '@/components/feature-link'
+import { useNavigate, useLocation, Navigate } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -22,6 +24,7 @@ type FormData = z.infer<typeof schema>
 
 export function LoginPage() {
   const { user, login } = useAuth()
+  const { enabled } = useFeatures()
   const navigate = useNavigate()
   const location = useLocation()
   const [submitting, setSubmitting] = useState(false)
@@ -29,8 +32,9 @@ export function LoginPage() {
   const { data: demoData } = useQuery({
     queryKey: ['demo-login-accounts'],
     queryFn: () => api.get<{ data: { email: string; label: string; type: string; password: string }[] }>('/demo/accounts'),
+    enabled: enabled.demo_data,
   })
-  const demoAccounts = demoData?.data ?? []
+  const demoAccounts = enabled.demo_data ? demoData?.data ?? [] : []
 
   const {
     register,

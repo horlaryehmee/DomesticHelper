@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { Link, useNavigate } from 'react-router-dom'
+import { FeatureLink as Link } from '@/components/feature-link'
+import { useNavigate } from 'react-router-dom'
 import { api, ApiError, setToken, getPreviewToken } from '@/lib/api'
 import { useAuth, accountPath, type AuthUser } from '@/lib/auth'
 import AuthSectionOne from '@/components/ui/auth-section-1'

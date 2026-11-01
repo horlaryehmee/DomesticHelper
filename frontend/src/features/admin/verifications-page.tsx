@@ -1,3 +1,4 @@
+import { useFeatures } from '@/lib/features'
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
@@ -32,6 +33,7 @@ interface ReferenceCheck {
 }
 
 export function AdminVerificationsPage() {
+  const { enabled } = useFeatures()
   const queryClient = useQueryClient()
   const [tab, setTab] = useState('accounts')
   const [statusFilter, setStatusFilter] = useState('pending')
@@ -44,7 +46,7 @@ export function AdminVerificationsPage() {
   const { data: references, isLoading: refsLoading } = useQuery({
     queryKey: ['admin-references'],
     queryFn: () => api.get<{ data: ReferenceCheck[] }>('/admin/reference-checks'),
-    enabled: tab === 'references',
+    enabled: enabled.reference_checks && tab === 'references',
   })
 
   const decide = useMutation({
@@ -77,11 +79,11 @@ export function AdminVerificationsPage() {
         <TabsList>
           <TabsTrigger value="accounts">Account approvals</TabsTrigger>
           <TabsTrigger value="identity">Identity</TabsTrigger>
-          <TabsTrigger value="references">Reference checks</TabsTrigger>
+          {enabled.reference_checks && <TabsTrigger value="references">Reference checks</TabsTrigger>}
         </TabsList>
       </Tabs>
 
-      {tab === 'accounts' ? <AccountApprovals /> : tab === 'identity' ? (
+      {tab === 'accounts' ? <AccountApprovals /> : tab === 'identity' || !enabled.reference_checks ? (
         <div className="space-y-4">
           <div className="flex gap-2">
             {['pending', 'approved', 'rejected'].map((s) => (

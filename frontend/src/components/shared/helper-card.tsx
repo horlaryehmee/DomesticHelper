@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom'
+import { FeatureLink as Link } from '@/components/feature-link'
 import { MapPin, Clock, Heart } from 'lucide-react'
 import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -9,13 +9,15 @@ import { VerificationBadgeCompact, type VerificationBadgeKey } from '@/component
 import { formatSalary, yearsLabel } from '@/lib/format'
 import { cn } from '@/lib/utils'
 import type { HelperSummary } from '@/lib/types'
+import { useFeatures, Feature } from '@/lib/features'
 import { useAuth } from '@/lib/auth'
 
 const PRIORITY_BADGES: VerificationBadgeKey[] = ['identity_verified', 'nin_verified', 'employment_verified', 'reference_checked']
 
 export function HelperCard({ helper, onSave, saved, variant = 'list' }: { helper: HelperSummary; onSave?: () => void; saved?: boolean; variant?: 'list' | 'grid' }) {
   const { user } = useAuth()
-  const score = helper.trust_score
+  const { enabled } = useFeatures()
+  const score = helper.trust_score ?? {score:0,category:'new' as const}
   const scoreColor =
     score.category === 'high'
       ? 'text-success-foreground'
@@ -40,7 +42,7 @@ export function HelperCard({ helper, onSave, saved, variant = 'list' }: { helper
           <div className="min-w-0 flex-1">
             <div className="flex items-start justify-between gap-2">
               <Link to={`/helpers/${helper.uuid}`} className="truncate text-base font-semibold leading-tight hover:text-primary hover:underline">{helper.name}</Link>
-              {user?.user_type === 'employer' && onSave && <button type="button" onClick={onSave} className="shrink-0 rounded-md p-1 text-muted-foreground hover:bg-accent hover:text-primary" aria-label={saved ? `Remove ${helper.name} from saved helpers` : `Save ${helper.name}`}><Heart className={cn('size-4', saved && 'fill-destructive text-destructive')} /></button>}
+              {enabled.saved_helpers && user?.user_type === 'employer' && onSave && <button type="button" onClick={onSave} className="shrink-0 rounded-md p-1 text-muted-foreground hover:bg-accent hover:text-primary" aria-label={saved ? `Remove ${helper.name} from saved helpers` : `Save ${helper.name}`}><Heart className={cn('size-4', saved && 'fill-destructive text-destructive')} /></button>}
             </div>
             <p className="mt-1 truncate text-xs font-medium text-primary">{helper.skills[0]?.name || 'Domestic helper'}</p>
             <p className="mt-1 flex items-center gap-1 truncate text-xs text-muted-foreground"><MapPin className="size-3 shrink-0" />{[helper.city, helper.state].filter(Boolean).join(', ') || 'Nigeria'}</p>
@@ -48,7 +50,7 @@ export function HelperCard({ helper, onSave, saved, variant = 'list' }: { helper
         </div>
         <div className="flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-slate-100 px-4 py-2.5 text-xs text-muted-foreground">
           <span>{yearsLabel(helper.years_experience)} experience</span>
-          <span className={cn('font-semibold', scoreColor)}>{score.score}/100 trust</span>
+          <Feature name="trust_scores"><span className={cn('font-semibold', scoreColor)}>{score.score}/100 trust</span></Feature>
           {helper.verification_status === 'verified' && <span className="font-medium text-success-foreground">Verified</span>}
         </div>
         <div className="flex items-center justify-between gap-2 border-t border-slate-100 px-4 py-3">
@@ -79,10 +81,10 @@ export function HelperCard({ helper, onSave, saved, variant = 'list' }: { helper
                 {[helper.city, helper.state].filter(Boolean).join(', ') || 'Nigeria'}
               </div>
             </div>
-            <div className={cn('text-right', scoreColor)}>
+            <Feature name="trust_scores"><div className={cn('text-right', scoreColor)}>
               <div className="text-2xl font-bold leading-none">{score.score}</div>
               <div className="mt-1 text-[10px] font-medium uppercase tracking-wide opacity-80">Trust</div>
-            </div>
+            </div></Feature>
           </div>
 
           <div className="mt-2 flex flex-wrap items-center gap-1.5">
@@ -102,7 +104,7 @@ export function HelperCard({ helper, onSave, saved, variant = 'list' }: { helper
               <Clock className="size-3.5" /> {helper.availability?.replace(/_/g, ' ')}
             </span>
             <span>{formatSalary(helper.expected_salary_min, helper.expected_salary_max)}</span>
-            {helper.average_rating > 0 && <RatingStars rating={helper.average_rating} size="size-3.5" showValue />}
+            {enabled.reviews && helper.average_rating > 0 && <RatingStars rating={helper.average_rating} size="size-3.5" showValue />}
           </div>
         </div>
       </div>
@@ -117,7 +119,7 @@ export function HelperCard({ helper, onSave, saved, variant = 'list' }: { helper
           )}
         </div>
         <div className="flex items-center gap-2">
-          {user?.user_type === 'employer' && onSave && (
+          {enabled.saved_helpers && user?.user_type === 'employer' && onSave && (
             <Button variant="outline" size="sm" onClick={onSave} aria-label="Save helper">
               <Heart className={cn(saved && 'fill-destructive text-destructive')} />
             </Button>

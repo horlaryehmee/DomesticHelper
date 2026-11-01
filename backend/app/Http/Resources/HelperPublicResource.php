@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources;
 
+use App\Services\PlatformFeatures;
 use App\Services\VerificationService;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -46,17 +47,17 @@ class HelperPublicResource extends JsonResource
                 : [],
             'verification_status' => $profile?->verification_status?->value,
             'verification_badges' => $verification,
-            'trust_score' => [
+            'trust_score' => $this->when(app(PlatformFeatures::class)->enabled('trust_scores'), [
                 'score' => $trustScore?->score ?? 50,
                 'category' => $eventsCount === 0 ? 'new' : $trustScore?->category?->value,
                 'label' => $eventsCount === 0 ? 'Building Trust' : $trustScore?->category?->label(),
                 'calculated_at' => $trustScore?->calculated_at?->toIso8601String(),
-            ],
-            'average_rating' => round(
+            ]),
+            'average_rating' => app(PlatformFeatures::class)->enabled('reviews') ? round(
                 $this->resource->getAttribute('reviews_received_avg_rating')
                     ?? ($approvedReviews?->avg('rating') ?? 0),
                 1,
-            ),
+            ) : 0,
             'reviews_count' => $this->resource->getAttribute('reviews_count')
                 ?? $approvedReviews?->count()
                 ?? 0,

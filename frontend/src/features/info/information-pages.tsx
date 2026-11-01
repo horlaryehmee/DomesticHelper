@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom'
+import { FeatureLink as Link } from '@/components/feature-link'
 
 function InfoPage({ eyebrow, title, children }: { eyebrow: string; title: string; children: React.ReactNode }) {
   return <article className="mx-auto max-w-3xl px-4 py-12 sm:py-20">
@@ -9,32 +9,31 @@ function InfoPage({ eyebrow, title, children }: { eyebrow: string; title: string
 }
 
 export function HowItWorksPage() {
-  return <InfoPage eyebrow="Getting started" title="How Hire Safe works">
-    <h2>1. Create a profile</h2><p>Choose whether you are hiring or looking for work. Complete the guided registration and add the details relevant to your role.</p>
-    <h2>2. Explore and connect</h2><p>Employers can search helpers and post jobs. Helpers can browse jobs and apply. Use the platform’s messaging and interview tools to discuss the role.</p>
-    <h2>3. Review information carefully</h2><p>Look at experience, references, reviews and any available verification information. Verification features assist your decision; you should still ask questions and check details yourself.</p>
-    <h2>4. Agree on the work</h2><p>Discuss duties, hours, pay, location and expectations clearly before work begins. Keep records of important agreements.</p>
-    <p>Ready to begin? <Link to="/register">Create your profile</Link> or <Link to="/contact">ask a question</Link>.</p>
-  </InfoPage>
+ return <InfoPage eyebrow="Getting started" title="How Hire Safe works">
+ <h2>1. Create and confirm your account</h2><p>Choose your account type and sign up. Confirm your email with a code, or use an eligible Google account with a verified email.</p>
+ <h2>2. Complete your details</h2><p>Add your personal details, NIN, residential address, supporting document and two guarantors with separate contact numbers.</p>
+ <h2>3. Submit for admin review</h2><p>Check the summary and send your onboarding for review. Your dashboard stays closed until your account is approved. If changes are requested, update your details and resubmit.</p>
+ <h2>4. Follow your verification</h2><p>Account approval and individual verification checks have separate statuses. Open your dashboard after approval to follow your checks and manage your account.</p>
+ <p><Link to="/register">Create your account</Link> or <Link to="/contact">ask a question</Link>.</p>
+ </InfoPage>
 }
-
 export function SafetyPage() {
-  return <InfoPage eyebrow="Trust and safety" title="Use Hire Safe with care">
-    <h2>Check before you commit</h2><p>Speak with the other person, confirm the role and location, and check references independently where appropriate. Do not treat a profile, review or verification status as a guarantee.</p>
-    <h2>Protect your information</h2><p>Keep passwords and verification codes private. Share identity documents only through the platform’s intended verification flow. Avoid posting sensitive details in public profiles or messages.</p>
-    <h2>Payments and suspicious requests</h2><p>Be cautious if anyone asks you to pay an unexpected fee, move a conversation to an unfamiliar channel, or send money to secure a job. Confirm any platform charge through your account before paying.</p>
-    <h2>Report a concern</h2><p>Use the report or dispute tools in your account when available, or <Link to="/contact">contact us</Link> and select “Safety concern or dispute.” For an immediate threat, contact the relevant local emergency service.</p>
-  </InfoPage>
+ return <InfoPage eyebrow="Trust and safety" title="Use Hire Safe with care">
+ <h2>Protect your account and documents</h2><p>Keep passwords and verification codes private. Submit identity and address documents through the intended verification flow. Do not put sensitive details in public text or contact messages.</p>
+ <h2>Understand verification statuses</h2><p>Account approval and individual verification checks are different steps. Verification supports your judgement and does not guarantee safety, suitability or future conduct.</p>
+ <h2>Provide accurate information</h2><p>Check your details before submitting. Tell both guarantors that you are listing them and provide contacts who can speak about you accurately.</p>
+ <h2>Raise a concern</h2><p>If you notice an account, privacy or safety issue, <Link to="/contact">contact the team</Link> with relevant details. Do not share passwords or identity numbers in your message.</p>
+ </InfoPage>
 }
-
 export function FaqPage() {
-  return <InfoPage eyebrow="Help centre" title="Frequently asked questions">
-    <h2>Do I need an account to browse?</h2><p>You can browse public helper profiles and jobs without signing in. Applying, posting jobs and account features require registration.</p>
-    <h2>Does verification guarantee safety?</h2><p>No. Verification reflects specific checks completed at a point in time. Make your own assessment before hiring or accepting work.</p>
-    <h2>How do I reset my password?</h2><p>Use the <Link to="/forgot-password">password reset page</Link>. If you cannot access your email, <Link to="/contact">contact us</Link> and choose “Account or login.”</p>
-    <h2>How can I raise a complaint?</h2><p>Use the report or dispute feature in your account, or send a message through the <Link to="/contact">Contact page</Link>.</p>
-    <h2>How do I request access to or correction of my data?</h2><p>Use your account settings where available, or select “Privacy or my personal data” on the <Link to="/contact">Contact page</Link>.</p>
-  </InfoPage>
+ return <InfoPage eyebrow="Help centre" title="Frequently asked questions">
+ <h2>Who can register?</h2><p>Employers and domestic helpers in Nigeria can create an account and complete verification onboarding.</p>
+ <h2>Why do I need two guarantors?</h2><p>Provide two people who know you, with each person's name, separate phone number and relationship to you. Let both people know you are listing them. Their details stay private.</p>
+ <h2>When can I access the dashboard?</h2><p>After confirming your email, completing onboarding and receiving admin approval. Individual identity checks have separate verification statuses.</p>
+ <h2>What if changes are requested?</h2><p>Read the admin feedback, update your details and resubmit your onboarding.</p>
+ <h2>Does verification guarantee safety?</h2><p>No. Verification reflects specific information reviewed at a point in time. You should still use your judgement and make independent checks.</p>
+ <h2>How can I get help?</h2><p>Use <Link to="/forgot-password">password reset</Link> for a forgotten password, or <Link to="/contact">contact the team</Link> about your account, verification or data.</p>
+ </InfoPage>
 }
 
 export function PrivacyPage() {

@@ -21,6 +21,7 @@ class UserFactory extends Factory
             'password' => 'password',
             'user_type' => UserType::Helper,
             'status' => UserStatus::Active,
+            'approval_status' => 'approved',
             'remember_token' => Str::random(10),
         ];
     }

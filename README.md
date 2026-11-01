@@ -574,3 +574,17 @@ When upgrading from the earlier updater after a Composer failure, run **Update f
 ### Onboarding and two guarantors
 
 Employer and helper onboarding uses separate profile, identity, guarantor and final review steps; helpers can also add a photo and introduction video. Both account types must provide two guarantors, each with a full name, phone number and relationship. The second phone must differ from the first. Both guarantors are encrypted at rest and visible only in authorised admin registration reviews. Existing records remain readable after the additive migration. Older pending submissions with only one guarantor must be returned for changes before approval; existing approved accounts keep access.
+
+### Live feature switches
+
+The default launch setup is **verification only**. Signup, email/Google authentication, onboarding, two guarantors, account approval, identity verification, account settings, notifications, contact enquiries and the admin controls stay available.
+
+A super-admin can open **Settings > Live features**, tick the modules to publish, then **Save live features**. Each checkbox changes only itself. Required modules are listed separately; missing requirements must be selected explicitly (or the dependent module unticked) before saving. The verification-only preset clears the draft selection and also requires saving.
+
+Optional modules include the job directory, job posting/applications, helper listings, community stories, messaging, saved helpers, employment, interviews, reviews, reports, disputes, trust scores, payments, paid verification reports, reference checks and demo tools. Disabled modules are removed from menus, dashboard tools and relevant public sections, and their API reads/writes return 404 even for admins. Existing records are retained. Existing authenticated pages refresh switch state periodically; the server enforces changes immediately. Trusted payment-provider webhooks continue settling existing transactions even when new payment actions are disabled.
+
+Job directory and Job posting are separate switches. With both enabled, admins can add a job for an active, approved employer from **Admin > Jobs > Add job**. Employers can also create/manage their jobs. Directory-only mode allows listing existing public jobs while hiding creation and application forms.
+
+When helper listings are disabled, helper onboarding collects identity, location and guarantors without asking for unused salary, skills or public introduction fields. Existing listing details are preserved on verification resubmission. Approval does not automatically publish a helper while listings are off. The homepage keeps its existing styling and layout; feature-related sections and copy follow the switches.
+
+Regression checks: `php artisan test` in `backend`, `node --test tests/feature-routes.test.mjs` in `frontend`, and the normal frontend build/lint checks. The existing domain tests explicitly enable optional modules; `PlatformFeaturesTest` verifies the production verification-only defaults and module enforcement.

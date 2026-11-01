@@ -2,6 +2,7 @@ import { Routes, Route, Navigate } from 'react-router-dom'
 import type { ReactNode } from 'react'
 import { useAuth } from './lib/auth'
 import { PageLoader } from './components/ui/spinner'
+import { FeatureRouteGate } from './lib/features'
 import { SiteGate } from './components/site-gate'
 
 import { PublicLayout } from './components/layout/public-layout'
@@ -26,7 +27,7 @@ import { AboutPage } from './features/info/about-page'
 import { HowItWorksPage, SafetyPage, FaqPage, PrivacyPage, TermsPage, CookiesPage } from './features/info/information-pages'
 import { AdminContactInquiriesPage } from './features/admin/contact-inquiries-page'
 
-import { EmployerDashboardPage } from './features/employer/dashboard-page'
+import { WorkspaceDashboard } from './features/shared/workspace-dashboard'
 import { EmployerProfilePage } from './features/employer/profile-page'
 import { SavedHelpersPage } from './features/employer/saved-helpers-page'
 import { EmployerJobsPage } from './features/employer/jobs-page'
@@ -37,7 +38,6 @@ import { ReportsPage } from './features/shared/reports-page'
 import { ReviewsPage } from './features/shared/reviews-page'
 import { VerificationReportsPage } from './features/employer/verification-reports-page'
 
-import { HelperDashboardPage } from './features/helper/dashboard-page'
 import { HelperProfileEditPage } from './features/helper/profile-edit-page'
 import { HelperVerificationPage } from './features/helper/verification-page'
 import { HelperApplicationsPage } from './features/helper/applications-page'
@@ -47,7 +47,6 @@ import { MessagesPage } from './features/messages/messages-page'
 import { NotificationsPage } from './features/notifications/notifications-page'
 import { SettingsPage } from './features/shared/settings-page'
 
-import { AdminDashboardPage } from './features/admin/dashboard-page'
 import { AdminUsersPage } from './features/admin/users-page'
 import { AdminVerificationsPage } from './features/admin/verifications-page'
 import { AdminReportsPage } from './features/admin/reports-page'
@@ -73,7 +72,7 @@ function Protected({ children, types }: { children: ReactNode; types?: string[] 
 
 export default function App() {
   return (
-    <SiteGate>
+    <SiteGate><FeatureRouteGate>
     <Routes>
       <Route path="/auth/google/callback" element={<GoogleCallbackPage />} />
       <Route path="/verify-email" element={<VerifyEmailPage />} />
@@ -113,7 +112,7 @@ export default function App() {
           </Protected>
         }
       >
-        <Route path="/employer" element={<EmployerDashboardPage />} />
+        <Route path="/employer" element={<WorkspaceDashboard />} />
         <Route path="/employer/profile" element={<EmployerProfilePage />} />
         <Route path="/employer/verification" element={<HelperVerificationPage />} />
         <Route path="/employer/saved-helpers" element={<SavedHelpersPage />} />
@@ -137,7 +136,7 @@ export default function App() {
           </Protected>
         }
       >
-        <Route path="/helper" element={<HelperDashboardPage />} />
+        <Route path="/helper" element={<WorkspaceDashboard />} />
         <Route path="/helper/profile" element={<HelperProfileEditPage />} />
         <Route path="/helper/verification" element={<HelperVerificationPage />} />
         <Route path="/helper/applications" element={<HelperApplicationsPage />} />
@@ -159,7 +158,7 @@ export default function App() {
           </Protected>
         }
       >
-        <Route path="/admin" element={<AdminDashboardPage />} />
+        <Route path="/admin" element={<WorkspaceDashboard />} />
         <Route path="/admin/users" element={<AdminUsersPage />} />
         <Route path="/admin/verifications" element={<AdminVerificationsPage />} />
         <Route path="/admin/reports" element={<AdminReportsPage />} />
@@ -174,6 +173,6 @@ export default function App() {
         <Route path="/admin/contact-inquiries" element={<AdminContactInquiriesPage />} />
       </Route>
     </Routes>
-    </SiteGate>
+    </FeatureRouteGate></SiteGate>
   )
 }

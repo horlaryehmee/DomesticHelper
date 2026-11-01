@@ -1,4 +1,5 @@
-import { Link, useParams } from 'react-router-dom'
+import { FeatureLink as Link } from '@/components/feature-link'
+import { useParams } from 'react-router-dom'
 import { useQuery, useMutation } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import {
@@ -21,6 +22,7 @@ import { ErrorState, EmptyState } from '@/components/ui/states'
 import { api, ApiError } from '@/lib/api'
 import { formatDate, formatSalary, yearsLabel } from '@/lib/format'
 import type { EmploymentHistoryEntry, HelperSummary, ReviewSummary } from '@/lib/types'
+import { Feature } from '@/lib/features'
 import { useAuth } from '@/lib/auth'
 
 export function HelperProfilePage() {
@@ -55,7 +57,7 @@ export function HelperProfilePage() {
   if (isError || !data) return <ErrorState retry={() => refetch()} />
 
   const helper = data.data
-  const score = helper.trust_score
+  const score = helper.trust_score ?? {score:0,category:'new' as const}
   const category: TrustCategory = score.category
 
   return (
@@ -99,12 +101,12 @@ export function HelperProfilePage() {
             <div className="flex flex-wrap items-center gap-2 border-t px-6 pt-4">
               {user?.user_type === 'employer' && (
                 <>
-                  <Button onClick={() => saveMutation.mutate()} disabled={saveMutation.isPending}>
+                  <Feature name="saved_helpers"><Button onClick={() => saveMutation.mutate()} disabled={saveMutation.isPending}>
                     <Heart /> Save
-                  </Button>
-                  <Button variant="outline" onClick={() => messageMutation.mutate()} disabled={messageMutation.isPending}>
+                  </Button></Feature>
+                  <Feature name="messaging"><Button variant="outline" onClick={() => messageMutation.mutate()} disabled={messageMutation.isPending}>
                     <MessageSquare /> Message
-                  </Button>
+                  </Button></Feature>
                   <Button asChild variant="secondary">
                     <Link to={`/employer/verification-reports?helper=${helper.uuid}`}>
                       <FileCheck2 /> Request Verification Report
@@ -149,7 +151,7 @@ export function HelperProfilePage() {
           </Card>
 
           {/* Employment history */}
-          <Card className="gap-4">
+          <Feature name="employment"><Card className="gap-4">
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-lg">
                 <CalendarDays className="size-5 text-primary" /> Verified employment history
@@ -175,10 +177,10 @@ export function HelperProfilePage() {
                 </div>
               )}
             </CardContent>
-          </Card>
+          </Card></Feature>
 
           {/* Reviews */}
-          <Card className="gap-4">
+          <Feature name="reviews"><Card className="gap-4">
             <CardHeader className="flex-row items-center justify-between">
               <CardTitle className="text-lg">Verified reviews</CardTitle>
               {helper.average_rating > 0 && <RatingStars rating={helper.average_rating} showValue />}
@@ -213,12 +215,12 @@ export function HelperProfilePage() {
                 </div>
               )}
             </CardContent>
-          </Card>
+          </Card></Feature>
         </div>
 
         {/* Sidebar */}
         <div className="space-y-5">
-          <Card className="items-center gap-4 py-8 text-center">
+          <Feature name="trust_scores">          <Card className="items-center gap-4 py-8 text-center">
             <TrustScoreRing score={score.score} category={category} size={150} stroke={11} />
             <div>
               <div className="font-semibold">{score.category === 'new' ? 'Building Trust' : trustLabel(category)}</div>
@@ -258,7 +260,7 @@ export function HelperProfilePage() {
                 </div>
               </DialogContent>
             </Dialog>
-          </Card>
+          </Card></Feature>
 
           <Card className="gap-4">
             <CardHeader><CardTitle className="text-base">At a glance</CardTitle></CardHeader>
@@ -271,7 +273,7 @@ export function HelperProfilePage() {
               <Separator />
               <div className="flex justify-between"><span className="text-muted-foreground">Salary</span><span className="font-medium">{formatSalary(helper.expected_salary_min, helper.expected_salary_max)}</span></div>
               <Separator />
-              <div className="flex justify-between"><span className="text-muted-foreground">Average rating</span><RatingStars rating={helper.average_rating} size="size-3.5" showValue /></div>
+              <Feature name="reviews"><div className="flex justify-between"><span className="text-muted-foreground">Average rating</span><RatingStars rating={helper.average_rating} size="size-3.5" showValue /></div></Feature>
             </CardContent>
           </Card>
 

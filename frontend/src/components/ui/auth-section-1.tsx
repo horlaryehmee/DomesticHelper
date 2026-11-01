@@ -1,6 +1,6 @@
 import { GrainGradient } from '@paper-design/shaders-react'
 import { Component, useEffect, useState, type ReactNode } from 'react'
-import { Link } from 'react-router-dom'
+import { FeatureLink as Link } from '@/components/feature-link'
 import { ArrowUpRight, ShieldCheck } from 'lucide-react'
 import { LogoMark } from '@/components/logo'
 

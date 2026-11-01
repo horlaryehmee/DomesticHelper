@@ -1,6 +1,7 @@
+import { Feature, useFeatures } from '@/lib/features'
 import { useLayoutEffect, useRef, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { Link } from 'react-router-dom'
+import { FeatureLink as Link } from '@/components/feature-link'
 import {
   ShieldCheck, Search, UserCheck, Handshake, FileCheck2, Scale, Star, BadgeCheck,
   Fingerprint, Briefcase, ChevronRight, Quote, Sparkles,
@@ -94,9 +95,11 @@ function hasOriginalStoryDescription(description: string) {
 }
 
 function TrustMarquee() {
+  const { enabled } = useFeatures()
+  const liveMessages = enabled.helper_directory ? marqueeMessages.filter(message => (!message.includes('employment') || enabled.employment) && (!message.includes('reviews') || enabled.reviews)) : ['Verified identities', 'Private documents', 'Two guarantor contacts', 'Careful account review', 'Clear verification statuses']
   const messages = (hidden: boolean) => (
     <div className="trust-marquee-group" aria-hidden={hidden}>
-      {Array.from({ length: 3 }, (_, repeat) => marqueeMessages.map((message) => (
+      {Array.from({ length: 3 }, (_, repeat) => liveMessages.map((message) => (
         <span className="trust-marquee-item" key={`${repeat}-${message}`}>
           <span>{message}</span>
           <span className="trust-marquee-divider" aria-hidden="true" />
@@ -106,7 +109,7 @@ function TrustMarquee() {
   )
 
   return (
-    <div className="trust-marquee" aria-label="Hire Safe: verified identities, real employment history, fair moderated reviews, trust you can check, and safer hiring for everyone">
+    <div className="trust-marquee" aria-label="Hire Safe verification">
       <div className="trust-marquee-track">
         {messages(false)}
         {messages(true)}
@@ -140,6 +143,7 @@ function SectionLabel({ children, light = false }: { children: React.ReactNode; 
 }
 
 export function LandingPage() {
+  const { enabled } = useFeatures()
   const pageRef = useRef<HTMLDivElement>(null)
   useLayoutEffect(() => {
     const page = pageRef.current
@@ -175,11 +179,12 @@ export function LandingPage() {
   const [faqCategory, setFaqCategory] = useState<'all' | 'hiring' | 'safety'>('all')
   const { data, isLoading } = useQuery({
     queryKey: ['landing-helpers'],
-    queryFn: () => api.get<{ data: HelperSummary[]; meta: PaginationMeta }>('/helpers', { per_page: 3, sort: 'trust_score' }),
+    queryFn: () => api.get<{ data: HelperSummary[]; meta: PaginationMeta }>('/helpers', { per_page: 3, sort: enabled.trust_scores ? 'trust_score' : 'recently_active' }),
+    enabled: enabled.helper_directory,
   })
   const { data: experienceQuotes = [], isLoading: experienceLoading } = useQuery({
     queryKey: ['landing-experiences', ...(data?.data.map((helper) => helper.uuid) ?? [])],
-    enabled: Boolean(data?.data.length),
+    enabled: enabled.helper_directory && enabled.reviews && Boolean(data?.data.length),
     queryFn: async (): Promise<ExperienceQuote[]> => {
       const helpers = data?.data ?? []
       const results = await Promise.allSettled(helpers.map((helper) =>
@@ -193,17 +198,28 @@ export function LandingPage() {
   const { data: communityData, isLoading: communityLoading } = useQuery({
     queryKey: ['landing-community-stories'],
     queryFn: () => api.get<{ data: CommunityStoryPreview[] }>('/community-experiences'),
+    enabled: enabled.community,
   })
   const communityStories = communityData?.data
     .filter((story) => story.content_type === 'experience' || story.media_url || story.slides?.length)
     .slice(0, 3) ?? []
 
-  const heroCta = user ? (user.user_type === 'employer' ? '/search' : '/jobs') : '/register'
+  const liveFaqs = faqs.filter((_, index) => [enabled.trust_scores, true, enabled.reviews && enabled.community, enabled.reports && enabled.trust_scores, enabled.disputes && enabled.trust_scores, true][index]).concat([
+    {category:'hiring', q:'Why do I need two guarantors?', a:'Provide two people who know you, with separate phone numbers and their relationship to you. Their details are kept private for review.'},
+    {category:'hiring', q:'When can I access the dashboard?', a:'After confirming your email, completing onboarding and receiving admin approval. Individual identity checks have separate verification statuses.'},
+  ])
+  const heroCta = user ? (user.user_type === 'admin' ? '/admin' : `/${user.user_type}/verification`) : '/register'
   const examplePoints = exampleScoreEvents.filter((event) => selectedScoreEvents.includes(event.id)).reduce((sum, event) => sum + event.points, 0)
   const exampleScore = Math.max(0, Math.min(100, 50 + examplePoints))
   const exampleCategory = trustCategory(exampleScore, selectedScoreEvents.length)
   const toggleScoreEvent = (id: string) => setSelectedScoreEvents((current) => current.includes(id) ? current.filter((item) => item !== id) : [...current, id])
-  const selectedAudience = audienceContent[audience]
+  const selectedAudience = enabled.helper_directory ? audienceContent[audience] : {
+    icon: audience === 'employer' ? UserCheck : Sparkles,
+    title: audience === 'employer' ? 'Start with verified details' : 'Build a verified account',
+    description: 'Complete your private account verification and follow the review process from your dashboard.',
+    benefits: ['Confirm your email address', 'Submit identity and address details privately', 'Provide two guarantor contacts', 'Review and resubmit if changes are requested'],
+    action: 'Start your verification',
+  }
   const AudienceIcon = selectedAudience.icon
   const featuredHelpers = data?.data ?? []
   const selectedHelper = featuredHelpers.find((helper) => helper.uuid === selectedHelperId) ?? featuredHelpers[0]
@@ -229,12 +245,12 @@ export function LandingPage() {
               Hire Domestic Staff <span className="text-coral">You Can Trust</span>
             </h1>
             <p className="mt-5 max-w-xl text-lg text-white/75">
-              Hire Safe is a verified trust network: check employment history, review trust scores, and hire with confidence.
+              {enabled.helper_directory ? "Hire Safe is a verified trust network for domestic staff hiring in Nigeria." : "Hire Safe is a verified trust network: submit your identity, address and two guarantors for a considered review."}
             </p>
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
               <Button size="lg" className="bg-coral text-coral-foreground hover:bg-coral/90" asChild>
-                <Link to="/search">
-                  <Search /> Find a Helper
+                <Link to={enabled.helper_directory ? "/search" : heroCta}>
+                  <Search /> {enabled.helper_directory ? "Find a Helper" : "Start Verification"}
                 </Link>
               </Button>
               <Button size="lg" variant="outline" className="border-white/35 bg-transparent text-white hover:bg-white/10 hover:text-white" asChild>
@@ -245,9 +261,9 @@ export function LandingPage() {
             </div>
             <div className="mt-10 grid max-w-md grid-cols-3 gap-4">
               {[
-                ['30+', 'Verified helpers'],
-                ['100%', 'Moderated reviews'],
-                ['0 to 100', 'Transparent trust score'],
+                ...(enabled.helper_directory ? [['30+', 'Verified helpers']] : [['2', 'Guarantor contacts']]),
+                ...(enabled.reviews ? [['100%', 'Moderated reviews']] : [['Private', 'Identity documents']]),
+                ...(enabled.trust_scores ? [['0 to 100', 'Transparent trust score']] : [['Admin', 'Account approval']]),
               ].map(([value, label]) => (
                 <div key={label} className="border-l-2 border-coral/70 pl-3">
                   <div className="text-xl font-bold">{value}</div>
@@ -272,10 +288,10 @@ export function LandingPage() {
         </div>
         <div className="mt-12 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 [&>*+*]:-mt-px sm:[&>*+*]:mt-0 sm:[&>*:nth-child(even)]:-ml-px sm:[&>*:nth-child(n+3)]:-mt-px lg:[&>*:nth-child(n+3)]:mt-0 lg:[&>*:nth-child(n+2)]:-ml-px">
           {[
-            { icon: Search, step: '01', title: 'Search & filter', text: 'Find helpers by skill, location, experience, salary and trust score.' },
-            { icon: FileCheck2, step: '02', title: 'Verify & check', text: 'Review verified badges, employment history and moderated reviews.' },
-            { icon: Handshake, step: '03', title: 'Interview & hire', text: 'Request an interview, then confirm the hire to create an employment record.' },
-            { icon: Star, step: '04', title: 'Track & review', text: 'Track the employment, confirm its end, and leave a moderated review.' },
+            { icon: Search, step: '01', title: 'Create your account', text: 'Choose your account type and confirm your email address.' },
+            { icon: FileCheck2, step: '02', title: 'Complete your details', text: 'Add your identity, address document and two guarantor contacts.' },
+            { icon: Handshake, step: '03', title: 'Submit for review', text: 'Check your details and submit your onboarding to the admin team.' },
+            { icon: Star, step: '04', title: 'Follow your progress', text: 'After account approval, follow your individual verification checks.' },
           ].map((s) => (
             <DotsCard key={s.step}>
               <CardContent className="flex h-full flex-col gap-3 px-4 lg:px-5">
@@ -306,9 +322,9 @@ export function LandingPage() {
             <ul className="mt-6 space-y-4">
               {[
                 'Every public badge reflects a verification that actually happened',
-                'Employment history is confirmed by the previous employer',
-                'Reviews come only from real, recorded employment relationships',
-                'Accusations stay private until verified, protecting helpers from false claims',
+                ...(enabled.employment ? ['Employment history is confirmed by the previous employer'] : ['Identity and address documents are kept private']),
+                ...(enabled.reviews ? ['Reviews come only from real, recorded employment relationships'] : ['Two guarantor contacts support your onboarding review']),
+                'Users can correct their details when changes are requested',
               ].map((item) => (
                 <li key={item} className="flex items-start gap-3 text-sm">
                   <BadgeCheck className="mt-0.5 size-5 shrink-0 text-primary" />
@@ -318,7 +334,7 @@ export function LandingPage() {
             </ul>
           </div>
           <div className="grid sm:grid-cols-2 [&>*+*]:-mt-px sm:[&>*+*]:mt-0 sm:[&>*:nth-child(even)]:-ml-px sm:[&>*:nth-child(n+3)]:-mt-px">
-            {verificationSteps.map((s) => (
+            {verificationSteps.map(step => step.title === 'Employment Check' && !enabled.employment ? { icon: UserCheck, title: 'Two Guarantors', text: 'Two private contacts support the onboarding review.' } : step).map((s) => (
               <DotsCard key={s.title}>
                 <CardContent className="flex flex-col gap-2 px-5">
                   <span className="flex size-10 items-center justify-center rounded-lg bg-primary/10">
@@ -334,7 +350,7 @@ export function LandingPage() {
       </section>
 
       {/* ============ FEATURED HELPERS ============ */}
-      <section className="mx-auto max-w-7xl px-4 py-20 sm:px-6">
+      <Feature name="helper_directory"><section className="mx-auto max-w-7xl px-4 py-20 sm:px-6">
         <div className="flex flex-wrap items-end justify-between gap-6">
           <div className="max-w-xl">
             <SectionLabel>Find a helper</SectionLabel>
@@ -378,7 +394,7 @@ export function LandingPage() {
                           <span className="block truncate text-sm font-semibold">{helper.name}</span>
                           <span className="block truncate text-xs text-muted-foreground">{helper.skills[0]?.name || 'Domestic helper'} · {helper.city || helper.state || 'Nigeria'}</span>
                         </span>
-                        <span className="hidden text-sm font-bold text-primary sm:block">{helper.trust_score.score}</span>
+                        <Feature name="trust_scores"><span className="hidden text-sm font-bold text-primary sm:block">{helper.trust_score?.score}</span></Feature>
                       </button>
                     )
                   })}
@@ -399,10 +415,10 @@ export function LandingPage() {
                       <p className="mt-1 flex items-center gap-1 text-xs text-muted-foreground sm:text-sm"><MapPin className="size-3.5 shrink-0 sm:size-4" /><span className="truncate">{[selectedHelper.city, selectedHelper.state].filter(Boolean).join(', ') || 'Nigeria'}</span></p>
                     </div>
                   </div>
-                  <div className="shrink-0 rounded-xl bg-primary px-2.5 py-2 text-center text-primary-foreground sm:px-4 sm:py-3">
-                    <span className="block text-2xl font-bold leading-none sm:text-3xl">{selectedHelper.trust_score.score}</span>
+                  <Feature name="trust_scores"><div className="shrink-0 rounded-xl bg-primary px-2.5 py-2 text-center text-primary-foreground sm:px-4 sm:py-3">
+                    <span className="block text-2xl font-bold leading-none sm:text-3xl">{selectedHelper.trust_score?.score}</span>
                     <span className="mt-1 block text-[9px] font-semibold uppercase tracking-wide opacity-80 sm:text-[10px]">Trust</span>
-                  </div>
+                  </div></Feature>
                 </div>
                 <div className="mt-5 flex flex-wrap gap-2 sm:mt-7">
                   {selectedHelper.skills.slice(0, 4).map((skill) => <span key={skill.id} className="rounded-full border px-3 py-1 text-xs font-medium">{skill.name}</span>)}
@@ -422,10 +438,10 @@ export function LandingPage() {
             <div className="p-10 text-center text-muted-foreground lg:col-span-2">No helper profiles are available right now.</div>
           )}
         </div>
-      </section>
+      </section></Feature>
 
       {/* ============ TRUST SCORE ============ */}
-      <section className="relative isolate overflow-hidden border-y border-white/10 bg-[#10091f]">
+      <Feature name="trust_scores"><section className="relative isolate overflow-hidden border-y border-white/10 bg-[#10091f]">
         <KineticGrid />
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-[#10091f]/25 via-transparent to-[#10091f]/45" aria-hidden="true" />
         <div className="relative z-10 mx-auto max-w-7xl px-4 py-20 sm:px-6">
@@ -439,7 +455,7 @@ export function LandingPage() {
           <div className="mt-10 grid overflow-hidden rounded-2xl border bg-card shadow-sm lg:grid-cols-[minmax(270px,0.38fr)_minmax(0,0.62fr)]">
             <div className="flex flex-col items-center justify-center border-b bg-primary/5 p-8 text-center lg:border-b-0 lg:border-r lg:p-10">
               <span className="mb-6 text-xs font-bold uppercase tracking-widest text-primary">Example score</span>
-              <TrustScoreRing score={exampleScore} category={exampleCategory} size={190} stroke={13} />
+              <Feature name="trust_scores"><TrustScoreRing score={exampleScore} category={exampleCategory} size={190} stroke={13} /></Feature>
               <strong className="mt-5 text-xl">{trustLabel(exampleCategory)}</strong>
               <p className="mt-2 text-sm text-muted-foreground">50 starting points {examplePoints >= 0 ? '+' : '−'} {Math.abs(examplePoints)} from selected events</p>
               <button type="button" onClick={() => setSelectedScoreEvents([])} className="mt-6 cursor-pointer text-sm font-semibold text-primary underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primary">Reset example</button>
@@ -470,7 +486,7 @@ export function LandingPage() {
             </div>
           </div>
         </div>
-      </section>
+      </section></Feature>
 
       {/* ============ FOR EMPLOYERS / HELPERS ============ */}
       <section className="mx-auto max-w-7xl px-4 py-20 sm:px-6">
@@ -520,7 +536,7 @@ export function LandingPage() {
       </section>
 
       {/* ============ SAFETY ============ */}
-      <section className="border-y bg-muted/30">
+      <Feature name="reports"><section className="border-y bg-muted/30">
         <div className="mx-auto max-w-7xl px-4 py-20 sm:px-6">
           <div className="mx-auto max-w-2xl text-center">
             <SectionLabel>Your safety matters</SectionLabel>
@@ -548,10 +564,10 @@ export function LandingPage() {
             ))}
           </div>
         </div>
-      </section>
+      </section></Feature>
 
       {/* ============ COMMUNITY STORIES ============ */}
-      <section className="border-y bg-muted/30">
+      <Feature name="community"><section className="border-y bg-muted/30">
         <div className="mx-auto max-w-7xl px-4 py-20 sm:px-6">
           <div className="flex flex-wrap items-end justify-between gap-5">
             <div className="max-w-2xl">
@@ -594,10 +610,10 @@ export function LandingPage() {
             <CommunityStoryDialog trigger={<Button size="sm">Share your experience <ChevronRight /></Button>} />
           </div>
         </div>
-      </section>
+      </section></Feature>
 
       {/* ============ TESTIMONIALS ============ */}
-      <section className="py-20">
+      <Feature name="reviews"><Feature name="helper_directory"><section className="py-20">
         <div className="mx-auto max-w-7xl px-4 text-center sm:px-6">
           <SectionLabel>Real experiences</SectionLabel>
           <h2 className="mt-4 text-3xl font-bold tracking-tight sm:text-4xl">Words from verified employment</h2>
@@ -627,7 +643,7 @@ export function LandingPage() {
         ) : (
           <p className="mx-auto mt-12 max-w-xl px-4 text-center text-sm text-muted-foreground">Approved employment reviews will appear here as they become available.</p>
         )}
-      </section>
+      </section></Feature></Feature>
 
       {/* ============ FAQ ============ */}
       <section className="border-t bg-muted/30">
@@ -635,10 +651,10 @@ export function LandingPage() {
           <div>
             <SectionLabel>Common questions</SectionLabel>
             <h2 className="mt-4 max-w-sm text-3xl font-bold tracking-tight sm:text-4xl">Answers you can count on</h2>
-            <p className="mt-4 max-w-sm text-muted-foreground">Find out how verification, reviews, reports, and privacy work before you take the next step.</p>
+            <p className="mt-4 max-w-sm text-muted-foreground">Find out how verification, onboarding, account approval and privacy work before you take the next step.</p>
             <div className="mt-7 flex max-w-sm items-start gap-3 rounded-xl border bg-card p-4">
               <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary"><MessageCircleQuestion className="size-5" /></span>
-              <p className="text-sm leading-relaxed text-muted-foreground">Every decision follows a review process. A single claim cannot change someone’s public trust score.</p>
+              <p className="text-sm leading-relaxed text-muted-foreground">Every account follows a review process. You can update your details if changes are requested.</p>
             </div>
           </div>
           <div>
@@ -658,7 +674,7 @@ export function LandingPage() {
               ))}
             </div>
             <Accordion type="single" collapsible className="space-y-3">
-              {faqs.filter((faq) => faqCategory === 'all' || faq.category === faqCategory).map((faq) => {
+              {liveFaqs.filter((faq) => faqCategory === 'all' || faq.category === faqCategory).map((faq) => {
                 const number = faqs.indexOf(faq) + 1
                 return (
                   <AccordionItem key={faq.q} value={`faq-${number}`} className="overflow-hidden rounded-xl border bg-card px-5 shadow-sm data-[state=open]:border-primary/30">
@@ -686,19 +702,19 @@ export function LandingPage() {
               <p className="mt-5 max-w-md text-base leading-relaxed text-white/70">Whether you’re hiring for your home or looking for your next role, explore the people and opportunities on Hire Safe.</p>
               <div className="mt-8 flex flex-wrap gap-x-5 gap-y-2 text-xs font-medium text-white/70">
                 <span className="flex items-center gap-1.5"><BadgeCheck className="size-4 text-coral" /> Verification details</span>
-                <span className="flex items-center gap-1.5"><BadgeCheck className="size-4 text-coral" /> Moderated reviews</span>
+                <Feature name="reviews"><span className="flex items-center gap-1.5"><BadgeCheck className="size-4 text-coral" /> Moderated reviews</span></Feature>
                 <span className="flex items-center gap-1.5"><BadgeCheck className="size-4 text-coral" /> Fair process</span>
               </div>
             </div>
             <div className="grid gap-3">
-              <Link to="/search" className="group flex items-center gap-4 rounded-2xl border border-white/15 bg-white p-4 text-foreground shadow-lg transition-transform hover:-translate-y-0.5 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-coral sm:p-5">
+              <Link to={enabled.helper_directory ? "/search" : heroCta} className="group flex items-center gap-4 rounded-2xl border border-white/15 bg-white p-4 text-foreground shadow-lg transition-transform hover:-translate-y-0.5 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-coral sm:p-5">
                 <span className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary"><Search className="size-6" /></span>
-                <span className="min-w-0 flex-1"><strong className="block text-base">I’m looking to hire</strong><span className="mt-1 block text-sm text-muted-foreground">Explore helpers and compare their profiles.</span></span>
+                <span className="min-w-0 flex-1"><strong className="block text-base">{enabled.helper_directory ? "Find a helper" : "Start verification"}</strong><span className="mt-1 block text-sm text-muted-foreground">{enabled.helper_directory ? "Explore helpers and compare their profiles." : "Complete your private account verification."}</span></span>
                 <ArrowRight className="size-5 shrink-0 text-primary transition-transform group-hover:translate-x-1" />
               </Link>
-              <Link to="/jobs" className="group flex items-center gap-4 rounded-2xl border border-white/15 bg-white p-4 text-foreground shadow-lg transition-transform hover:-translate-y-0.5 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-coral sm:p-5">
+              <Link to={enabled.job_directory ? "/jobs" : "/how-it-works"} className="group flex items-center gap-4 rounded-2xl border border-white/15 bg-white p-4 text-foreground shadow-lg transition-transform hover:-translate-y-0.5 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-coral sm:p-5">
                 <span className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-coral/15 text-coral"><Briefcase className="size-6" /></span>
-                <span className="min-w-0 flex-1"><strong className="block text-base">I’m looking for work</strong><span className="mt-1 block text-sm text-muted-foreground">Browse roles that fit your skills.</span></span>
+                <span className="min-w-0 flex-1"><strong className="block text-base">{enabled.job_directory ? "Find a role" : "Understand the process"}</strong><span className="mt-1 block text-sm text-muted-foreground">{enabled.job_directory ? "Browse roles that fit your skills." : "See the steps from signup to account approval."}</span></span>
                 <ArrowRight className="size-5 shrink-0 text-primary transition-transform group-hover:translate-x-1" />
               </Link>
               <p className="mt-3 text-center text-sm text-white/70">New to Hire Safe? <Link to="/register" className="font-semibold text-white underline decoration-coral decoration-2 underline-offset-4 hover:text-coral">Create your profile</Link></p>

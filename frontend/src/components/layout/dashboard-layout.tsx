@@ -1,5 +1,7 @@
+import { useFeatures } from '@/lib/features'
 import { useState } from 'react'
-import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom'
+import { FeatureLink as Link } from '@/components/feature-link'
+import { NavLink, Outlet, useNavigate } from 'react-router-dom'
 import {
   ShieldCheck, LayoutDashboard, User, Heart, Briefcase, Users, CalendarClock,
   FileText, Star, MessageSquare, Bell, Settings, LogOut, Menu, ClipboardCheck, Search,
@@ -10,6 +12,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { LogoLockup } from '@/components/logo'
 
 export function DashboardLayout() {
+  const { canVisit } = useFeatures()
   const { user, logout } = useAuth()
   const navigate = useNavigate()
   const [mobileOpen, setMobileOpen] = useState(false)
@@ -49,7 +52,7 @@ export function DashboardLayout() {
         </Link>
       </div>
       <nav className="flex-1 space-y-1 overflow-y-auto px-3 pb-4">
-        {nav.map((item) => (
+        {nav.filter(item => canVisit(item.to)).map((item) => (
           <NavLink
             key={item.to}
             to={item.to}

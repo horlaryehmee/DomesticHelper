@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { FeatureLink as Link } from '@/components/feature-link'
 import { ArrowLeft, ArrowRight, CheckCircle2, Mail } from 'lucide-react'
 import { api, ApiError } from '@/lib/api'
 import { Button } from '@/components/ui/button'

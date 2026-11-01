@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom'
+import { FeatureLink as Link } from '@/components/feature-link'
 import { useQuery } from '@tanstack/react-query'
 import {
   Users, Briefcase, FileText, ClipboardCheck, Star, CreditCard, UserCheck,

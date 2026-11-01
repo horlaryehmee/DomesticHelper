@@ -26,6 +26,8 @@ return Application::configure(basePath: dirname(__DIR__))
             'site_preview' => EnsureSitePreview::class,
         ]);
 
+        $middleware->api(append: [\App\Http\Middleware\EnsureFeatureEnabled::class]);
+
         $middleware->api(prepend: [
             EnsureFrontendRequestsAreStateful::class,
         ]);

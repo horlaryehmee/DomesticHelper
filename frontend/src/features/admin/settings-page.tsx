@@ -1,3 +1,5 @@
+import { useFeatures } from '@/lib/features'
+import { FeatureSettings } from './feature-settings'
 import { GoogleAuthSettings } from './google-auth-settings'
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
@@ -46,6 +48,11 @@ interface Deployment {
 
 export function AdminSettingsPage() {
   const { user } = useAuth()
+  const { enabled } = useFeatures()
+  const settingLive = (setting: Setting) => {
+    const feature = ({verification_report_price:'verification_reports',reference_check_price:'reference_checks',require_nin_for_public:'helper_directory',platform_fee_percent:'payments',trust_score_base:'trust_scores'} as Record<string,string>)[setting.key]
+    return feature ? enabled[feature] : setting.group === 'payments' ? enabled.payments : setting.group === 'trust' ? enabled.trust_scores : true
+  }
   const queryClient = useQueryClient()
   const { data, isLoading } = useQuery({
     queryKey: ['settings'],
@@ -87,7 +94,7 @@ export function AdminSettingsPage() {
   const { data: demoData, isError: demoError } = useQuery({
     queryKey: ['demo-status'],
     queryFn: () => api.get<{ data: DemoStatus }>('/admin/demo'),
-    enabled: user?.user_type === 'admin',
+    enabled: user?.user_type === 'admin' && enabled.demo_data,
   })
   const { data: deploymentData, isError: deploymentError } = useQuery({
     queryKey: ['deployment'],
@@ -135,7 +142,7 @@ export function AdminSettingsPage() {
   const save = useMutation({
     mutationFn: () =>
       api.put('/admin/settings', {
-        settings: (data?.data ?? []).map((s) => ({ key: s.key, value: drafts[s.key] ?? s.value ?? '' })),
+        settings: (data?.data ?? []).filter(settingLive).map((s) => ({ key: s.key, value: drafts[s.key] ?? s.value ?? '' })),
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['settings'] })
@@ -146,7 +153,7 @@ export function AdminSettingsPage() {
 
   if (isLoading) return <div className="space-y-2">{[1, 2, 3].map((i) => <Skeleton key={i} className="h-16" />)}</div>
 
-  const groups = (data?.data ?? []).reduce<Record<string, Setting[]>>((acc, s) => {
+  const groups = (data?.data ?? []).filter(settingLive).reduce<Record<string, Setting[]>>((acc, s) => {
     ;(acc[s.group] ??= []).push(s)
     return acc
   }, {})
@@ -166,6 +173,7 @@ export function AdminSettingsPage() {
         </Button>
       </div>
 
+      <FeatureSettings />
       <GoogleAuthSettings />
 
       <Card className="gap-4">
@@ -244,7 +252,7 @@ export function AdminSettingsPage() {
         </CardContent>}
       </Card>
 
-      {!demoError && demoData && <Card className="gap-4">
+      {enabled.demo_data && !demoError && demoData && <Card className="gap-4">
         <CardHeader>
           <CardTitle className="text-base">Demo data</CardTitle>
           <p className="text-sm text-muted-foreground">Add sample helpers, an employer and a job to preview the site. Clear demo removes tagged samples and the older seeded demo accounts. Real users and platform settings stay in place.</p>

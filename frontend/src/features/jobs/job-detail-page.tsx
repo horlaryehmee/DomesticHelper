@@ -1,4 +1,5 @@
-import { Link, useParams } from 'react-router-dom'
+import { FeatureLink as Link } from '@/components/feature-link'
+import { useParams } from 'react-router-dom'
 import { useQuery, useMutation } from '@tanstack/react-query'
 import { useState } from 'react'
 import { toast } from 'sonner'
@@ -14,6 +15,7 @@ import { ErrorState } from '@/components/ui/states'
 import { api, ApiError } from '@/lib/api'
 import { formatDate, formatSalary } from '@/lib/format'
 import type { JobSummary } from '@/lib/types'
+import { Feature } from '@/lib/features'
 import { useAuth } from '@/lib/auth'
 
 export function JobDetailPage() {
@@ -88,7 +90,7 @@ export function JobDetailPage() {
         </div>
 
         <div className="space-y-5">
-          <Card className="gap-4">
+          <Feature name="job_posting"><Card className="gap-4">
             <CardContent className="space-y-4 pt-6">
               {user?.user_type === 'helper' && (
                 applied ? (
@@ -114,7 +116,7 @@ export function JobDetailPage() {
               )}
               {isEmployer && <p className="text-center text-sm text-muted-foreground">Employers cannot apply to jobs.</p>}
             </CardContent>
-          </Card>
+          </Card></Feature>
 
           <Card className="gap-4">
             <CardHeader><CardTitle className="text-base">About the employer</CardTitle></CardHeader>

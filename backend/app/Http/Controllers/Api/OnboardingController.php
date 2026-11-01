@@ -7,6 +7,7 @@ use App\Http\Resources\UserResource;
 use App\Models\User;
 use App\Services\AuditLogService;
 use App\Services\EmailVerificationService;
+use App\Services\PlatformFeatures;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -68,7 +69,7 @@ class OnboardingController extends Controller
             }
             $user->forceFill(['approval_status' => $data['status'], 'approval_notes' => $data['notes'] ?? null])->save();
             if ($user->helperProfile) {
-                $user->helperProfile->update(['is_public' => $data['status'] === 'approved']);
+                $user->helperProfile->update(['is_public' => $data['status'] === 'approved' && app(PlatformFeatures::class)->enabled('helper_directory')]);
             }
             AuditLogService::log('account.'.$data['status'], $user, null, ['notes' => $data['notes'] ?? null]);
         });

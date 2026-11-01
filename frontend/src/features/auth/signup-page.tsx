@@ -1,6 +1,8 @@
+import { useFeatures } from '@/lib/features'
 import { GoogleSignInButton } from './google-sign-in'
 import { useState, type FormEvent } from 'react'
-import { Link, Navigate, useNavigate, useLocation } from 'react-router-dom'
+import { FeatureLink as Link } from '@/components/feature-link'
+import { Navigate, useNavigate, useLocation } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { ShieldCheck } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -12,6 +14,7 @@ import { useAuth, accountPath, type AuthUser } from '@/lib/auth'
 
 export function RegisterPage() {
  const { user, setUser } = useAuth()
+ const { enabled } = useFeatures()
  const navigate = useNavigate()
  const [userType, setUserType] = useState<'employer' | 'helper'>('employer')
  const [termsAccepted, setTermsAccepted] = useState(false)
@@ -34,8 +37,8 @@ export function RegisterPage() {
     <div className="space-y-2">
      <Label htmlFor="user_type" className="text-black/70 dark:text-white/70">I am joining as</Label>
      <select id="user_type" name="user_type" value={userType} onChange={e => setUserType(e.target.value as 'employer' | 'helper')} className="h-12 w-full rounded-[10px] border border-black/25 bg-white px-4 text-base focus-visible:outline-2 focus-visible:outline-offset-2 dark:border-white/20 dark:bg-[#0a0a0a]" required>
-      <option value="employer">An employer looking to hire</option>
-      <option value="helper">A domestic helper looking for work</option>
+      <option value="employer">{enabled.helper_directory ? 'An employer looking to hire' : 'An employer completing verification'}</option>
+      <option value="helper">{enabled.helper_directory ? 'A domestic helper looking for work' : 'A domestic helper completing verification'}</option>
      </select>
     </div>
     <div className="grid gap-4 sm:grid-cols-2">

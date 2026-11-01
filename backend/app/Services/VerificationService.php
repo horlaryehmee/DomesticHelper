@@ -5,7 +5,6 @@ namespace App\Services;
 use App\Enums\HelperVerificationStatus;
 use App\Enums\IdentityVerificationStatus;
 use App\Enums\IdentityVerificationType;
-use App\Models\HelperProfile;
 use App\Models\IdentityVerification;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
@@ -51,11 +50,11 @@ class VerificationService
         $hasVerifiedEmployment = $employmentRelation
             ->where('verification_status', 'verified')
             ->exists();
-        if ($hasVerifiedEmployment) {
+        if ($hasVerifiedEmployment && app(PlatformFeatures::class)->enabled('employment')) {
             $badges[] = 'employment_verified';
         }
 
-        if ($helper->referenceChecks()->where('status', 'completed')->exists()) {
+        if (app(PlatformFeatures::class)->enabled('reference_checks') && $helper->referenceChecks()->where('status', 'completed')->exists()) {
             $badges[] = 'reference_checked';
         }
 
@@ -176,6 +175,12 @@ class VerificationService
             if (! $p) {
                 return 0;
             }
+            if (! app(PlatformFeatures::class)->enabled('helper_directory')) {
+                $details = DB::table('registration_verification_details')->where('user_id', $user->id)->first();
+                $checks = [$user->first_name && $user->last_name, (bool) $user->phone, (bool) $user->email_verified_at, (bool) $p->date_of_birth, (bool) $p->state, (bool) $p->nin_hash, (bool) $details?->guarantor_2_name_encrypted];
+
+                return (int) round(count(array_filter($checks)) / count($checks) * 100);
+            }
             $checks = [
                 $user->first_name && $user->last_name,
                 (bool) $user->phone,
@@ -193,6 +198,7 @@ class VerificationService
             if ($p->profile_completed !== ($percent >= 100)) {
                 $p->forceFill(['profile_completed' => $percent >= 100])->save();
             }
+
             return $percent;
         }
 
@@ -211,6 +217,7 @@ class VerificationService
         if ($p->profile_completed !== ($percent >= 100)) {
             $p->forceFill(['profile_completed' => $percent >= 100])->save();
         }
+
         return $percent;
     }
 }

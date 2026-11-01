@@ -8,6 +8,7 @@ use App\Http\Resources\HelperPublicResource;
 use App\Http\Resources\ReviewPublicResource;
 use App\Models\HelperProfileView;
 use App\Models\User;
+use App\Services\PlatformFeatures;
 use App\Services\Search\HelperSearchService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -25,6 +26,16 @@ class HelperController extends Controller
         ]);
 
         $sort = $request->input('sort', 'relevance');
+        $features = app(PlatformFeatures::class);
+        if (! $features->enabled('trust_scores')) {
+            unset($filters['trust_min'],$filters['trust_max']);
+            if ($sort === 'trust_score') {
+                $sort = 'relevance';
+            }
+        }
+        if (! $features->enabled('reviews') && $sort === 'rating') {
+            $sort = 'relevance';
+        }
         abort_unless(in_array($sort, ['relevance', 'trust_score', 'experience', 'rating', 'recently_active'], true), 422);
 
         $results = $search->search($filters, $sort, (int) $request->input('per_page', 12));
@@ -70,8 +81,8 @@ class HelperController extends Controller
 
         return response()->json([
             'data' => new HelperPublicResource($helper),
-            'reviews' => ReviewPublicResource::collection($helper->reviewsReceived),
-            'employment_history' => EmploymentRecordPublicResource::collection($helper->employmentRecordsAsHelper),
+            'reviews' => app(PlatformFeatures::class)->enabled('reviews') ? ReviewPublicResource::collection($helper->reviewsReceived) : [],
+            'employment_history' => app(PlatformFeatures::class)->enabled('employment') ? EmploymentRecordPublicResource::collection($helper->employmentRecordsAsHelper) : [],
         ]);
     }
 

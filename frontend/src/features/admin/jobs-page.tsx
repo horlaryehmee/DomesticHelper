@@ -1,3 +1,5 @@
+import { useFeatures } from '@/lib/features'
+import { AdminCreateJob } from './create-job'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { ShieldCheck } from 'lucide-react'
@@ -23,6 +25,7 @@ interface Job {
 }
 
 export function AdminJobsPage() {
+  const { enabled } = useFeatures()
   const queryClient = useQueryClient()
   const { data, isLoading } = useQuery({
     queryKey: ['admin-jobs'],
@@ -44,7 +47,7 @@ export function AdminJobsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight">Jobs</h1>
+        <div className="flex flex-wrap items-center justify-between gap-4"><h1 className="text-2xl font-bold tracking-tight">Jobs</h1><AdminCreateJob /></div>
         <p className="mt-1 text-sm text-muted-foreground">Monitor and moderate job listings across the platform.</p>
       </div>
 
@@ -62,7 +65,7 @@ export function AdminJobsPage() {
                       <Badge variant={j.status === 'active' ? 'success' : j.status === 'reported' ? 'destructive' : 'secondary'}>{j.status}</Badge>
                     </div>
                     <div className="mt-1 text-sm text-muted-foreground">
-                      {j.employer?.name} · {[j.city, j.state].filter(Boolean).join(', ')} · {formatSalary(j.salary_min, j.salary_max)} · {j.applications_count} applicants · {formatDate(j.created_at)}
+                      {j.employer?.name} · {[j.city, j.state].filter(Boolean).join(', ')} · {formatSalary(j.salary_min, j.salary_max)} · {enabled.job_posting ? `${j.applications_count} applicants` : null} · {formatDate(j.created_at)}
                     </div>
                   </div>
                   <div className="flex gap-2">

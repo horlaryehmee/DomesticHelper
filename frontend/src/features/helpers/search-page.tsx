@@ -1,3 +1,4 @@
+import { useFeatures, Feature } from '@/lib/features'
 import { useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
@@ -27,6 +28,7 @@ interface Meta {
 }
 
 export function SearchPage() {
+  const { enabled } = useFeatures()
   const [params, setParams] = useSearchParams()
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [view, setView] = useState<'grid' | 'list'>('grid')
@@ -35,7 +37,8 @@ export function SearchPage() {
 
   const q = params.get('q') ?? ''
   const page = Number(params.get('page') ?? 1)
-  const sort = params.get('sort') ?? 'relevance'
+  const requestedSort = params.get('sort') ?? 'relevance'
+  const sort = requestedSort === 'trust_score' && !enabled.trust_scores || requestedSort === 'rating' && !enabled.reviews ? 'relevance' : requestedSort
 
   const filters = {
     q,
@@ -47,7 +50,7 @@ export function SearchPage() {
     verification: params.get('verification') ?? undefined,
     skills: params.getAll('skill').map(Number),
     min_experience: params.get('min_experience') ?? undefined,
-    trust_min: params.get('trust_min') ?? undefined,
+    trust_min: enabled.trust_scores ? params.get('trust_min') ?? undefined : undefined,
     salary_min: params.get('salary_min') ?? undefined,
     salary_max: params.get('salary_max') ?? undefined,
   }
@@ -97,7 +100,7 @@ export function SearchPage() {
 
   const hasActiveFilters = filters.state || filters.gender || filters.availability || filters.verification || filters.skills.length > 0 || filters.min_experience || filters.trust_min || filters.salary_min || filters.salary_max
   const activeFilterCount = [filters.state, filters.gender, filters.availability, filters.verification, filters.min_experience, filters.trust_min, filters.salary_min, filters.salary_max].filter(Boolean).length + filters.skills.length
-  const activeChips = Array.from(params.entries()).filter(([key]) => !['page', 'sort'].includes(key)).map(([key, value]) => ({
+  const activeChips = Array.from(params.entries()).filter(([key]) => !['page', 'sort'].includes(key) && (key !== 'trust_min' || enabled.trust_scores)).map(([key, value]) => ({
     key, value,
     label: key === 'skill' ? meta?.skills.find((skill) => skill.id === Number(value))?.name ?? 'Skill' : `${({ q: 'Search', state: 'Location', gender: 'Gender', availability: 'Availability', verification: 'Verification', min_experience: 'Experience ≥', trust_min: 'Trust ≥', salary_min: 'Salary ≥', salary_max: 'Salary ≤' } as Record<string, string>)[key] ?? key}: ${value.replace(/_/g, ' ')}`,
   }))
@@ -174,7 +177,7 @@ export function SearchPage() {
         </Select>
       </div>
 
-      <div className="space-y-3">
+<Feature name="trust_scores">      <div className="space-y-3">
         <div className="flex items-center justify-between">
           <Label>Minimum trust score</Label>
           <span className="text-xs font-medium text-primary">{filters.trust_min ?? 0}</span>
@@ -186,7 +189,7 @@ export function SearchPage() {
           value={[Number(filters.trust_min ?? 0)]}
           onValueChange={([v]) => setParam('trust_min', v === 0 ? null : String(v))}
         />
-      </div>
+      </div></Feature>
 
       <div className="space-y-1.5">
         <Label>Maximum monthly salary</Label>
@@ -266,9 +269,9 @@ export function SearchPage() {
           <SelectTrigger size="sm" aria-label="Sort helpers" className="h-10 w-40 rounded-xl bg-white"><SelectValue /></SelectTrigger>
           <SelectContent>
             <SelectItem value="relevance">Relevance</SelectItem>
-            <SelectItem value="trust_score">Trust score</SelectItem>
+            {enabled.trust_scores && <SelectItem value="trust_score">Trust score</SelectItem>}
             <SelectItem value="experience">Experience</SelectItem>
-            <SelectItem value="rating">Rating</SelectItem>
+            {enabled.reviews && <SelectItem value="rating">Rating</SelectItem>}
             <SelectItem value="recently_active">Recently active</SelectItem>
           </SelectContent>
         </Select>

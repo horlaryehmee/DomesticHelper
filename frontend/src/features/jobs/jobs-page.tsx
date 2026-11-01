@@ -1,4 +1,6 @@
-import { Link, useSearchParams } from 'react-router-dom'
+import { useFeatures } from '@/lib/features'
+import { FeatureLink as Link } from '@/components/feature-link'
+import { useSearchParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { Briefcase, MapPin, Search, Building2, Clock } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
@@ -14,6 +16,7 @@ import { formatDate, formatSalary } from '@/lib/format'
 import type { JobSummary, PaginationMeta } from '@/lib/types'
 
 export function JobsPage() {
+  const { enabled } = useFeatures()
   const [params, setParams] = useSearchParams()
   const q = params.get('q') ?? ''
   const state = params.get('state') ?? ''
@@ -91,7 +94,7 @@ export function JobsPage() {
                     {job.accommodation_available ? 'Accommodation available' : job.employment_type.replace(/_/g, ' ')}
                   </Badge>
                   <Button asChild size="sm">
-                    <Link to={`/jobs/${job.uuid}`}>View & apply</Link>
+                    <Link to={`/jobs/${job.uuid}`}>{enabled.job_posting ? "View & apply" : "View job"}</Link>
                   </Button>
                 </div>
               </div>
