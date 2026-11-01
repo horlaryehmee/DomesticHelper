@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\File;
 use Symfony\Component\Process\Process;
 
 class DeploymentRunner
@@ -12,7 +13,9 @@ class DeploymentRunner
         @set_time_limit(0);
         $root = dirname(base_path());
         $record = DB::table('deployments')->find($deploymentId);
-        if (! $record || $record->status !== 'queued') return;
+        if (! $record || $record->status !== 'queued') {
+            return;
+        }
 
         DB::table('deployments')->where('id', $deploymentId)->update([
             'status' => 'running', 'step' => 'Checking deployment',
@@ -26,11 +29,11 @@ class DeploymentRunner
                 throw new \RuntimeException('This server must run from a Git checkout with the cPanel deploy script.');
             }
 
-            $run = function (array $command, string $step, int $timeout = 120) use ($root, $deploymentId, &$output): string {
+            $run = function (array $command, string $step, int $timeout = 120, array $environment = []) use ($root, $deploymentId, &$output): string {
                 DB::table('deployments')->where('id', $deploymentId)->update([
                     'step' => $step, 'updated_at' => now(),
                 ]);
-                $process = new Process($command, $root);
+                $process = $this->makeProcess($command, $root, $environment);
                 $process->setTimeout($timeout);
                 $process->run(function ($type, $chunk) use ($deploymentId, &$output) {
                     $output = mb_substr($output.$chunk, -16000);
@@ -41,6 +44,7 @@ class DeploymentRunner
                 if (! $process->isSuccessful()) {
                     throw new \RuntimeException($step.' failed (exit '.$process->getExitCode().').');
                 }
+
                 return trim($process->getOutput());
             };
 
@@ -58,12 +62,19 @@ class DeploymentRunner
             $to = $run(['git', 'rev-parse', 'HEAD'], 'Reading new version');
             DB::table('deployments')->where('id', $deploymentId)->update(['to_commit' => $to]);
 
-            $dependenciesChanged = $from !== $to && $run([
-                'git', 'diff', '--name-only', $from, $to, '--', 'backend/composer.json', 'backend/composer.lock',
-            ], 'Checking PHP dependencies') !== '';
-            if ($dependenciesChanged || ! is_file($root.'/backend/vendor/autoload.php')) {
-                $run(['composer', 'install', '--working-dir=backend', '--no-dev', '--prefer-dist', '--optimize-autoloader', '--no-interaction'], 'Installing PHP dependencies', 420);
+            // Web server workers may have neither HOME nor COMPOSER_HOME.
+            // Keep Composer configuration/cache private and writable by this app.
+            $composerHome = getenv('COMPOSER_HOME') ?: storage_path('app/private/composer');
+            File::ensureDirectoryExists($composerHome, 0700);
+            if (! is_writable($composerHome)) {
+                throw new \RuntimeException('Composer home is not writable. Check permissions on '.$composerHome.'.');
             }
+
+            // Always reconcile vendor with the lock file: a prior attempt may have
+            // pulled the new commit and then failed during dependency installation.
+            $run(['composer', 'install', '--working-dir=backend', '--no-dev', '--prefer-dist', '--optimize-autoloader', '--no-interaction'], 'Installing PHP dependencies', 420, [
+                'COMPOSER_HOME' => $composerHome,
+            ]);
             $run(['bash', 'scripts/install-public-html.sh'], 'Updating site router', 60);
             $run(['bash', 'scripts/cpanel-deploy.sh'], 'Migrating and publishing site', 300);
 
@@ -77,5 +88,10 @@ class DeploymentRunner
                 'output' => $output, 'finished_at' => now(), 'updated_at' => now(),
             ]);
         }
+    }
+
+    protected function makeProcess(array $command, string $root, array $environment): Process
+    {
+        return new Process($command, $root, $environment);
     }
 }
